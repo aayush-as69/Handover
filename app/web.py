@@ -20,12 +20,12 @@ from .access import chunk_visible, effective_sensitivity, filter_review, visible
 from .db import get_session
 from .enums import REVIEWER_ROLES, ChangeType, Confidence, ReviewStatus, Role
 from .models import Chunk, Claim, Project, User
-from .security import LoginThrottle, csrf_ok, new_csrf_token, verify_password
+from .security import (clear_login_failures, csrf_ok, login_blocked, new_csrf_token,
+                       record_login_failure, verify_password)
 from .verify import verify_claim
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
-throttle = LoginThrottle()
 
 MAX_STATEMENT = 1000
 MAX_NOTE = 1000
@@ -117,16 +117,16 @@ def login(request: Request, username: str = Form(""), password: str = Form(""),
           csrf: str = Form(""), session: Session = Depends(get_session)):
     check_csrf(request, csrf)
     key = username.strip().lower()[:64]
-    if throttle.blocked(key):
+    if login_blocked(session, key):
         return render(request, "login.html", None, 429,
                       error="Too many failed attempts. Try again in a few minutes.")
     user = session.scalar(select(User).where(User.username == key))
     # Verify even when the user is unknown, so timing does not reveal which names exist.
     ok = verify_password(password, user.password_hash if user else "pbkdf2$1$00$00")
     if not (user and ok):
-        throttle.fail(key)
+        record_login_failure(session, key)
         return render(request, "login.html", None, 401, error="Wrong username or password.")
-    throttle.reset(key)
+    clear_login_failures(session, key)
     request.session.clear()                      # new session on login
     request.session["uid"] = user.id
     return RedirectResponse(landing(user), status_code=303)

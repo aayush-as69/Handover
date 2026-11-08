@@ -3,7 +3,7 @@
 {% block body %}
 <h1>{{ handover.title }}</h1>
 <p class="muted">From {{ handover.outgoing_name }}.
-{% if handover.status.value == "approved" %}Signed off by {{ approver.display_name if approver else "an approver" }}{% if handover.approved_at %} on {{ handover.approved_at.strftime("%Y-%m-%d") }}{% endif %}.
+{% if handover.status.value == "approved" and release %}Release {{ release.number }}, signed off by {{ release.approved_by_name }} on {{ release.approved_at.strftime("%Y-%m-%d") }}.
 {% else %}<strong>Draft preview. Not shared yet.</strong>{% endif %}
 Only approved claims appear, and only what your role may see. Each claim shows its evidence.</p>
 
@@ -16,11 +16,14 @@ Only approved claims appear, and only what your role may see. Each claim shows i
   <form method="post" class="buttons">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     {% if handover.status.value != "approved" %}
-      <button class="primary" formaction="/handover/approve">Sign off handover</button>
+      <button class="primary" formaction="/handover/approve">{{ "Publish a new release" if release else "Sign off handover" }}</button>
     {% else %}
+      {% if state.not_yet_released or state.withdrawn %}<button class="primary" formaction="/handover/approve">Publish a new release</button>{% endif %}
       <button class="danger" formaction="/handover/withdraw">Withdraw</button>
     {% endif %}
+    <a href="/handover/releases">Release history</a>
   </form>
+  {% if release %}<p class="muted">Release {{ release.number }}: {{ state.still_valid }} claim(s) still valid{% if state.withdrawn %}, {{ state.withdrawn }} removed since sign-off because they were edited, rejected or reopened{% endif %}{% if state.not_yet_released %}, {{ state.not_yet_released }} newly approved and not yet released{% endif %}.</p>{% endif %}
   {% if pending %}<p class="muted">{{ pending }} claim(s) are still waiting for review and are not included.</p>{% endif %}
   {% if acks %}<p class="muted">Acknowledged by: {% for n, t in acks %}{{ n }} ({{ t.strftime("%Y-%m-%d") }}){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
 </section>

@@ -17,7 +17,8 @@ from .extract import ExtractionError
 from .extract.llm import llm_from_env
 from .extract.pipeline import run_extraction
 from .extract.rules import RuleExtractor
-from .handover import (HandoverError, acknowledge, answered_questions, conflict_notes, approve_handover, build_sections, can_view,
+from .handover import (HandoverError, acknowledge, answered_questions, conflict_notes,
+                       latest_release, release_state, releases, approve_handover, build_sections, can_view,
                        get_handover, get_or_create_handover, pending_count, withdraw_handover)
 from .questions import generate_questions
 from .ingest.errors import IngestError
@@ -71,13 +72,15 @@ def handover_page(request: Request, user: User = Depends(require_user),
     sections = build_sections(session, project, user, role)
     shown = {c.id for sec in sections for c in sec.claims}
     hide = lambda text: redact_text(role, text)
+    rel = latest_release(session, handover)
+    state = release_state(session, project, handover)
     acks = session.scalars(select(Acknowledgement).where(
-        Acknowledgement.handover_id == handover.id)).all()
+        Acknowledgement.release_id == rel.id)).all() if rel else []
     ack_users = {a.user_id: session.get(User, a.user_id) for a in acks}
     is_reviewer = user.role in REVIEWER_ROLES
     return render(
         request, "handover.html", user, project=project, handover=handover, sections=sections,
-        approver=session.get(User, handover.approved_by_id) if handover.approved_by_id else None,
+        release=rel, state=state,
         acked=any(a.user_id == user.id for a in acks), is_reviewer=is_reviewer,
         acks=[(ack_users[a.user_id].display_name, a.acknowledged_at) for a in acks]
         if is_reviewer else [],
@@ -90,6 +93,20 @@ def handover_page(request: Request, user: User = Depends(require_user),
                                if v.change_type == ChangeType.approve), None)
                    for s in sections for c in s.claims},
     )
+
+
+@router.get("/handover/releases")
+def release_history(request: Request, user: User = Depends(require_user),
+                    session: Session = Depends(get_session)):
+    if user.role not in REVIEWER_ROLES:
+        raise HTTPException(status_code=403, detail="Only reviewers can see release history.")
+    handover = get_handover(session, project_for(session))
+    rows = []
+    for r in (releases(session, handover) if handover else []):
+        n_acks = len(session.scalars(select(Acknowledgement.id).where(
+            Acknowledgement.release_id == r.id)).all())
+        rows.append((r, len(r.entries), n_acks))
+    return render(request, "releases.html", user, rows=rows)
 
 
 @router.post("/handover/{action}")
