@@ -26,7 +26,11 @@ Round 2, in development. Working so far:
 - Verification pass: every quoted snippet is checked against its source, and each claim gets
   a confidence label with a plain-language reason (see "Confidence labels" below)
 
-Not built yet: review screen, role views, deployment. See the roadmap below.
+- Login (salted PBKDF2, lockout after repeated failures, CSRF tokens, security headers) and a
+  review screen: each claim beside its quoted evidence, the confidence label with its reason,
+  approve / edit / reject / reopen, and a version history with word-level diffs
+
+Not built yet: handover approval and role views, source upload screen, deployment. See the roadmap below.
 
 ## Trust rules the code enforces
 1. A claim is `unsupported` until the verification pass proves otherwise.
@@ -45,6 +49,9 @@ Not built yet: review screen, role views, deployment. See the roadmap below.
    claims without valid evidence are dropped, and source text is fenced inside the prompt as
    data, never instructions.
 9. Draft claims start as `generated`. The pipeline never approves anything: a human does.
+11. The review queue and every claim action re-check role and clearance on the server. A claim
+    above a reviewer's clearance returns "not found". Approving a claim that is not `verified`
+    needs a written reason, and editing a claim re-runs the verification check.
 10. Confidence labels come from mechanical checks, never from a model's opinion. An invented
     or paraphrased quote is labelled `unsupported`, not quietly accepted.
 
@@ -64,7 +71,8 @@ pip install -r requirements-dev.txt
 pytest
 python -m app.demo                 # load the synthetic demo project and print a summary
 python -m app.demo --extract rules # ...and extract draft claims with no API key
-uvicorn app.main:app --reload
+DEMO_PASSWORD=choose-one python -m app.demo --extract rules   # demo logins: meera, riya
+uvicorn app.main:app --reload      # then open /login (set SECRET_KEY for stable sessions)
 ```
 
 ### Using an LLM for extraction
@@ -83,7 +91,7 @@ Keys are read from the environment only and are never stored or logged.
 - Chat dates are read as day/month/year unless the file clearly uses month/day/year.
 - Live GitHub reading covers public repositories only, up to 100 commits, issues and pull
   requests, and is limited by GitHub's unauthenticated rate limit.
-- There is no login or upload screen yet, so nothing is exposed over HTTP except `/health`.
+- There is no upload screen yet; sources are loaded with `python -m app.demo`. Login throttling is kept in memory, so it resets on restart.
 - The rule-based extractor reads structure only. It cannot understand chat, spot conflicts
   between sources or find recurring problems; those need the LLM extractor.
 - The LLM extractor is tested against simulated provider responses. Its quality on a live
@@ -100,8 +108,8 @@ Keys are read from the environment only and are never stored or logged.
 2. Source ingestion: notes, chat, task CSV, GitHub (done)
 3. Claim extraction with exact evidence snippets (done)
 4. Verification pass and confidence labels (done)
-5. Review screen with version history
-6. Role login, filtered handover view, acknowledgement
+5. Login and review screen with version history (done)
+6. Handover approval, filtered role views, acknowledgement
 7. Deployment, tests and architecture document
 
 See `docs/DISCLOSURES.md` for AI assistance, libraries and data.

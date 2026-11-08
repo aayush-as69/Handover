@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Source{% endblock %}
+{% block body %}
+<p><a href="/review">← Review queue</a></p>
+<h1>{{ chunk.source.name }} <span class="muted">› {{ chunk.locator }}</span></h1>
+{% if chunk.redacted %}<p class="flash">A secret in this text was masked when it was imported.</p>{% endif %}
+<pre class="source">{{ parts[0] }}<mark>{{ parts[1] }}</mark>{{ parts[2] }}</pre>
+{% endblock %}

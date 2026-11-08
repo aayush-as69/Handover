@@ -32,3 +32,8 @@ Planned and to be listed here when added: a hosting provider for the deployed de
 ## Data
 All demonstration data in `data/demo/` is synthetic. No real credentials or confidential
 workplace material is used. The "API key" in the demo chat is invented.
+
+## Step 5 (review screen)
+- New library: `itsdangerous` (signed session cookies via Starlette). Passwords use the Python
+  standard library (PBKDF2-HMAC-SHA256). Pages are server-rendered with Jinja2; no JavaScript.
+- Written with Claude's assistance and reviewed/tested by the team member.

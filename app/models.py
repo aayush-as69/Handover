@@ -207,6 +207,10 @@ class Claim(Base):
     def reject(self, by: str, note: str | None = None) -> None:
         self._bump(ChangeType.reject, by, ReviewStatus.rejected, note)
 
+    def reopen(self, by: str, note: str | None = None) -> None:
+        """Send a decided claim back to the queue (it leaves any handover until approved again)."""
+        self._bump(ChangeType.reopen, by, ReviewStatus.generated, note)
+
 
 class Evidence(Base):
     __tablename__ = "evidence"

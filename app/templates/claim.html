@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Claim {{ claim.id }}{% endblock %}
+{% block body %}
+<p><a href="/review">← Review queue</a></p>
+<section class="card">
+  <div class="meta">
+    <span class="pill {{ claim.confidence.value }}">{{ claim.confidence.value }}</span>
+    <span class="pill s-{{ sensitivity.value }}">{{ sensitivity.value }}</span>
+    <span class="pill status-{{ claim.review_status.value }}">{{ claim.review_status.value }}</span>
+    <span class="muted">{{ claim.type.value.replace("_", " ") }} · version {{ claim.version }}</span>
+  </div>
+  <h1 class="statement">{{ claim.statement }}</h1>
+  <p class="why"><strong>Why this label:</strong> {{ claim.verification_note or "Not checked yet." }}</p>
+</section>
+
+<h2>Evidence</h2>
+{% for ev, can_open in evidence %}
+<blockquote class="evidence {{ 'bad' if not ev.snippet_verified }}">
+  <p>“{{ ev.snippet }}”</p>
+  <footer>
+    {{ ev.stance.value }} ·
+    {% if ev.snippet_verified %}<span class="ok">found word for word</span>{% else %}<span class="bad">NOT found in the source</span>{% endif %}
+    · {{ ev.chunk.source.name }} › {{ ev.chunk.locator }}
+    {% if ev.chunk.redacted %}· <span class="pill confidential">secret masked</span>{% endif %}
+    {% if can_open %}· <a href="/review/chunks/{{ ev.chunk.id }}?snippet={{ ev.snippet|urlencode }}">open source text</a>{% endif %}
+  </footer>
+</blockquote>
+{% else %}
+<p class="muted">No evidence is attached to this claim.</p>
+{% endfor %}
+
+<h2>Decide</h2>
+<section class="card">
+  <form method="post" action="/review/claims/{{ claim.id }}/edit" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Edit statement
+      <textarea name="statement" rows="3" maxlength="{{ max_statement }}">{{ claim.statement }}</textarea>
+    </label>
+    <label>Note (optional) <input name="note" maxlength="1000"></label>
+    <button>Save edit</button>
+    <p class="muted">An edited claim returns to review and its evidence is re-checked.</p>
+  </form>
+  <hr>
+  <form method="post" class="stack" id="decide">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Note {% if claim.confidence.value != "verified" %}(required to approve: this claim is not fully verified){% else %}(optional){% endif %}
+      <input name="note" maxlength="1000"></label>
+    <div class="buttons">
+      {% if claim.review_status.value != "approved" %}<button class="primary" formaction="/review/claims/{{ claim.id }}/approve">Approve</button>{% endif %}
+      {% if claim.review_status.value != "rejected" %}<button class="danger" formaction="/review/claims/{{ claim.id }}/reject">Reject</button>{% endif %}
+      {% if claim.review_status.value in ("approved", "rejected") %}<button formaction="/review/claims/{{ claim.id }}/reopen">Reopen</button>{% endif %}
+    </div>
+  </form>
+</section>
+
+<h2>Version history</h2>
+<ol class="history">
+{% for v, diff in history %}
+  <li>
+    <strong>v{{ v.version }} · {{ v.change_type.value }}</strong> by {{ v.changed_by }}
+    <span class="muted">{{ v.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</span>
+    {% if v.note %}<div class="note">“{{ v.note }}”</div>{% endif %}
+    {% if diff %}<div class="diff">{% for op, t in diff %}{% if op == "same" %}{{ t }} {% elif op == "del" %}<del>{{ t }}</del> {% else %}<ins>{{ t }}</ins> {% endif %}{% endfor %}</div>
+    {% elif v.change_type.value in ("generated", "edit") %}<div class="diff">{{ v.statement }}</div>{% endif %}
+  </li>
+{% endfor %}
+</ol>
+{% endblock %}
