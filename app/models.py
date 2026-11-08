@@ -146,6 +146,10 @@ class Claim(Base):
     support_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     verification_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # Optional advisory second opinion from a model (see app/semantic.py). It can only add a
+    # warning for the reviewer; it never changes the confidence label.
+    semantic_verdict: Mapped[Optional[str]] = mapped_column(String(16), nullable=True)
+    semantic_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     sensitivity: Mapped[Sensitivity] = mapped_column(
         _enum(Sensitivity), default=Sensitivity.team
     )
@@ -211,6 +215,7 @@ class Claim(Base):
     def edit(self, new_statement: str, by: str, note: str | None = None) -> None:
         """Any edit sends the claim back to 'edited': it must be approved again."""
         self.statement = new_statement
+        self.semantic_verdict = self.semantic_note = None     # the old opinion was about old words
         self._bump(ChangeType.edit, by, ReviewStatus.edited, note)
 
     def approve(self, by: str, note: str | None = None) -> None:

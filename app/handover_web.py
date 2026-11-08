@@ -138,6 +138,22 @@ def handover_action(action: str, request: Request, csrf: str = Form(""),
     return _flash(request, msg, "/handover")
 
 
+@router.post("/admin/sources/semantic")
+def semantic_check(request: Request, csrf: str = Form(""), user: User = Depends(require_admin),
+                   session: Session = Depends(get_session)):
+    check_csrf(request, csrf)
+    from .semantic import judge_from_env, semantic_review
+    try:
+        report = semantic_review(session, project_for(session), judge_from_env())
+    except ExtractionError as exc:
+        session.rollback()
+        return _flash(request, f"Semantic check failed: {exc}", "/admin/sources")
+    session.commit()
+    msg = (f"Checked {report.checked} claim(s): {report.doubted} doubted, {report.skipped} skipped "
+           "(confidential or built straight from a quote). Doubts are advisory; nothing was changed.")
+    return _flash(request, msg + "".join(" " + w for w in report.warnings[:2]), "/review")
+
+
 # ------------------------------------------------------------------ sources (admin)
 
 

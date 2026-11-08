@@ -26,6 +26,9 @@ from .verify import verify_claim
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+CONFIDENCE_LABELS = {"verified": "quote-verified", "inferred": "inferred",
+                     "conflicting": "conflicting", "unsupported": "unsupported"}
+templates.env.globals["conf_label"] = lambda c: CONFIDENCE_LABELS[getattr(c, "value", c)]
 
 MAX_STATEMENT = 1000
 MAX_NOTE = 1000
@@ -181,7 +184,18 @@ def claim_detail(claim_id: int, request: Request, user: User = Depends(require_r
     for v in claim.versions:
         history.append((v, word_diff(prev, v.statement) if prev is not None and prev != v.statement else None))
         prev = v.statement
-    return render(request, "claim.html", user, claim=claim, evidence=evidence,
+    from .conflicts import visible_members
+    from .enums import ConflictStatus
+    from .models import Conflict
+    all_claims = {c.id: c for c in session.scalars(select(Claim).where(Claim.project_id == claim.project_id))}
+    disputes = []
+    for cf in session.scalars(select(Conflict).where(Conflict.project_id == claim.project_id,
+                                                     Conflict.status != ConflictStatus.stale)):
+        if claim.id in cf.claim_ids:
+            others = [m for m in visible_members(user.role, cf, all_claims) if m.id != claim.id]
+            if others:
+                disputes.append((cf, others))
+    return render(request, "claim.html", user, claim=claim, evidence=evidence, disputes=disputes,
                   history=list(reversed(history)), sensitivity=effective_sensitivity(claim),
                   max_statement=MAX_STATEMENT)
 
@@ -202,8 +216,9 @@ def claim_action(claim_id: int, action: str, request: Request, csrf: str = Form(
     if action == "approve":
         if claim.review_status == ReviewStatus.approved:
             return back("Already approved.")
-        if claim.confidence != Confidence.verified and not note:
-            return back("This claim is not fully verified. Add a note saying why you accept it.")
+        from .semantic import has_doubt
+        if (claim.confidence != Confidence.verified or has_doubt(claim)) and not note:
+            return back("This claim is not fully verified, or a model doubted it. Add a note saying why you accept it.")
         claim.approve(who, note)
         msg = "Approved."
     elif action == "reject":

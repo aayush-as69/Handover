@@ -1,6 +1,8 @@
 """Verification pass: decide how far each claim can be trusted, from mechanical checks.
 
-Labels (never set by a model):
+Labels (never set by a model). "verified" is shorthand for QUOTE-verified: the evidence exists
+and is consistent with the claim. It does NOT mean the claim is true, current or complete;
+that is what the human approval is for.
   verified     At least one supporting quote was found WORD FOR WORD in its source, and the
                claim's key terms, numbers and negation agree with the quotes. (Claims built by
                the rule-based extractor are derived mechanically from the quote, so the quote
@@ -30,7 +32,8 @@ from .enums import ChangeType, Confidence, Stance
 from .models import AuditEvent, Claim, Project, utcnow
 
 MIN_SNIPPET_CHARS = 10
-SUPPORT_THRESHOLD = 0.5
+SUPPORT_THRESHOLD = 0.6
+MIN_KEY_TERMS = 2
 
 _STOP = set(
     """a an the and or but if then than so as of in on at to for from by with about into over
@@ -155,6 +158,8 @@ def verify_claim(claim: Claim) -> Confidence:
             t for t in claim_terms - quote_terms if any(c.isdigit() for c in t)
         )
         problems = []
+        if len(claim_terms) < MIN_KEY_TERMS:
+            problems.append("the claim has too few distinctive terms to compare with the quotes")
         if score < SUPPORT_THRESHOLD:
             problems.append(f"only {score:.0%} of the claim's key terms appear in the quotes")
         if missing_numbers:

@@ -21,9 +21,12 @@ from typing import Sequence
 import httpx
 from pydantic import ValidationError
 
-from ..schemas import ExtractedClaim, ExtractionResult
+from ..schemas import MAX_CLAIMS_PER_REPLY, ExtractedClaim, ExtractionResult
 from .base import ChunkView, ExtractionError, ExtractorOutput
 from .prompt import batch_chunks, build_messages
+
+
+MAX_REPLY_CHARS = 400_000
 
 
 def _strip_fences(text: str) -> str:
@@ -32,6 +35,36 @@ def _strip_fences(text: str) -> str:
         text = re.sub(r"^```[A-Za-z]*\n?", "", text)
         text = re.sub(r"\n?```$", "", text)
     return text.strip()
+
+
+def _reply_text(resp: httpx.Response) -> str:
+    """Pull the text out of a chat-completions reply, accepting only well-formed shapes."""
+    bad = ExtractionError("the LLM provider returned an unexpected response")
+    try:
+        body = resp.json()
+        choice = body["choices"][0]
+        content = choice["message"]["content"]
+    except (KeyError, IndexError, TypeError, ValueError):
+        raise bad
+    if choice.get("finish_reason") == "length":
+        raise ExtractionError("the model's reply was cut off (too long); try a smaller batch")
+    if isinstance(content, list):          # some providers return a list of text parts
+        parts = []
+        for part in content:
+            if isinstance(part, str):
+                parts.append(part)
+            elif isinstance(part, dict) and isinstance(part.get("text"), str):
+                parts.append(part["text"])
+            else:
+                raise bad
+        content = "".join(parts)
+    if content is None:
+        return ""
+    if not isinstance(content, str):
+        raise bad
+    if len(content) > MAX_REPLY_CHARS:
+        raise ExtractionError("the model's reply was unreasonably large and was refused")
+    return content
 
 
 def parse_model_output(content: str) -> tuple[list[ExtractedClaim], int]:
@@ -45,7 +78,13 @@ def parse_model_output(content: str) -> tuple[list[ExtractedClaim], int]:
     if not isinstance(data, dict) or not isinstance(data.get("claims"), list):
         raise ValueError('reply must be a JSON object with a "claims" list')
     valid, invalid = [], 0
+    if len(data["claims"]) > MAX_CLAIMS_PER_REPLY:
+        invalid += len(data["claims"]) - MAX_CLAIMS_PER_REPLY
+        data["claims"] = data["claims"][:MAX_CLAIMS_PER_REPLY]
     for item in data["claims"]:
+        if not isinstance(item, dict):
+            invalid += 1
+            continue
         try:
             valid.append(ExtractedClaim.model_validate(item))
         except ValidationError:
@@ -91,10 +130,7 @@ class OpenAICompatibleExtractor:
             return self._chat(messages, json_mode=False)  # some providers lack JSON mode
         if resp.status_code >= 400:
             raise ExtractionError(f"the LLM provider returned an error ({resp.status_code})")
-        try:
-            return resp.json()["choices"][0]["message"]["content"] or ""
-        except (KeyError, IndexError, TypeError, ValueError):
-            raise ExtractionError("the LLM provider returned an unexpected response")
+        return _reply_text(resp)
 
     def _extract_batch(self, batch: Sequence[ChunkView], n: int) -> tuple[list[ExtractedClaim], list[str]]:
         messages = build_messages(batch)
