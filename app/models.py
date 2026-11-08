@@ -157,6 +157,9 @@ class Claim(Base):
         _enum(ReviewStatus), default=ReviewStatus.generated
     )
     version: Mapped[int] = mapped_column(Integer, default=1)
+    # Optimistic locking: every write says "only if nobody changed it since I read it".
+    # We bump `version` ourselves (one version per recorded change), so SQLAlchemy must not.
+    __mapper_args__ = {"version_id_col": version, "version_id_generator": False}
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 

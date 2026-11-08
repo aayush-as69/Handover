@@ -174,6 +174,11 @@ def verify_claim(claim: Claim) -> Confidence:
 
     if failed and label != Confidence.unsupported:
         note += f" {failed} other quote(s) could not be found."
+        if label == Confidence.verified:
+            # A claim is only quote-verified if EVERY quote it cites checks out. One invented
+            # quote means the author cannot be trusted to have cited carefully.
+            label = Confidence.inferred
+            note += " A claim cannot be verified while any quote it cites is missing from the sources."
     changed = claim.verified_at is None or claim.confidence != label or claim.verification_note != note
     claim.confidence = label
     claim.support_score = score

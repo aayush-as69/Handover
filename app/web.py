@@ -15,6 +15,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.exc import StaleDataError
 
 from .access import chunk_visible, effective_sensitivity, filter_review, visible_in_review
 from .db import get_session
@@ -86,6 +87,11 @@ def project_for(session: Session) -> Project:
     if project is None:
         raise HTTPException(status_code=404, detail="No project has been loaded yet.")
     return project
+
+
+def _flash_stale(request: Request) -> None:
+    request.session["flash"] = ("Someone else changed this claim at the same moment, so your change "
+                                "was not saved. Review the latest version and try again.")
 
 
 def get_reviewable(session: Session, user: User, claim_id: int) -> Claim:
@@ -202,12 +208,17 @@ def claim_detail(claim_id: int, request: Request, user: User = Depends(require_r
 
 @router.post("/review/claims/{claim_id}/{action}")
 def claim_action(claim_id: int, action: str, request: Request, csrf: str = Form(""),
-                 note: str = Form(""), statement: str = Form(""),
+                 note: str = Form(""), statement: str = Form(""), version: str = Form(""),
                  user: User = Depends(require_reviewer), session: Session = Depends(get_session)):
     check_csrf(request, csrf)
     claim = get_reviewable(session, user, claim_id)
     note = note.strip()[:MAX_NOTE] or None
     who = user.display_name
+
+    if version.strip() != str(claim.version):
+        request.session["flash"] = ("This claim was changed by someone else while you were looking at "
+                                    "it. Review the latest version and try again.")
+        return RedirectResponse(f"/review/claims/{claim.id}", status_code=303)
 
     def back(msg: str):
         request.session["flash"] = msg
@@ -245,7 +256,12 @@ def claim_action(claim_id: int, action: str, request: Request, csrf: str = Form(
         msg = "Saved. The edited claim must be approved again, and its confidence was re-checked."
     else:
         raise HTTPException(status_code=404, detail="Unknown action.")
-    session.commit()
+    try:
+        session.commit()
+    except StaleDataError:
+        session.rollback()
+        _flash_stale(request)
+        return RedirectResponse(f"/review/claims/{claim.id}", status_code=303)
     return back(msg)
 
 

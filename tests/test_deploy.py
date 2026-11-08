@@ -63,8 +63,11 @@ def test_demo_mode_boots_a_usable_site_and_a_full_walkthrough_works(monkeypatch)
             target = next(c.id for c in claims if c.sensitivity.value == "team"
                           and c.confidence.value == "verified")
         sign_in(boss, "meera")
+        page = boss.get(f"/review/claims/{target}").text
+        version = re.search(r'name="version" value="(\d+)"', page).group(1)
         assert boss.post(f"/review/claims/{target}/approve",
-                         data={"csrf": tok(boss, f"/review/claims/{target}")}).status_code == 303
+                         data={"csrf": tok(boss, f"/review/claims/{target}"),
+                               "version": version}).status_code == 303
         assert boss.post("/handover/approve", data={"csrf": tok(boss, "/handover")}).status_code == 303
         sign_in(kabir, "kabir")
         page = kabir.get("/handover")

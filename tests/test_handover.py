@@ -44,7 +44,7 @@ def test_non_reviewers_see_nothing_until_signoff(env):
     approve_claims(app, Session, ids)
     k = login(app, "kabir")
     page = k.get("/handover")
-    assert "No handover has been shared" in page.text
+    assert "No handover is available to you" in page.text
     with Session() as s:
         assert not any(s.get(Claim, i).statement in page.text for i in ids)
     assert 'class="evidence' not in page.text
@@ -136,9 +136,9 @@ def test_withdraw_hides_it_again(env):
     m = approve_claims(app, Session, public_ids(Session)[:2])
     m.post("/handover/approve", data={"csrf": token(m, "/handover")})
     k = login(app, "kabir")
-    assert "No handover has been shared" not in k.get("/handover").text
+    assert "No handover is available to you" not in k.get("/handover").text
     m.post("/handover/withdraw", data={"csrf": token(m, "/handover")})
-    assert "No handover has been shared" in k.get("/handover").text
+    assert "No handover is available to you" in k.get("/handover").text
 
 
 def test_handover_actions_need_csrf(env):

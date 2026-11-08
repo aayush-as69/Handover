@@ -17,7 +17,7 @@ from .extract import ExtractionError
 from .extract.llm import llm_from_env
 from .extract.pipeline import run_extraction
 from .extract.rules import RuleExtractor
-from .handover import (HandoverError, acknowledge, answered_questions, conflict_notes,
+from .handover import (HandoverError, acknowledge, is_stale, answered_questions, conflict_notes,
                        latest_release, release_state, releases, approve_handover, build_sections, can_view,
                        get_handover, get_or_create_handover, pending_count, withdraw_handover)
 from .questions import generate_questions
@@ -58,8 +58,9 @@ def handover_page(request: Request, user: User = Depends(require_user),
     if handover is None and user.role in REVIEWER_ROLES:
         handover = get_or_create_handover(session, project)
         session.commit()
-    if not can_view(user, handover):
-        # Same page whether nothing exists or it is not signed off: reveals nothing.
+    if not can_view(user, handover) or (
+            user.role not in REVIEWER_ROLES and is_stale(session, project, handover)):
+        # Same page whether nothing exists, it is not signed off, or the sign-off went stale.
         return render(request, "handover_pending.html", user, project=project)
     role = user.role
     if view_as:
@@ -80,7 +81,7 @@ def handover_page(request: Request, user: User = Depends(require_user),
     is_reviewer = user.role in REVIEWER_ROLES
     return render(
         request, "handover.html", user, project=project, handover=handover, sections=sections,
-        release=rel, state=state,
+        release=rel, state=state, stale=is_stale(session, project, handover),
         acked=any(a.user_id == user.id for a in acks), is_reviewer=is_reviewer,
         acks=[(ack_users[a.user_id].display_name, a.acknowledged_at) for a in acks]
         if is_reviewer else [],

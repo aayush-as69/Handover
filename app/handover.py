@@ -129,6 +129,18 @@ def release_state(session: Session, project: Project, handover: Handover | None)
                         len([c for c in approved if c not in {cid for cid, _ in rel.entries}]))
 
 
+def is_stale(session: Session, project: Project, handover: Handover | None) -> bool:
+    """True when something signed off has since been edited, rejected or reopened.
+
+    A sign-off covers exactly what was approved at that moment. Once any of it changes, the
+    sign-off no longer describes what readers would see, so non-reviewers see nothing until
+    a reviewer signs off again. Derived on every read, so no code path can forget to apply it.
+    """
+    if handover is None or handover.status != HandoverStatus.approved:
+        return False
+    return release_state(session, project, handover).withdrawn > 0
+
+
 def _view_claims(session: Session, project: Project, handover: Handover) -> list[Claim]:
     """What is shown. A published handover shows its latest release, minus anything changed
     since (fail closed). An unpublished draft previews the currently approved claims."""
@@ -155,6 +167,8 @@ def build_sections(session: Session, project: Project, user: User,
     handover = get_handover(session, project)
     if handover is None or not can_view(user, handover):
         return []
+    if user.role not in REVIEWER_ROLES and is_stale(session, project, handover):
+        return []
     claims = filter_handover(role, _view_claims(session, project, handover))
     out = []
     for key, title, types in SECTIONS:
@@ -178,6 +192,9 @@ def acknowledge(session: Session, handover: Handover, user: User) -> bool:
     rel = latest_release(session, handover)
     if not can_view(user, handover) or handover.status != HandoverStatus.approved or rel is None:
         raise HandoverError("There is no signed-off handover to acknowledge.")
+    project = session.get(Project, handover.project_id)
+    if is_stale(session, project, handover):
+        raise HandoverError("The handover changed after it was signed off. Wait for the new sign-off.")
     if session.scalar(select(Acknowledgement).where(
             Acknowledgement.release_id == rel.id, Acknowledgement.user_id == user.id)):
         return False
