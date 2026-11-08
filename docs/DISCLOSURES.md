@@ -20,8 +20,11 @@ FastAPI, Uvicorn, SQLAlchemy, Pydantic, Jinja2, python-multipart, HTTPX, pytest.
 used under their open-source licences.
 
 ## External services
-None yet. Planned and to be listed here when added: an LLM API, the GitHub REST API (public
-repositories only), and a hosting provider for the deployed demo.
+- GitHub REST API (`api.github.com`): used to read public repositories, unauthenticated, read
+  only. See `app/ingest/github.py`.
+
+Planned and to be listed here when added: an LLM API and a hosting provider for the deployed
+demo.
 
 ## Data
 All demonstration data in `data/demo/` is synthetic. No real credentials or confidential
