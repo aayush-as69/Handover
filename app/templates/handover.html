@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Handover{% endblock %}
+{% block body %}
+<h1>{{ handover.title }}</h1>
+<p class="muted">From {{ handover.outgoing_name }}.
+{% if handover.status.value == "approved" %}Signed off by {{ approver.display_name if approver else "an approver" }}{% if handover.approved_at %} on {{ handover.approved_at.strftime("%Y-%m-%d") }}{% endif %}.
+{% else %}<strong>Draft preview. Not shared yet.</strong>{% endif %}
+Only approved claims appear, and only what your role may see. Each claim shows its evidence.</p>
+
+{% if is_reviewer %}
+<section class="card">
+  <form method="post" class="buttons">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% if handover.status.value != "approved" %}
+      <button class="primary" formaction="/handover/approve">Sign off handover</button>
+    {% else %}
+      <button class="danger" formaction="/handover/withdraw">Withdraw</button>
+    {% endif %}
+  </form>
+  {% if pending %}<p class="muted">{{ pending }} claim(s) are still waiting for review and are not included.</p>{% endif %}
+  {% if acks %}<p class="muted">Acknowledged by: {% for n, t in acks %}{{ n }} ({{ t.strftime("%Y-%m-%d") }}){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+</section>
+{% endif %}
+
+{% for sec in sections %}
+<h2 id="{{ sec.key }}">{{ sec.title }}</h2>
+{% for c in sec.claims %}
+<section class="card">
+  <div class="meta">
+    <span class="pill {{ c.confidence.value }}">{{ c.confidence.value }}</span>
+    <span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span>
+    <span class="muted">{{ c.type.value.replace("_", " ") }}</span>
+  </div>
+  <p class="statement-sm">{{ c.statement }}</p>
+  {% set a = approvals[c.id] %}
+  {% if a and a.note %}<p class="note">Reviewer note ({{ a.changed_by }}): “{{ a.note }}”</p>{% endif %}
+  {% for ev in c.evidence %}{% if ev.stance.value == "supports" %}
+  <blockquote class="evidence"><p>“{{ ev.snippet }}”</p>
+  <footer>{{ ev.chunk.source.name }} › {{ ev.chunk.locator }}</footer></blockquote>
+  {% endif %}{% endfor %}
+</section>
+{% endfor %}
+{% else %}
+<p class="muted">No approved claims are available to you yet.</p>
+{% endfor %}
+
+{% if handover.status.value == "approved" and not is_reviewer %}
+<section class="card">
+  {% if acked %}<p class="ok">You have acknowledged this handover.</p>
+  {% else %}
+  <form method="post" action="/handover/acknowledge">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <p>When you have read it, confirm so the team knows nothing is being missed.</p>
+    <button class="primary">I have read this handover</button>
+  </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -27,10 +27,17 @@ _HEADERS = {
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_db()
+    password = os.environ.get("DEMO_PASSWORD")
+    if os.environ.get("DEMO_MODE", "").lower() in ("1", "true", "yes") and password:
+        from .db import SessionLocal
+        from .demo import bootstrap_demo
+        with SessionLocal() as session:
+            bootstrap_demo(session, password)
     yield
 
 
 def create_app(secret_key: str | None = None) -> FastAPI:
+    from .handover_web import router as handover_router
     from .web import router
 
     key = secret_key or os.environ.get("SECRET_KEY")
@@ -59,6 +66,7 @@ def create_app(secret_key: str | None = None) -> FastAPI:
     )
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
     app.include_router(router)
+    app.include_router(handover_router)
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request, exc):

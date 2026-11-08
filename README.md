@@ -30,7 +30,11 @@ Round 2, in development. Working so far:
   review screen: each claim beside its quoted evidence, the confidence label with its reason,
   approve / edit / reject / reopen, and a version history with word-level diffs
 
-Not built yet: handover approval and role views, source upload screen, deployment. See the roadmap below.
+- Handover: an approver signs it off, then each person sees only the approved claims their
+  role may see, grouped as first week, decisions, risks, dependencies and people. The
+  incoming person acknowledges it. Admins can upload sources and run extraction in the browser.
+
+Not built yet: deployment and the Round 3 improvements. See the roadmap below.
 
 ## Trust rules the code enforces
 1. A claim is `unsupported` until the verification pass proves otherwise.
@@ -52,6 +56,11 @@ Not built yet: handover approval and role views, source upload screen, deploymen
 11. The review queue and every claim action re-check role and clearance on the server. A claim
     above a reviewer's clearance returns "not found". Approving a claim that is not `verified`
     needs a written reason, and editing a claim re-runs the verification check.
+12. Nobody except reviewers sees a handover before sign-off. After sign-off it is a live view
+    of approved claims only, so rejecting, reopening or editing a claim removes it from every
+    view at once. A person never learns how many claims their role hides.
+13. Only admins can add sources. Uploads are size-limited, must be text, are masked for
+    secrets, and the file name is reduced to a plain name.
 10. Confidence labels come from mechanical checks, never from a model's opinion. An invented
     or paraphrased quote is labelled `unsupported`, not quietly accepted.
 
@@ -71,7 +80,7 @@ pip install -r requirements-dev.txt
 pytest
 python -m app.demo                 # load the synthetic demo project and print a summary
 python -m app.demo --extract rules # ...and extract draft claims with no API key
-DEMO_PASSWORD=choose-one python -m app.demo --extract rules   # demo logins: meera, riya
+DEMO_PASSWORD=choose-one python -m app.demo --extract rules   # demo logins: meera (approver), riya (admin), kabir (viewer), rao (restricted)
 uvicorn app.main:app --reload      # then open /login (set SECRET_KEY for stable sessions)
 ```
 
@@ -91,7 +100,7 @@ Keys are read from the environment only and are never stored or logged.
 - Chat dates are read as day/month/year unless the file clearly uses month/day/year.
 - Live GitHub reading covers public repositories only, up to 100 commits, issues and pull
   requests, and is limited by GitHub's unauthenticated rate limit.
-- There is no upload screen yet; sources are loaded with `python -m app.demo`. Login throttling is kept in memory, so it resets on restart.
+- The handover is one per project and not versioned: it always shows what is approved now. Login throttling is kept in memory, so it resets on restart.
 - The rule-based extractor reads structure only. It cannot understand chat, spot conflicts
   between sources or find recurring problems; those need the LLM extractor.
 - The LLM extractor is tested against simulated provider responses. Its quality on a live
@@ -109,7 +118,7 @@ Keys are read from the environment only and are never stored or logged.
 3. Claim extraction with exact evidence snippets (done)
 4. Verification pass and confidence labels (done)
 5. Login and review screen with version history (done)
-6. Handover approval, filtered role views, acknowledgement
+6. Handover sign-off, filtered role views, acknowledgement, source upload (done)
 7. Deployment, tests and architecture document
 
 See `docs/DISCLOSURES.md` for AI assistance, libraries and data.
