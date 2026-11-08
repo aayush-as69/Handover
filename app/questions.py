@@ -13,6 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .enums import ClaimType, ConflictStatus, QuestionStatus, ReviewStatus, SourceKind
+from .verify import _tokens
 from .conflicts import LEXICON, _mentions
 from .models import Claim, Conflict, Project, Question, User, utcnow
 
@@ -82,6 +83,28 @@ def wanted(session: Session, project: Project) -> dict[str, tuple[str, str, list
             out[f"promise:{c.id}"] = ("undocumented_promise",
                 f"This was promised but may not exist yet: “{quote}” "
                 "Where will it live, and has it been started?", [c.id])
+
+    # An open question that a later decision already answers is not worth asking again.
+    decisions = [(c, _tokens(c.statement)) for c in claims if c.type == ClaimType.decision]
+    claim_by_id = {c.id: c for c in claims}
+    for key in [k for k, v in out.items() if v[0] == "open_question"]:
+        c = claim_by_id[out[key][2][0]]
+        asked = _tokens(c.statement.split("?")[0]) if "?" in c.statement else set()
+        if len(asked) >= 2 and any(asked <= toks for d, toks in decisions):
+            del out[key]
+
+    # One person-gap, one question: merge owner questions about the same thing.
+    seen: list[tuple[str, set[str]]] = []
+    for key in [k for k, v in out.items() if v[0] == "no_owner"]:
+        toks = _tokens(claim_by_id[out[key][2][0]].statement)
+        twin = next((k for k, t in seen if toks and t and
+                     len(toks & t) / min(len(toks), len(t)) >= 0.5), None)
+        if twin:
+            kind, text, ids = out[twin]
+            out[twin] = (kind, text, sorted({*ids, *out[key][2]}))
+            del out[key]
+        else:
+            seen.append((key, toks))
 
     for cf in session.scalars(select(Conflict).where(Conflict.project_id == project.id,
                                                      Conflict.status == ConflictStatus.open)):

@@ -381,3 +381,20 @@ def test_questions_above_a_reviewers_clearance_are_hidden_and_closed_to_actions(
         assert r.status_code == 404
     finally:
         access.ROLE_CLEARANCE.update(orig)
+
+
+def test_an_open_question_already_decided_is_not_asked(session, project):
+    add_claim(session, project, "Which payment gateway? Riya to compare options.", ClaimType.open_question)
+    add_claim(session, project, "Payment gateway is PayNest. Reason: free sandbox.")
+    add_claim(session, project, "Refund policy: full, partial or none?", ClaimType.open_question)
+    qs = generate_questions(session, project)
+    assert [q.kind for q in qs] == ["open_question"] and "Refund" in qs[0].text
+
+
+def test_owner_questions_about_the_same_thing_are_merged(session, project):
+    a = add_claim(session, project, "QR check-in at the venue: someone should look at this.", ClaimType.next_action)
+    b = add_claim(session, project, "Task T7 (QR check-in at the venue) has no owner", ClaimType.owner)
+    c = add_claim(session, project, "Pull request #10 is still open: payments v2", ClaimType.next_action)
+    qs = [q for q in generate_questions(session, project) if q.kind == "no_owner"]
+    assert len(qs) == 2
+    assert sorted(len(q.claim_ids) for q in qs) == [1, 2]
