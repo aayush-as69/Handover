@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Review queue{% endblock %}
+{% block body %}
+<h1>Review queue <span class="muted">· {{ project.name }}</span></h1>
+<p class="muted">Nothing reaches a handover until a person approves it. Riskiest claims come first.</p>
+<form method="get" class="filters">
+  <label>Show
+    <select name="status">
+      {% for v, l in [("open","Needs review"),("approved","Approved"),("rejected","Rejected"),("all","All")] %}
+      <option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}{% if v in totals %} ({{ totals[v] }}){% endif %}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Confidence
+    <select name="confidence">
+      <option value="">Any</option>
+      {% for c in ["conflicting","unsupported","inferred","verified"] %}
+      <option value="{{ c }}" {% if confidence == c %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button>Filter</button>
+</form>
+{% if hidden %}<p class="muted">{{ hidden }} claim(s) are above your clearance and not listed.</p>{% endif %}
+<table>
+  <thead><tr><th>Claim</th><th>Type</th><th>Confidence</th><th>Sensitivity</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for c in claims %}
+  <tr>
+    <td><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a></td>
+    <td>{{ c.type.value.replace("_", " ") }}</td>
+    <td><span class="pill {{ c.confidence.value }}">{{ c.confidence.value }}</span></td>
+    <td><span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span></td>
+    <td>{{ c.review_status.value }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="5" class="muted">No claims here.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -64,6 +64,7 @@ class ChangeType(str, Enum):
     edit = "edit"
     approve = "approve"
     reject = "reject"
+    reopen = "reopen"
 
 
 class HandoverStatus(str, Enum):

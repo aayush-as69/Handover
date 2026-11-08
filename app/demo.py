@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 
 from sqlalchemy import select
@@ -22,11 +23,14 @@ from .extract.pipeline import run_extraction
 from .extract.rules import RuleExtractor
 from .ingest.service import ingest_source
 from .models import Project, User
+from .security import hash_password
 
 DEMO_DIR = Path(__file__).resolve().parents[1] / "data" / "demo"
 
 
-def load_demo_project(session: Session, demo_dir: Path = DEMO_DIR) -> Project:
+def load_demo_project(session: Session, demo_dir: Path = DEMO_DIR,
+                      password: str | None = None) -> Project:
+    """Create the demo project. With a password, demo users can log in (otherwise they cannot)."""
     manifest = json.loads((demo_dir / "manifest.json").read_text(encoding="utf-8"))
     info = manifest["project"]
 
@@ -41,9 +45,13 @@ def load_demo_project(session: Session, demo_dir: Path = DEMO_DIR) -> Project:
         session.flush()
 
     for u in manifest["users"]:
-        if session.scalar(select(User).where(User.username == u["username"])) is None:
-            session.add(User(username=u["username"], display_name=u["display_name"],
-                             role=Role(u["role"])))
+        user = session.scalar(select(User).where(User.username == u["username"]))
+        if user is None:
+            user = User(username=u["username"], display_name=u["display_name"],
+                        role=Role(u["role"]))
+            session.add(user)
+        if password and not user.password_hash:
+            user.password_hash = hash_password(password)
 
     for s in manifest["sources"]:
         ingest_source(
@@ -69,7 +77,7 @@ def main() -> None:
 
     init_db()
     with SessionLocal() as session:
-        project = load_demo_project(session)
+        project = load_demo_project(session, password=os.environ.get("DEMO_PASSWORD"))
         session.commit()
         print(f"Project: {project.name} (id {project.id})\n")
         print(f"{'source':44} {'kind':8} {'sensitivity':13} {'chunks':>6} {'masked':>6}")
