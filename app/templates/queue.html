@@ -15,7 +15,7 @@
     <select name="confidence">
       <option value="">Any</option>
       {% for c in ["conflicting","unsupported","inferred","verified"] %}
-      <option value="{{ c }}" {% if confidence == c %}selected{% endif %}>{{ c }}</option>
+      <option value="{{ c }}" {% if confidence == c %}selected{% endif %}>{{ conf_label(c) }}</option>
       {% endfor %}
     </select>
   </label>
@@ -29,7 +29,7 @@
   <tr>
     <td><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a></td>
     <td>{{ c.type.value.replace("_", " ") }}</td>
-    <td><span class="pill {{ c.confidence.value }}">{{ c.confidence.value }}</span></td>
+    <td><span class="pill {{ c.confidence.value }}">{{ conf_label(c.confidence) }}</span></td>
     <td><span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span></td>
     <td>{{ c.review_status.value }}</td>
   </tr>

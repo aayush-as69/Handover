@@ -34,7 +34,7 @@ Only approved claims appear, and only what your role may see. Each claim shows i
 {% for c in sec.claims %}
 <section class="card">
   <div class="meta">
-    <span class="pill {{ c.confidence.value }}">{{ c.confidence.value }}</span>
+    <span class="pill {{ c.confidence.value }}">{{ conf_label(c.confidence) }}</span>
     <span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span>
     <span class="muted">{{ c.type.value.replace("_", " ") }}</span>
   </div>

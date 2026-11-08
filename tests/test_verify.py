@@ -205,3 +205,20 @@ def test_a_model_cannot_pass_off_invented_quotes_as_evidence(session, demo_proje
     assert by_statement["The team picked MongoDB for speed"].confidence == Confidence.unsupported
     # nothing is approved automatically, whatever the label
     assert {c.review_status for c in by_statement.values()} == {ReviewStatus.generated}
+
+
+def test_a_claim_with_too_few_distinctive_terms_cannot_be_verified(session, project):
+    c = claim_with(session, project, "Redis", "Seat locks will go in Redis, Redis it is",
+                   "Seat locks will go in Redis, Redis it is")
+    assert verify_claim(c) == Confidence.inferred
+    assert "too few distinctive terms" in c.verification_note
+
+
+def test_coverage_threshold_is_sixty_percent(session, project):
+    # 3 of 5 key terms in the quote = 60%: verified; 2 of 5 = 40%: inferred
+    ok = claim_with(session, project, "Riya Kabir Meera sandbox payments",
+                    "Riya Kabir Meera discussed lunch", "Riya Kabir Meera discussed lunch")
+    assert verify_claim(ok) == Confidence.verified
+    low = claim_with(session, project, "Riya Kabir Meera sandbox payments",
+                     "Riya Kabir discussed lunch", "Riya Kabir discussed lunch")
+    assert verify_claim(low) == Confidence.inferred

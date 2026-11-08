@@ -364,3 +364,26 @@ def test_citation_does_not_repeat_the_file_name(env):
         m = _re.search(r"([\w.-]+\.(?:md|txt|csv|json))", line)
         if m:
             assert line.count(m.group(1)) == 1
+
+
+def test_ui_says_quote_verified_and_explains_its_limit(env):
+    app, Session = env
+    c = login(app, "meera")
+    html = c.get("/review?status=all").text
+    assert "quote-verified" in html
+    cid = a_claim(Session, confidential=False)
+    page = c.get(f"/review/claims/{cid}").text
+    assert "does not mean the claim is true, current or complete" in page
+
+
+def test_claim_page_shows_when_a_claim_is_disputed(env):
+    app, Session = env
+    from app.models import Claim as C
+    c = login(app, "meera")
+    from app.conflicts import detect_conflicts
+    from app.models import Project as P
+    with Session() as s:
+        detect_conflicts(s, s.scalar(select(P)))
+        s.commit()
+        redis = s.scalars(select(C).where(C.statement.contains("Seat locks will go in Redis"))).one().id
+    assert "Disputed" in c.get(f"/review/claims/{redis}").text

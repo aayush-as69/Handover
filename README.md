@@ -70,13 +70,28 @@ Not built yet: nothing planned beyond Round 3. See the roadmap below.
     to that reader, and is labelled as their own words, not a verified fact.
 16. Inside visible claims, emails, phone numbers and (for the most restricted role) money
     amounts are hidden by role. Reviewers can preview each role's exact view.
+17. Releases are immutable. A sign-off records which claims at which versions were approved,
+    by whom and when. A claim edited, rejected or reopened afterwards drops out of the shared
+    handover until the next release (fail closed). Acknowledgements belong to one release.
+18. History is append-only. Claim versions (with the full state after each change),
+    verification results, releases and quoted evidence cannot be updated or deleted; the
+    database layer refuses it.
+19. One handover per project, one copy of identical source content, one acknowledgement per
+    person per release: all enforced by unique constraints, and creation, upload and
+    acknowledgement handle simultaneous requests by keeping the winner.
+20. Failed sign-ins are counted in the database, so lockout survives restarts and several
+    server processes.
+21. Model replies are validated for shape and type (a chunk id must be a real integer, text
+    must be text, sizes are bounded, control characters stripped). The optional model
+    "second opinion" can only add a warning that makes approval need a written reason. It
+    never changes a label, and never sees confidential claims.
 10. Confidence labels come from mechanical checks, never from a model's opinion. An invented
     or paraphrased quote is labelled `unsupported`, not quietly accepted.
 
 ## Confidence labels
 | Label | Meaning |
 |---|---|
-| verified | A supporting quote was found word for word in its source, and the claim's key terms, numbers and negation agree with it. |
+| verified (shown as "quote-verified") | A supporting quote was found word for word in its source, and the claim's key terms (at least two, at least 60%), numbers and negation agree with it. It does **not** mean the claim is true, current or complete. A person decides that. |
 | inferred | Quotes were found, but the claim says more than they do (extra terms, numbers or dates, or a flipped negation). A human must judge it. |
 | conflicting | A quote found in the sources contradicts the claim. |
 | unsupported | No quote could be found in any source, or there is no evidence. |
@@ -104,6 +119,14 @@ python -m app.demo --extract llm
 Keys are read from the environment only and are never stored or logged.
 
 ## Known limitations (so far)
+- There is no database migration tool yet. Tables are created on first start, so changing the
+  schema of an existing database needs Alembic (or a fresh database). Fine for the demo;
+  required before real data.
+- The semantic second opinion and the LLM extractor have only been tested against simulated
+  provider replies, never a live model.
+- GitHub reading is limited to public repositories. Files, diffs and reviews are fetched for
+  the newest 5 pull requests and commits (rate-limit friendly) and diffs are cut at about
+  1,100 characters.
 - Conflict detection is rule based: it knows a fixed list of technology categories (datastore,
   payment gateway, frontend, backend) plus any `topic`/`value` the LLM extractor fills in. It
   will miss conflicts outside those, and can flag claims that merely mention a related tool.

@@ -4,13 +4,16 @@
 <p><a href="/review">← Review queue</a></p>
 <section class="card">
   <div class="meta">
-    <span class="pill {{ claim.confidence.value }}">{{ claim.confidence.value }}</span>
+    <span class="pill {{ claim.confidence.value }}">{{ conf_label(claim.confidence) }}</span>
     <span class="pill s-{{ sensitivity.value }}">{{ sensitivity.value }}</span>
     <span class="pill status-{{ claim.review_status.value }}">{{ claim.review_status.value }}</span>
     <span class="muted">{{ claim.type.value.replace("_", " ") }} · version {{ claim.version }}</span>
   </div>
   <h1 class="statement">{{ claim.statement }}</h1>
   <p class="why"><strong>Why this label:</strong> {{ claim.verification_note or "Not checked yet." }}</p>
+  <p class="muted">“Quote-verified” means the quotes exist in the sources and fit the claim. It does not mean the claim is true, current or complete. That is your decision.</p>
+  {% if claim.semantic_verdict %}<p class="{{ 'warnbox' if claim.semantic_verdict != 'supports' else 'muted' }}">Model second opinion (advisory): <strong>{{ claim.semantic_verdict }}</strong>{% if claim.semantic_note %}. {{ claim.semantic_note }}{% endif %}</p>{% endif %}
+  {% for cf, others in disputes %}<p class="warnbox">Disputed ({{ cf.status.value }}): {{ cf.reason }} <a href="/conflicts">See conflicts</a></p>{% endfor %}
 </section>
 
 <h2>Evidence</h2>
@@ -43,7 +46,7 @@
   <hr>
   <form method="post" class="stack" id="decide">
     <input type="hidden" name="csrf" value="{{ csrf }}">
-    <label>Note {% if claim.confidence.value != "verified" %}(required to approve: this claim is not fully verified){% else %}(optional){% endif %}
+    <label>Note {% if claim.confidence.value != "verified" or claim.semantic_verdict in ("partly", "unrelated", "contradicts") %}(required to approve: this claim is not fully verified or a model doubted it){% else %}(optional){% endif %}
       <input name="note" maxlength="1000"></label>
     <div class="buttons">
       {% if claim.review_status.value != "approved" %}<button class="primary" formaction="/review/claims/{{ claim.id }}/approve">Approve</button>{% endif %}

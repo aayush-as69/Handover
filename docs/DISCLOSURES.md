@@ -50,3 +50,6 @@ workplace material is used. The "API key" in the demo chat is invented.
 ## Round 3 features
 - No new libraries or services. Written with Claude's assistance; reviewed and tested by the team member.
 - Built on the `round3` branch; `main` remains the Round 2 submission until merged.
+
+## Hardening pass
+- No new libraries. Written with Claude's assistance; reviewed and tested by the team member.
