@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from ..enums import SENSITIVITY_RANK, Sensitivity
 from ..models import Chunk, Claim, Evidence, Project, Source
+from ..verify import verify_claims
 from .base import ChunkView, Extractor
 
 
@@ -31,6 +32,8 @@ class ExtractionReport:
     dropped_unknown_chunk: int = 0
     chunks_sent: int = 0
     confidential_chunks_withheld: int = 0
+    snippets_failed: int = 0
+    confidence_counts: dict[str, int] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
 
 
@@ -96,6 +99,7 @@ def run_extraction(
         select(Claim.type, Claim.statement).where(Claim.project_id == project.id)
     ).all()
     seen = {_key(t, s) for t, s in existing}
+    created: list[Claim] = []
 
     for ec in output.result.claims:
         evidence = [e for e in ec.evidence if e.chunk_id in given]
@@ -115,14 +119,25 @@ def run_extraction(
         claim = Claim.create(
             project_id=project.id, statement=ec.statement.strip(), type=ec.type,
             created_by=extractor.name, topic=ec.topic, value=ec.value, owner=ec.owner,
-            sensitivity=level,
+            sensitivity=level, extractor=extractor.name,
         )
         for e in evidence:
             claim.evidence.append(
                 Evidence(chunk_id=e.chunk_id, snippet=e.snippet.strip()[:500], stance=e.stance)
             )
         session.add(claim)
+        created.append(claim)
         report.claims_created += 1
 
+    session.flush()
+    # Every new claim is checked straight away, so nothing sits in the queue unlabelled.
+    verification = verify_claims(created)
+    report.confidence_counts = verification.counts
+    report.snippets_failed = verification.snippets_failed
+    if verification.snippets_failed:
+        report.warnings.append(
+            f"{verification.snippets_failed} quote(s) could not be found in their source; "
+            "those claims are labelled accordingly"
+        )
     session.flush()
     return report

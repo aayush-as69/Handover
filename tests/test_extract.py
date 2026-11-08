@@ -97,16 +97,17 @@ def test_next_action_owner_is_only_set_for_a_single_named_person():
 # ------------------------------------------------------------ pipeline
 
 
-def test_pipeline_stores_draft_unverified_claims_with_evidence(session, demo_project):
+def test_pipeline_stores_draft_claims_that_are_checked_but_never_approved(session, demo_project):
     report = run_extraction(session, demo_project, RuleExtractor())
     session.commit()
     claims = session.scalars(select(Claim)).all()
     assert report.claims_created == len(claims) > 20
     for c in claims:
-        assert c.review_status == ReviewStatus.generated
-        assert c.confidence == Confidence.unsupported
+        assert c.review_status == ReviewStatus.generated        # a human approves, never the pipeline
+        assert c.confidence in set(Confidence)
+        assert c.verified_at is not None and c.verification_note
         assert c.version == 1 and c.versions[0].changed_by == "rules-v1"
-        assert c.evidence and all(e.snippet_verified is None for e in c.evidence)
+        assert c.evidence and all(e.snippet_verified is not None for e in c.evidence)
 
 
 def test_rerunning_extraction_does_not_duplicate_claims(session, demo_project):

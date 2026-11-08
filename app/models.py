@@ -13,6 +13,7 @@ from sqlalchemy import (
     Boolean,
     DateTime,
     Enum as SAEnum,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -132,6 +133,12 @@ class Claim(Base):
         _enum(Confidence), default=Confidence.unsupported
     )
     conflict_group: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    # Which extractor produced the claim (e.g. "rules-v1", "llm:gemini-2.0-flash").
+    extractor: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    # Written by the verification pass, so a reviewer can see WHY a label was given.
+    support_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    verification_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     sensitivity: Mapped[Sensitivity] = mapped_column(
         _enum(Sensitivity), default=Sensitivity.team
     )
