@@ -19,8 +19,11 @@ Round 2, in development. Working so far:
   addressable chunks. Secrets are masked before anything is stored. Public GitHub
   repositories can be read live (no credentials); a bundled snapshot works offline.
 
-Not built yet: AI extraction, verification, review screen, role views, deployment. See the
-roadmap below.
+- Claim extraction into draft, evidence-linked claims, with two interchangeable extractors:
+  a rule-based baseline that runs locally with no key (structured notes, tasks and GitHub
+  only), and an LLM extractor for any OpenAI-compatible provider (also reads chat)
+
+Not built yet: verification, review screen, role views, deployment. See the roadmap below.
 
 ## Trust rules the code enforces
 1. A claim is `unsupported` until the verification pass proves otherwise.
@@ -33,14 +36,31 @@ roadmap below.
    model. A message that contained one is treated as confidential.
 6. A source is parsed completely before anything is saved, so a bad file leaves nothing
    half-ingested. Identical content is never ingested twice.
+7. A remote (LLM) extractor never sees confidential chunks unless explicitly allowed. Local
+   extractors may read them, because nothing leaves the server.
+8. Extraction output is untrusted. Evidence must point at a chunk the extractor was given,
+   claims without valid evidence are dropped, and source text is fenced inside the prompt as
+   data, never instructions.
+9. Draft claims start as `generated` and `unsupported`. A human approves them later.
 
 ## Run it
 ```bash
 pip install -r requirements-dev.txt
 pytest
 python -m app.demo                 # load the synthetic demo project and print a summary
+python -m app.demo --extract rules # ...and extract draft claims with no API key
 uvicorn app.main:app --reload
 ```
+
+### Using an LLM for extraction
+Any provider that speaks the OpenAI chat-completions format works. Set three variables:
+```bash
+export LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai   # example: Gemini
+export LLM_API_KEY=...                                                        # your key
+export LLM_MODEL=...                                                          # a model name
+python -m app.demo --extract llm
+```
+Keys are read from the environment only and are never stored or logged.
 
 ## Known limitations (so far)
 - Secret masking is pattern based and leans towards masking too much. It will not catch every
@@ -49,11 +69,17 @@ uvicorn app.main:app --reload
 - Live GitHub reading covers public repositories only, up to 100 commits, issues and pull
   requests, and is limited by GitHub's unauthenticated rate limit.
 - There is no login or upload screen yet, so nothing is exposed over HTTP except `/health`.
+- The rule-based extractor reads structure only. It cannot understand chat, spot conflicts
+  between sources or find recurring problems; those need the LLM extractor.
+- The LLM extractor is tested against simulated provider responses. Its quality on a live
+  model has to be checked by running it with a real key and reviewing the output.
+- Confidential chunks are not sent to a remote model by default, so no claims are generated
+  from them in LLM mode.
 
 ## Roadmap
 1. Foundation: data model, access rules, demo data (done)
 2. Source ingestion: notes, chat, task CSV, GitHub (done)
-3. Claim extraction with exact evidence snippets
+3. Claim extraction with exact evidence snippets (done)
 4. Verification pass and confidence labels
 5. Review screen with version history
 6. Role login, filtered handover view, acknowledgement

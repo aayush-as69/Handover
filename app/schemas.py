@@ -25,7 +25,7 @@ class ExtractedClaim(BaseModel):
     topic: Optional[str] = None
     value: Optional[str] = None
     owner: Optional[str] = None
-    # Zero evidence is allowed on purpose: such a claim is stored as 'unsupported' (a gap).
+    # A claim with no valid evidence is dropped by the extraction pipeline, never stored.
     evidence: list[EvidenceIn] = Field(default_factory=list)
 
 

@@ -23,8 +23,11 @@ used under their open-source licences.
 - GitHub REST API (`api.github.com`): used to read public repositories, unauthenticated, read
   only. See `app/ingest/github.py`.
 
-Planned and to be listed here when added: an LLM API and a hosting provider for the deployed
-demo.
+- An LLM provider is optional and configured by the operator (`LLM_BASE_URL`, `LLM_API_KEY`,
+  `LLM_MODEL`). Any OpenAI-compatible service works. Only non-confidential chunks are sent to
+  it by default. The provider actually used for the submitted demo will be named here.
+
+Planned and to be listed here when added: a hosting provider for the deployed demo.
 
 ## Data
 All demonstration data in `data/demo/` is synthetic. No real credentials or confidential
