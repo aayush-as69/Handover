@@ -162,3 +162,40 @@ def test_rate_limit_during_details_keeps_the_basics_and_warns():
     assert not any(c.endswith("/reviews") for c in calls)          # stopped at the first failure
     res = parse_github(json.dumps(s), "o/r")
     assert any("partly fetched" in w for w in res.warnings)
+
+
+# ------------------------------------------------------------ pagination
+
+
+def _pager(total, calls):
+    def h(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        q = request.url.params
+        calls.append((path, q.get("page"), q.get("per_page")))
+        if path == "/repos/o/r":
+            return httpx.Response(200, json={"private": False})
+        if path == "/repos/o/r/commits":
+            page, size = int(q["page"]), int(q["per_page"])
+            lo = (page - 1) * size
+            rows = [{"sha": f"{i:07x}", "commit": {"author": {"name": "A", "date": "2026-10-01T10:00:00Z"},
+                     "message": f"m{i}"}} for i in range(lo, min(lo + size, total))]
+            return httpx.Response(200, json=rows)
+        return httpx.Response(200, json=[])
+    return h
+
+
+def test_reads_several_pages_up_to_max_items():
+    calls = []
+    s = fetch_public_repo("o", "r", client=client(_pager(500, calls)), max_items=250, detail_limit=0)
+    pages = [c[1] for c in calls if c[0].endswith("/commits")]
+    assert pages == ["1", "2", "3"]
+    assert len(s["commits"]) == 250
+
+
+def test_stops_on_a_short_page_and_never_exceeds_the_page_cap():
+    calls = []
+    fetch_public_repo("o", "r", client=client(_pager(30, calls)), max_items=100, detail_limit=0)
+    assert [c[1] for c in calls if c[0].endswith("/commits")] == ["1"]
+    calls = []
+    fetch_public_repo("o", "r", client=client(_pager(10_000, calls)), max_items=10_000, detail_limit=0)
+    assert len([c for c in calls if c[0].endswith("/commits")]) == 5

@@ -108,7 +108,7 @@ class Chunk(Base):
     __table_args__ = (UniqueConstraint("source_id", "idx"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"))
+    source_id: Mapped[int] = mapped_column(ForeignKey("sources.id"), index=True)
     idx: Mapped[int] = mapped_column(Integer)
     text: Mapped[str] = mapped_column(Text)
     # Human-readable pointer back to the original, e.g. "line 12" or "commit 7c2e8d1".
@@ -128,7 +128,7 @@ class Claim(Base):
     __tablename__ = "claims"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
     statement: Mapped[str] = mapped_column(Text)
     type: Mapped[ClaimType] = mapped_column(_enum(ClaimType))
     # Topic/value let conflict detection group claims, e.g. topic="datastore", value="PostgreSQL".
@@ -154,7 +154,7 @@ class Claim(Base):
         _enum(Sensitivity), default=Sensitivity.team
     )
     review_status: Mapped[ReviewStatus] = mapped_column(
-        _enum(ReviewStatus), default=ReviewStatus.generated
+        _enum(ReviewStatus), default=ReviewStatus.generated, index=True
     )
     version: Mapped[int] = mapped_column(Integer, default=1)
     # Optimistic locking: every write says "only if nobody changed it since I read it".
@@ -236,8 +236,8 @@ class Evidence(Base):
     __tablename__ = "evidence"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    claim_id: Mapped[int] = mapped_column(ForeignKey("claims.id"))
-    chunk_id: Mapped[int] = mapped_column(ForeignKey("chunks.id"))
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claims.id"), index=True)
+    chunk_id: Mapped[int] = mapped_column(ForeignKey("chunks.id"), index=True)
     # The exact text quoted from the chunk. The verification pass checks it really appears there.
     snippet: Mapped[str] = mapped_column(Text)
     stance: Mapped[Stance] = mapped_column(_enum(Stance), default=Stance.supports)
@@ -384,7 +384,7 @@ class AuditEvent(Base):
     __tablename__ = "audit_events"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    claim_id: Mapped[int] = mapped_column(ForeignKey("claims.id"))
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claims.id"), index=True)
     at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     actor: Mapped[str] = mapped_column(String(128))
     action: Mapped[str] = mapped_column(String(32))

@@ -7,12 +7,13 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db import get_session
+from tests.dbutil import new_engine
 from app.demo import load_demo_project
 from app.enums import ChangeType, Confidence, ReviewStatus, Sensitivity
 from app.extract.pipeline import run_extraction
 from app.extract.rules import RuleExtractor
 from app.main import create_app
-from app.models import Base, Chunk, Claim
+from app.models import Chunk, Claim
 from app.security import LoginThrottle, hash_password, verify_password
 from app import web
 
@@ -21,9 +22,7 @@ PW = "demo-" + "pass-123"
 
 @pytest.fixture()
 def env():
-    engine = create_engine("sqlite://", connect_args={"check_same_thread": False},
-                           poolclass=StaticPool)
-    Base.metadata.create_all(engine)
+    engine = new_engine()
     Session = sessionmaker(engine, expire_on_commit=False)
     with Session() as s:
         project = load_demo_project(s, password=PW)
