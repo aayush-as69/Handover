@@ -353,3 +353,15 @@ def test_version_history_shows_a_word_diff(env):
 
 def test_word_diff():
     assert web.word_diff("a b c", "a x c") == [("same", "a"), ("del", "b"), ("ins", "x"), ("same", "c")]
+
+
+def test_citation_does_not_repeat_the_file_name(env):
+    app, Session = env
+    c = login(app, "meera")
+    cid = a_claim(Session, confidential=False)
+    html = c.get(f"/review/claims/{cid}").text
+    import re as _re
+    for line in _re.findall(r"<footer>(.*?)</footer>", html, _re.S):
+        m = _re.search(r"([\w.-]+\.(?:md|txt|csv|json))", line)
+        if m:
+            assert line.count(m.group(1)) == 1

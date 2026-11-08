@@ -20,7 +20,7 @@
   <footer>
     {{ ev.stance.value }} ·
     {% if ev.snippet_verified %}<span class="ok">found word for word</span>{% else %}<span class="bad">NOT found in the source</span>{% endif %}
-    · {{ ev.chunk.source.name }} › {{ ev.chunk.locator }}
+    · {{ ev.chunk.locator if ev.chunk.locator.startswith(ev.chunk.source.name) else ev.chunk.source.name ~ ' › ' ~ ev.chunk.locator }}
     {% if ev.chunk.redacted %}· <span class="pill confidential">secret masked</span>{% endif %}
     {% if can_open %}· <a href="/review/chunks/{{ ev.chunk.id }}?snippet={{ ev.snippet|urlencode }}">open source text</a>{% endif %}
   </footer>
