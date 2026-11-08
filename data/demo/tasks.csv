@@ -1,0 +1,12 @@
+id,title,owner,status,due,notes
+T1,Event listing UI,Arjun Nair,done,2026-10-01,
+T2,Booking flow API,Riya Sharma,done,2026-10-10,Row-level locking merged
+T3,Seat locking (Redis),Riya Sharma,in_progress,2026-11-10,Timeout disabled temporarily; double booking still reproducible
+T4,Payments v2 migration,Riya Sharma,in_progress,2026-11-15,create_intent done; refund and webhook still on v1
+T5,Checkout page,Arjun Nair,in_progress,2026-11-12,Calls /payments/v2/intent
+T6,Admin dashboard,Arjun Nair,todo,2026-11-25,
+T7,QR check-in at the venue,,todo,2026-12-05,
+T8,Email reminders,Meera Iyer,blocked,2026-11-18,SMTP credentials failing
+T9,Refund policy decision,Meera Iyer,blocked,2026-11-10,Waiting on faculty advisor
+T10,PayNest sandbox setup documentation,Riya Sharma,todo,2026-11-18,Promised in chat on 2026-11-04
+T11,Load testing,Kabir Mehta,todo,2026-11-30,Assigned in advance of joining

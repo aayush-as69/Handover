@@ -1,0 +1,25 @@
+{
+  "project": {
+    "name": "CampusEvents",
+    "description": "Synthetic campus event discovery, seat booking and payments app built by a four-person club team.",
+    "outgoing_member": "Riya Sharma",
+    "incoming_member": "Kabir Mehta",
+    "synthetic": true
+  },
+  "sources": [
+    {"path": "notes/2026-09-05_kickoff.md", "kind": "notes", "sensitivity": "team"},
+    {"path": "notes/2026-09-19_architecture.md", "kind": "notes", "sensitivity": "team"},
+    {"path": "notes/2026-10-03_sprint_review.md", "kind": "notes", "sensitivity": "team"},
+    {"path": "notes/2026-10-10_sponsor_agreement.md", "kind": "notes", "sensitivity": "confidential"},
+    {"path": "notes/2026-10-31_handover_planning.md", "kind": "notes", "sensitivity": "team"},
+    {"path": "team_chat.txt", "kind": "chat", "sensitivity": "team"},
+    {"path": "tasks.csv", "kind": "tasks", "sensitivity": "team"},
+    {"path": "github_snapshot.json", "kind": "github", "sensitivity": "public"}
+  ],
+  "users": [
+    {"username": "meera", "display_name": "Meera Iyer", "role": "approver"},
+    {"username": "riya", "display_name": "Riya Sharma", "role": "admin"},
+    {"username": "kabir", "display_name": "Kabir Mehta", "role": "viewer"},
+    {"username": "rao", "display_name": "Mr. Rao", "role": "restricted"}
+  ]
+}

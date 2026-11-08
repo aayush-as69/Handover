@@ -1,0 +1,32 @@
+{
+  "repo": "campus-events-demo",
+  "synthetic": true,
+  "commits": [
+    {"sha": "a1f3c9e", "author": "Riya Sharma", "date": "2026-09-07T18:20:00Z", "message": "init: fastapi project skeleton", "files": ["app/main.py", "requirements.txt"]},
+    {"sha": "b27d05a", "author": "Arjun Nair", "date": "2026-09-08T16:45:00Z", "message": "init: react app, event list page", "files": ["web/src/EventList.jsx"]},
+    {"sha": "c48e1b3", "author": "Riya Sharma", "date": "2026-09-20T20:10:00Z", "message": "add postgres models: events, seats, bookings", "files": ["app/models.py", "docker-compose.yml"]},
+    {"sha": "d59f2c4", "author": "Riya Sharma", "date": "2026-09-28T19:30:00Z", "message": "booking endpoint with row-level locking", "files": ["app/booking.py"]},
+    {"sha": "3b9d4f6", "author": "Riya Sharma", "date": "2026-10-04T09:25:00Z", "message": "seat locks via redis", "files": ["app/seat_lock.py", "docker-compose.yml"]},
+    {"sha": "7c2e8d1", "author": "Riya Sharma", "date": "2026-10-09T23:05:00Z", "message": "add mongo event feed prototype (mongoengine)", "files": ["app/feed_mongo.py", "docker-compose.yml", "requirements.txt"]},
+    {"sha": "e5a07b2", "author": "Riya Sharma", "date": "2026-10-14T19:00:00Z", "message": "TEMP: disable seat lock timeout, tests flaky", "files": ["app/seat_lock.py"]},
+    {"sha": "f61a8c3", "author": "Riya Sharma", "date": "2026-10-19T21:40:00Z", "message": "payments: add v2 create_intent", "files": ["app/payments_v2.py"]},
+    {"sha": "0a72b94", "author": "Arjun Nair", "date": "2026-10-26T17:15:00Z", "message": "checkout page uses /payments/v2/intent", "files": ["web/src/Checkout.jsx"]},
+    {"sha": "1b83ca5", "author": "Riya Sharma", "date": "2026-10-28T20:50:00Z", "message": "payments v2: webhook handler skeleton (not wired)", "files": ["app/payments_v2.py"]},
+    {"sha": "2c94db6", "author": "Arjun Nair", "date": "2026-11-01T15:30:00Z", "message": "dashboard: scaffold admin pages", "files": ["web/src/admin/Dashboard.jsx"]},
+    {"sha": "4d05ec7", "author": "Riya Sharma", "date": "2026-11-03T11:10:00Z", "message": "fix: typo in booking error message", "files": ["app/booking.py"]}
+  ],
+  "issues": [
+    {"number": 3, "title": "Email reminders fail with SMTP auth error", "state": "open", "author": "Meera Iyer", "assignees": ["Meera Iyer"], "created": "2026-10-08T20:00:00Z", "body": "Reminder emails fail with an SMTP authentication error on staging."},
+    {"number": 4, "title": "Two users can book the same seat under load", "state": "open", "author": "Riya Sharma", "assignees": ["Riya Sharma"], "created": "2026-10-12T22:40:00Z", "body": "Load test: two users both got seat A12. Row-level lock is not enough when requests overlap."},
+    {"number": 5, "title": "QR check-in: no implementation", "state": "open", "author": "Meera Iyer", "assignees": [], "created": "2026-10-18T11:30:00Z", "body": "Nobody has started QR check-in for the venue entrance. Needs an owner."},
+    {"number": 7, "title": "Double booking again after redis lock change", "state": "open", "author": "Arjun Nair", "assignees": [], "created": "2026-10-24T21:55:00Z", "body": "Seen again on staging after the Redis lock change. Same symptom as issue 4."},
+    {"number": 8, "title": "Remove mongo feed or document why it exists", "state": "open", "author": "Arjun Nair", "assignees": [], "created": "2026-10-25T10:20:00Z", "body": "The team agreed on PostgreSQL only, but the repo now has a Mongo feed. Remove it or explain it."},
+    {"number": 9, "title": "Refund endpoint still uses payments v1", "state": "open", "author": "Riya Sharma", "assignees": ["Riya Sharma"], "created": "2026-10-28T18:45:00Z", "body": "Refunds and webhooks still call the v1 API, which shuts down on 2026-12-31."}
+  ],
+  "pulls": [
+    {"number": 1, "title": "postgres models", "state": "merged", "author": "Riya Sharma", "created": "2026-09-21T10:00:00Z", "body": "Adds events, seats and bookings tables."},
+    {"number": 2, "title": "booking endpoint with row-level locking", "state": "merged", "author": "Riya Sharma", "created": "2026-10-01T12:00:00Z", "body": "Adds the booking endpoint using row-level locks."},
+    {"number": 6, "title": "payments v2: create_intent", "state": "merged", "author": "Riya Sharma", "created": "2026-10-20T09:00:00Z", "body": "First part of the v2 migration. Refunds and webhooks not included."},
+    {"number": 10, "title": "payments v2: webhook handler (WIP)", "state": "open", "author": "Riya Sharma", "created": "2026-10-28T21:00:00Z", "body": "Draft. Handler exists but is not wired to the router."}
+  ]
+}

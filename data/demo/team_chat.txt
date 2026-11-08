@@ -1,0 +1,26 @@
+[06/09/2026, 10:02] Meera Iyer: Welcome to the CampusEvents group. Kickoff notes are in the shared doc.
+[12/09/2026, 21:14] Arjun Nair: which DB should I run locally for the frontend work?
+[12/09/2026, 21:20] Riya Sharma: postgres via docker compose, I'll push the compose file tonight
+[19/09/2026, 18:45] Arjun Nair: so final answer from the meeting: postgres only, right?
+[19/09/2026, 18:47] Riya Sharma: yes, postgres only. no other datastore
+[04/10/2026, 09:30] Riya Sharma: put seat locks in redis btw, compose file updated
+[08/10/2026, 20:05] Meera Iyer: reminder emails are failing again, SMTP auth error
+[09/10/2026, 23:10] Riya Sharma: added a mongo event feed as a quick prototype, don't worry about it
+[10/10/2026, 08:40] Arjun Nair: wait, I thought we agreed postgres only?
+[10/10/2026, 08:52] Riya Sharma: yeah it's temporary, I'll move it to postgres later
+[11/10/2026, 16:20] Riya Sharma: sandbox payment key for testing: api_key = demo_live_8f3a91c2d7e04b65a1f0 (do NOT commit this)
+[12/10/2026, 22:31] Riya Sharma: load test result: two users got seat A12 at the same time. opening an issue
+[14/10/2026, 19:05] Riya Sharma: switched off the seat lock timeout for now, tests were flaky. will fix properly
+[18/10/2026, 11:15] Meera Iyer: who is taking QR check-in?
+[18/10/2026, 11:18] Arjun Nair: not me, I'm on the dashboard
+[18/10/2026, 11:22] Riya Sharma: maybe Kabir when he joins?
+[20/10/2026, 17:00] Arjun Nair: did the advisor reply about the refund policy?
+[20/10/2026, 17:05] Meera Iyer: nothing yet, I'll chase
+[22/10/2026, 13:40] Riya Sharma: for campus SSO questions ask Mr. Rao, he knows the IT office
+[24/10/2026, 21:50] Arjun Nair: double booking happened again after the redis lock change, filed an issue
+[25/10/2026, 10:12] Meera Iyer: is the mongo feed still used for anything?
+[28/10/2026, 18:30] Riya Sharma: payments v2 status: create_intent is done, refund and webhook are still on v1. do not deploy checkout until refund moves
+[30/10/2026, 12:00] Arjun Nair: checkout page now calls /payments/v2/intent
+[01/11/2026, 20:20] Meera Iyer: SMTP is still failing, emails are blocked
+[02/11/2026, 09:15] Meera Iyer: reminder: Riya's last day is 20 Nov. Kabir joins on 9 Nov.
+[04/11/2026, 14:35] Riya Sharma: I'll write the PayNest sandbox setup doc this week
