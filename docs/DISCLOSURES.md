@@ -16,7 +16,7 @@ work, reviews the output and is responsible for the submission.
 None. No template, boilerplate or previously written code is used.
 
 ## Libraries
-FastAPI, Uvicorn, SQLAlchemy, Pydantic, Jinja2, python-multipart, HTTPX, pytest. All are
+FastAPI, Uvicorn, SQLAlchemy, Pydantic, Jinja2, python-multipart, HTTPX, itsdangerous, psycopg 3, pytest. All are
 used under their open-source licences.
 
 ## External services
@@ -27,7 +27,7 @@ used under their open-source licences.
   `LLM_MODEL`). Any OpenAI-compatible service works. Only non-confidential chunks are sent to
   it by default. The provider actually used for the submitted demo will be named here.
 
-Planned and to be listed here when added: a hosting provider for the deployed demo.
+- Render (render.com): hosts the deployed demo web service and its PostgreSQL database.
 
 ## Data
 All demonstration data in `data/demo/` is synthetic. No real credentials or confidential
@@ -41,3 +41,8 @@ workplace material is used. The "API key" in the demo chat is invented.
 ## Step 6 (handover and sources)
 - No new libraries. File upload uses `python-multipart` (already listed).
 - Written with Claude's assistance and reviewed/tested by the team member.
+
+## Step 7 (deployment)
+- New library: `psycopg` (PostgreSQL driver). Deployment is described in `render.yaml`.
+- The hosted demo uses synthetic data only and the demo password is set in the host's
+  dashboard, not in this repository.
