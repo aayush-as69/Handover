@@ -88,6 +88,8 @@ def main() -> None:
             print(f"\nExtraction with {report.extractor}: {report.claims_created} claims created, "
                   f"{report.duplicates_skipped} duplicates skipped, "
                   f"{report.dropped_no_evidence} dropped (no valid evidence)")
+            print("  confidence: " + ", ".join(
+                f"{n} {label}" for label, n in sorted(report.confidence_counts.items())))
             for w in report.warnings:
                 print(f"  note: {w}")
 

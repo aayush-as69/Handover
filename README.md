@@ -23,7 +23,10 @@ Round 2, in development. Working so far:
   a rule-based baseline that runs locally with no key (structured notes, tasks and GitHub
   only), and an LLM extractor for any OpenAI-compatible provider (also reads chat)
 
-Not built yet: verification, review screen, role views, deployment. See the roadmap below.
+- Verification pass: every quoted snippet is checked against its source, and each claim gets
+  a confidence label with a plain-language reason (see "Confidence labels" below)
+
+Not built yet: review screen, role views, deployment. See the roadmap below.
 
 ## Trust rules the code enforces
 1. A claim is `unsupported` until the verification pass proves otherwise.
@@ -41,7 +44,19 @@ Not built yet: verification, review screen, role views, deployment. See the road
 8. Extraction output is untrusted. Evidence must point at a chunk the extractor was given,
    claims without valid evidence are dropped, and source text is fenced inside the prompt as
    data, never instructions.
-9. Draft claims start as `generated` and `unsupported`. A human approves them later.
+9. Draft claims start as `generated`. The pipeline never approves anything: a human does.
+10. Confidence labels come from mechanical checks, never from a model's opinion. An invented
+    or paraphrased quote is labelled `unsupported`, not quietly accepted.
+
+## Confidence labels
+| Label | Meaning |
+|---|---|
+| verified | A supporting quote was found word for word in its source, and the claim's key terms, numbers and negation agree with it. |
+| inferred | Quotes were found, but the claim says more than they do (extra terms, numbers or dates, or a flipped negation). A human must judge it. |
+| conflicting | A quote found in the sources contradicts the claim. |
+| unsupported | No quote could be found in any source, or there is no evidence. |
+
+Every label carries a note explaining why, so a reviewer can see what the check found.
 
 ## Run it
 ```bash
@@ -75,12 +90,16 @@ Keys are read from the environment only and are never stored or logged.
   model has to be checked by running it with a real key and reviewing the output.
 - Confidential chunks are not sent to a remote model by default, so no claims are generated
   from them in LLM mode.
+- Verification is a coarse text check. It catches invented quotes, drifting paraphrase,
+  made-up numbers and flipped negation. It cannot judge meaning, which is why a human approves
+  every claim. Detecting conflicts between claims from different sources, and finding missing
+  reasons and owners, are separate features that are not built yet.
 
 ## Roadmap
 1. Foundation: data model, access rules, demo data (done)
 2. Source ingestion: notes, chat, task CSV, GitHub (done)
 3. Claim extraction with exact evidence snippets (done)
-4. Verification pass and confidence labels
+4. Verification pass and confidence labels (done)
 5. Review screen with version history
 6. Role login, filtered handover view, acknowledgement
 7. Deployment, tests and architecture document
