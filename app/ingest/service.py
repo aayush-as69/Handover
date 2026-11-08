@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 
 import httpx
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..enums import SENSITIVITY_RANK, Sensitivity, SourceKind
@@ -97,8 +98,17 @@ def ingest_source(
                 redacted=masked.redacted,
             )
         )
-    session.add(source)
-    session.flush()
+    try:
+        # A savepoint, so losing a race to an identical upload undoes only this insert.
+        with session.begin_nested():
+            session.add(source)
+    except IntegrityError:
+        existing = session.scalar(
+            select(Source).where(Source.project_id == project.id, Source.content_hash == digest))
+        if existing is None:
+            raise
+        return IngestResult(existing, len(existing.chunks),
+                            sum(c.redacted for c in existing.chunks), duplicate=True)
     return IngestResult(source, len(source.chunks), redacted_count, parsed.warnings)
 
 

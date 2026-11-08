@@ -39,7 +39,6 @@ def env():
             s.close()
 
     app.dependency_overrides[get_session] = override
-    web.throttle = LoginThrottle()
     return app, Session
 
 

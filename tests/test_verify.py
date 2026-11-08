@@ -144,7 +144,9 @@ def test_verifying_changes_the_label_but_never_the_review_status(session, projec
     verify_claim(c)
     verify_claim(c)                                  # safe to repeat
     assert c.review_status == ReviewStatus.approved and c.confidence == Confidence.verified
-    c.evidence[0].snippet = "this was tampered with later"
+    # stored evidence cannot be rewritten (see test_integrity); a quote that no longer matches
+    # its source is still caught if the source text itself ever differs
+    c.evidence[0].chunk.text = "the source now says something else entirely"
     assert verify_claim(c) == Confidence.unsupported
     assert c.review_status == ReviewStatus.approved  # a human still decides what to do about it
 

@@ -17,6 +17,7 @@ approves every claim.
 
 from __future__ import annotations
 
+import json
 import re
 from collections import Counter
 from dataclasses import dataclass, field
@@ -26,7 +27,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .enums import ChangeType, Confidence, Stance
-from .models import Claim, Project, utcnow
+from .models import AuditEvent, Claim, Project, utcnow
 
 MIN_SNIPPET_CHARS = 10
 SUPPORT_THRESHOLD = 0.5
@@ -168,10 +169,16 @@ def verify_claim(claim: Claim) -> Confidence:
 
     if failed and label != Confidence.unsupported:
         note += f" {failed} other quote(s) could not be found."
+    changed = claim.verified_at is None or claim.confidence != label or claim.verification_note != note
     claim.confidence = label
     claim.support_score = score
     claim.verification_note = note
     claim.verified_at = utcnow()
+    if changed:     # an unchanged re-check adds no noise; every change is on the record
+        claim.audit_events.append(AuditEvent(
+            actor="verifier", action="verify",
+            detail=json.dumps({"confidence": label.value, "note": note, "score": score,
+                               "evidence": json.loads(claim.evidence_snapshot())})))
     return label
 
 
