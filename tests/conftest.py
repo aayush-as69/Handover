@@ -26,6 +26,15 @@ def project(session):
     return p
 
 
+@pytest.fixture()
+def demo_project(session):
+    from app.demo import load_demo_project
+
+    p = load_demo_project(session)
+    session.commit()
+    return p
+
+
 def make_claim(session, project, *, claim_sens=Sensitivity.team, chunk_sens=Sensitivity.team,
                source_sens=Sensitivity.team, statement="Seat locks use Redis"):
     """A claim backed by one chunk, with independent sensitivity labels at each level."""
