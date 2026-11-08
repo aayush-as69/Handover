@@ -2,9 +2,10 @@ import os
 
 
 def _normalise_db_url(url: str) -> str:
-    # Some hosts hand out "postgres://", which SQLAlchemy does not accept.
-    if url.startswith("postgres://"):
-        return "postgresql://" + url[len("postgres://"):]
+    # Hosts hand out "postgres://" or "postgresql://"; SQLAlchemy needs the driver named (psycopg 3).
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
     return url
 
 
