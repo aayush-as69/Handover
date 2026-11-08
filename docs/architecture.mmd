@@ -1,0 +1,25 @@
+%%{init: {"theme":"base","flowchart":{"nodeSpacing":40,"rankSpacing":38,"curve":"basis"},"themeVariables":{"fontFamily":"Arial","fontSize":"15px","primaryColor":"#eef3ff","primaryBorderColor":"#1f5eff","lineColor":"#555","clusterBkg":"#fafafa","clusterBorder":"#cfcfcf"}}}%%
+flowchart TB
+  subgraph S1["1 · Bring in"]
+    direction LR
+    A1["Sources<br/>notes · chat · tasks · GitHub"] --> A2["Ingest<br/>parse · mask secrets · dedupe"] --> A3[("Passages<br/>dated, addressable")]
+  end
+  subgraph S2["2 · Draft and check"]
+    direction LR
+    B1["Extract<br/>rules or LLM<br/>output is untrusted"] --> B2[("Draft claims<br/>with quoted evidence")] --> B3["Verify<br/>quote found word for word?<br/>label + reason"]
+  end
+  subgraph S3["3 · A person decides"]
+    direction LR
+    C1["Review<br/>approve · edit · reject · reopen<br/>version history"] --> C2["Sign-off<br/>approver or admin"]
+  end
+  subgraph S4["4 · Share safely"]
+    direction LR
+    D1["Handover view<br/>approved claims only<br/>filtered by role"] --> D2["Acknowledge<br/>incoming person"]
+  end
+  S1 --> S2 --> S3 --> S4
+  RULE["Access rules in one place (app/access.py): a claim is as sensitive as the most sensitive of the claim, its passage and its source. The highest label wins."]
+  S4 --- RULE
+  classDef human fill:#fff4e0,stroke:#c77700,color:#222
+  classDef rule fill:#e8f6ee,stroke:#1b7f4b,color:#222
+  class C1,C2 human
+  class RULE rule
