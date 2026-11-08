@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from .access import chunk_visible, effective_sensitivity, filter_review, visible_in_review
 from .db import get_session
-from .enums import ChangeType, Confidence, ReviewStatus, Role
+from .enums import REVIEWER_ROLES, ChangeType, Confidence, ReviewStatus, Role
 from .models import Chunk, Claim, Project, User
 from .security import LoginThrottle, csrf_ok, new_csrf_token, verify_password
 from .verify import verify_claim
@@ -29,7 +29,7 @@ throttle = LoginThrottle()
 
 MAX_STATEMENT = 1000
 MAX_NOTE = 1000
-REVIEW_ROLES = (Role.admin, Role.approver)
+REVIEW_ROLES = REVIEWER_ROLES
 
 
 # ------------------------------------------------------------------ helpers
@@ -96,9 +96,15 @@ def get_reviewable(session: Session, user: User, claim_id: int) -> Claim:
 # ------------------------------------------------------------------ login
 
 
+def landing(user: Optional[User]) -> str:
+    if user is None:
+        return "/login"
+    return "/review" if user.role in REVIEW_ROLES else "/handover"
+
+
 @router.get("/")
 def home(user: Optional[User] = Depends(current_user)):
-    return RedirectResponse("/review" if user else "/login", status_code=303)
+    return RedirectResponse(landing(user), status_code=303)
 
 
 @router.get("/login")
@@ -123,7 +129,7 @@ def login(request: Request, username: str = Form(""), password: str = Form(""),
     throttle.reset(key)
     request.session.clear()                      # new session on login
     request.session["uid"] = user.id
-    return RedirectResponse("/review" if user.role in REVIEW_ROLES else "/", status_code=303)
+    return RedirectResponse(landing(user), status_code=303)
 
 
 @router.post("/logout")

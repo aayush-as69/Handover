@@ -67,6 +67,21 @@ def load_demo_project(session: Session, demo_dir: Path = DEMO_DIR,
     return project
 
 
+def bootstrap_demo(session: Session, password: str) -> None:
+    """For a hosted demo: load the project, draft claims and an empty handover once.
+
+    Nothing is approved here. A reviewer still has to do that.
+    """
+    from .handover import get_or_create_handover
+    from .models import Claim
+
+    project = load_demo_project(session, password=password)
+    if session.scalar(select(Claim.id).where(Claim.project_id == project.id)) is None:
+        run_extraction(session, project, RuleExtractor())
+    get_or_create_handover(session, project)
+    session.commit()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Load the synthetic demo project")
     parser.add_argument(

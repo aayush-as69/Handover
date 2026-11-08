@@ -86,3 +86,6 @@ ROLE_CLEARANCE = {
     Role.viewer: Sensitivity.restricted,
     Role.restricted: Sensitivity.team,
 }
+
+
+REVIEWER_ROLES = (Role.admin, Role.approver)

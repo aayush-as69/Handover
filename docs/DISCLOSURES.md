@@ -37,3 +37,7 @@ workplace material is used. The "API key" in the demo chat is invented.
 - New library: `itsdangerous` (signed session cookies via Starlette). Passwords use the Python
   standard library (PBKDF2-HMAC-SHA256). Pages are server-rendered with Jinja2; no JavaScript.
 - Written with Claude's assistance and reviewed/tested by the team member.
+
+## Step 6 (handover and sources)
+- No new libraries. File upload uses `python-multipart` (already listed).
+- Written with Claude's assistance and reviewed/tested by the team member.
