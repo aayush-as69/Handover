@@ -73,8 +73,10 @@ def a_claim(Session, *, confidential):
 
 
 def act(c, cid, action, **data):
-    t = token(c, f"/review/claims/{cid}")
-    return c.post(f"/review/claims/{cid}/{action}", data={"csrf": t, **data})
+    html = c.get(f"/review/claims/{cid}").text
+    t = re.search(r'name="csrf" value="([^"]+)"', html).group(1)
+    v = re.search(r'name="version" value="(\d+)"', html).group(1)
+    return c.post(f"/review/claims/{cid}/{action}", data={"csrf": t, "version": v, **data})
 
 
 # ------------------------------------------------------------ passwords / throttle
@@ -387,3 +389,69 @@ def test_claim_page_shows_when_a_claim_is_disputed(env):
         s.commit()
         redis = s.scalars(select(C).where(C.statement.contains("Seat locks will go in Redis"))).one().id
     assert "Disputed" in c.get(f"/review/claims/{redis}").text
+
+
+# ------------------------------------------------------------ concurrent changes
+
+
+def test_a_stale_form_cannot_overwrite_a_newer_change(env):
+    app, Session = env
+    a, b = login(app, "meera"), login(app, "riya")
+    cid = a_claim(Session, confidential=False)
+    html = a.get(f"/review/claims/{cid}").text          # both reviewers open the same version
+    t = re.search(r'name="csrf" value="([^"]+)"', html).group(1)
+    v = re.search(r'name="version" value="(\d+)"', html).group(1)
+    act(b, cid, "edit", statement="Riya changed the wording first")
+    r = a.post(f"/review/claims/{cid}/approve", data={"csrf": t, "version": v})
+    assert r.status_code == 303
+    with Session() as s:
+        claim = s.get(Claim, cid)
+        assert claim.review_status == ReviewStatus.edited       # Meera's approval did not land
+        assert claim.statement == "Riya changed the wording first"
+    assert "changed by someone else" in a.get(f"/review/claims/{cid}").text
+
+
+def test_a_missing_version_is_refused(env):
+    app, Session = env
+    c = login(app, "meera")
+    cid = a_claim(Session, confidential=False)
+    r = c.post(f"/review/claims/{cid}/approve", data={"csrf": token(c, f"/review/claims/{cid}")})
+    assert r.status_code == 303
+    with Session() as s:
+        assert s.get(Claim, cid).review_status == ReviewStatus.generated
+
+
+def test_two_sessions_writing_the_same_claim_cannot_both_succeed(env):
+    from sqlalchemy.orm.exc import StaleDataError
+    _, Session = env
+    cid = a_claim(Session, confidential=False)
+    s1, s2 = Session(), Session()
+    c1, c2 = s1.get(Claim, cid), s2.get(Claim, cid)
+    c1.approve("Meera")
+    s1.commit()
+    with pytest.raises(StaleDataError):
+        c2.reject("Riya")                         # c2 still holds the version it read earlier
+        s2.commit()
+    s2.rollback()
+    s3 = Session()
+    claim = s3.get(Claim, cid)
+    assert claim.review_status == ReviewStatus.approved and [v.version for v in claim.versions] == [1, 2]
+    for x in (s1, s2, s3):
+        x.close()
+
+
+def test_approval_invalidation_is_visible_in_the_ui(env):
+    app, Session = env
+    m = login(app, "meera")
+    cid = a_claim(Session, confidential=False)
+    act(m, cid, "approve")
+    m.get("/handover")
+    m.post("/handover/approve", data={"csrf": token(m, "/handover")})
+    k = login(app, "kabir")
+    assert "I have read this handover" in k.get("/handover").text
+    act(m, cid, "edit", statement="A reworded claim after sign-off")
+    assert "No handover is available to you" in k.get("/handover").text
+    assert "sign-off is out of date" in m.get("/handover").text
+    act(m, cid, "approve", note="re-checked")
+    m.post("/handover/approve", data={"csrf": token(m, "/handover")})
+    assert "I have read this handover" in k.get("/handover").text

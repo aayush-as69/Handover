@@ -117,7 +117,7 @@ def test_a_contradicting_quote_that_cannot_be_found_does_not_count(session, proj
     c = claim_with(session, project, "PostgreSQL is the only datastore",
                    "PostgreSQL is the only datastore", "PostgreSQL is the only datastore",
                    extra=[("a quote nobody ever wrote", Stance.contradicts)])
-    assert verify_claim(c) == Confidence.verified
+    assert verify_claim(c) == Confidence.inferred            # any missing quote blocks "verified"
     assert "1 other quote(s) could not be found" in c.verification_note
 
 
@@ -222,3 +222,26 @@ def test_coverage_threshold_is_sixty_percent(session, project):
     low = claim_with(session, project, "Riya Kabir Meera sandbox payments",
                      "Riya Kabir discussed lunch", "Riya Kabir discussed lunch")
     assert verify_claim(low) == Confidence.inferred
+
+
+def test_one_valid_and_one_invalid_supporting_quote_is_not_verified(session, project):
+    c = claim_with(session, project, "Seat locks will go in Redis", "Seat locks will go in Redis",
+                   "Seat locks will go in Redis",
+                   extra=[("a quote that was never written", Stance.supports)])
+    assert verify_claim(c) == Confidence.inferred
+    assert [e.snippet_verified for e in c.evidence] == [True, False]
+    assert "any quote it cites is missing" in c.verification_note
+
+
+def test_rule_built_claims_with_a_missing_quote_are_not_verified_either(session, project):
+    c = claim_with(session, project, "Task T7 (QR check-in at the venue) has no owner",
+                   "T7: QR check-in at the venue | owner: UNASSIGNED",
+                   "T7: QR check-in at the venue | owner: UNASSIGNED",
+                   extractor="rules-v1", extra=[("not in the source at all", Stance.supports)])
+    assert verify_claim(c) == Confidence.inferred
+
+
+def test_all_quotes_valid_stays_verified(session, project):
+    c = claim_with(session, project, "Seat locks will go in Redis", "Seat locks will go in Redis today",
+                   "Seat locks will go in Redis", extra=[("go in Redis today", Stance.supports)])
+    assert verify_claim(c) == Confidence.verified

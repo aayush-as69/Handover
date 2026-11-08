@@ -36,6 +36,7 @@
 <section class="card">
   <form method="post" action="/review/claims/{{ claim.id }}/edit" class="stack">
     <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="version" value="{{ claim.version }}">
     <label>Edit statement
       <textarea name="statement" rows="3" maxlength="{{ max_statement }}">{{ claim.statement }}</textarea>
     </label>
@@ -46,6 +47,7 @@
   <hr>
   <form method="post" class="stack" id="decide">
     <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="hidden" name="version" value="{{ claim.version }}">
     <label>Note {% if claim.confidence.value != "verified" or claim.semantic_verdict in ("partly", "unrelated", "contradicts") %}(required to approve: this claim is not fully verified or a model doubted it){% else %}(optional){% endif %}
       <input name="note" maxlength="1000"></label>
     <div class="buttons">

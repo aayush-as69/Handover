@@ -7,6 +7,7 @@
 {% else %}<strong>Draft preview. Not shared yet.</strong>{% endif %}
 Only approved claims appear, and only what your role may see. Each claim shows its evidence.</p>
 
+{% if is_reviewer and stale %}<p class="warnbox" role="alert"><strong>The sign-off is out of date.</strong> {{ state.withdrawn }} signed-off claim(s) were edited, rejected or reopened. Readers cannot see this handover until you sign off again.</p>{% endif %}
 {% if is_reviewer %}
 <form method="get" class="filters"><label>Preview as
   <select name="view_as">{% for r in roles %}<option value="{{ r }}" {% if r == view_role.value %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></label>
@@ -18,7 +19,7 @@ Only approved claims appear, and only what your role may see. Each claim shows i
     {% if handover.status.value != "approved" %}
       <button class="primary" formaction="/handover/approve">{{ "Publish a new release" if release else "Sign off handover" }}</button>
     {% else %}
-      {% if state.not_yet_released or state.withdrawn %}<button class="primary" formaction="/handover/approve">Publish a new release</button>{% endif %}
+      {% if state.not_yet_released or state.withdrawn %}<button class="primary" formaction="/handover/approve">Sign off again (new release)</button>{% endif %}
       <button class="danger" formaction="/handover/withdraw">Withdraw</button>
     {% endif %}
     <a href="/handover/releases">Release history</a>

@@ -187,21 +187,45 @@ def test_new_releases_are_numbered_and_history_is_kept(session, project):
     assert len(r1.entries) == 1                    # release 1 is unchanged
 
 
-def test_claims_changed_after_release_are_dropped_until_released_again(session, project):
+def test_a_change_after_sign_off_hides_the_handover_from_readers_until_signed_off_again(session, project):
     a = add_claim(session, project, "Use Redis for locks.", status=ReviewStatus.approved)
     b = add_claim(session, project, "Use MySQL for reports.", status=ReviewStatus.approved)
     u, h, r1 = make_release(session, project)
     viewer = staff(session, "Kabir", Role.viewer)
-    ids = lambda: {c.id for s in build_sections(session, project, viewer) for c in s.claims}
+    ids = lambda who=viewer: {c.id for s in build_sections(session, project, who) for c in s.claims}
     assert ids() == {a.id, b.id}
     a.edit("Use Redis for seat locks.", "Meera")
-    assert ids() == {b.id}                         # fail closed
-    a.approve("Meera")                             # approved again, but at a new version
-    assert ids() == {b.id}
+    assert ids() == set()                         # stale sign-off: readers see nothing at all
+    assert ids(u) == {b.id}                       # reviewers still see what is still valid
+    a.approve("Meera")                            # approved again, at a new version
+    assert ids() == set()
     st = release_state(session, project, h)
     assert st.withdrawn == 1 and st.still_valid == 1
     approve_handover(session, h, u)
     assert ids() == {a.id, b.id}
+
+
+@pytest.mark.parametrize("change", ["edit", "reject", "reopen"])
+def test_every_kind_of_change_invalidates_the_sign_off(session, project, change):
+    a = add_claim(session, project, "Use Redis for locks.", status=ReviewStatus.approved)
+    u, h, _ = make_release(session, project)
+    viewer = staff(session, "Kabir", Role.viewer)
+    from app.handover import is_stale
+    assert not is_stale(session, project, h)
+    {"edit": lambda: a.edit("Something new here", "M"), "reject": lambda: a.reject("M"),
+     "reopen": lambda: a.reopen("M")}[change]()
+    assert is_stale(session, project, h)
+    assert build_sections(session, project, viewer) == []
+    with pytest.raises(HandoverError, match="changed after it was signed off"):
+        acknowledge(session, h, viewer)
+
+
+def test_approving_more_claims_does_not_invalidate_the_sign_off(session, project):
+    add_claim(session, project, "Use Redis for locks.", status=ReviewStatus.approved)
+    u, h, _ = make_release(session, project)
+    add_claim(session, project, "Use MySQL for reports.", status=ReviewStatus.approved)
+    from app.handover import is_stale
+    assert not is_stale(session, project, h)
 
 
 def test_claims_approved_after_release_are_not_shown_yet(session, project):
