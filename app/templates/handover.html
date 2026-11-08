@@ -41,7 +41,7 @@ Only approved claims appear, and only what your role may see. Each claim shows i
   {% if a and a.note %}<p class="note">Reviewer note ({{ a.changed_by }}): “{{ hide(a.note) }}”</p>{% endif %}
   {% for ev in c.evidence %}{% if ev.stance.value == "supports" %}
   <blockquote class="evidence"><p>“{{ hide(ev.snippet) }}”</p>
-  <footer>{{ ev.chunk.source.name }} › {{ ev.chunk.locator }}</footer></blockquote>
+  <footer>{{ ev.chunk.locator if ev.chunk.locator.startswith(ev.chunk.source.name) else ev.chunk.source.name ~ ' › ' ~ ev.chunk.locator }}</footer></blockquote>
   {% endif %}{% endfor %}
 </section>
 {% endfor %}
