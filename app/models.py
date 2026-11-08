@@ -110,6 +110,8 @@ class Chunk(Base):
     sensitivity: Mapped[Sensitivity] = mapped_column(
         _enum(Sensitivity), default=Sensitivity.team
     )
+    # True when a secret was masked at ingestion. The raw secret is never stored.
+    redacted: Mapped[bool] = mapped_column(Boolean, default=False)
 
     source: Mapped[Source] = relationship(back_populates="chunks")
 

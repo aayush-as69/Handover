@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import Iterable
 
 from .enums import ROLE_CLEARANCE, SENSITIVITY_RANK, ReviewStatus, Role, Sensitivity
-from .models import Claim
+from .models import Chunk, Claim
 
 
 def role_can_see(role: Role, sensitivity: Sensitivity) -> bool:
@@ -30,6 +30,16 @@ def effective_sensitivity(claim: Claim) -> Sensitivity:
             if ev.chunk.source is not None:
                 levels.append(ev.chunk.source.sensitivity)
     return max(levels, key=lambda s: SENSITIVITY_RANK[s])
+
+
+def chunk_visible(role: Role, chunk: Chunk) -> bool:
+    """Whether a role may open the original source text behind a citation."""
+    level = max(
+        chunk.sensitivity,
+        chunk.source.sensitivity if chunk.source is not None else chunk.sensitivity,
+        key=lambda s: SENSITIVITY_RANK[s],
+    )
+    return role_can_see(role, level)
 
 
 def visible_in_handover(role: Role, claim: Claim) -> bool:
