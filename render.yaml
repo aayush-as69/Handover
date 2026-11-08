@@ -12,6 +12,8 @@ services:
         value: 3.12.7
       - key: SECRET_KEY
         generateValue: true
+      - key: APP_ENV
+        value: production
       - key: COOKIE_SECURE
         value: "true"
       - key: DEMO_MODE

@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.config import _normalise_db_url
+from tests.dbutil import new_engine
 
 
 @pytest.mark.parametrize("given,expected", [
@@ -25,9 +26,7 @@ def test_demo_mode_boots_a_usable_site_and_a_full_walkthrough_works(monkeypatch)
     from app.main import create_app
     from app.models import Base, Claim
 
-    engine = create_engine("sqlite://", connect_args={"check_same_thread": False},
-                           poolclass=StaticPool)
-    Base.metadata.create_all(engine)
+    engine = new_engine()
     monkeypatch.setattr(db, "SessionLocal", sessionmaker(engine, expire_on_commit=False))
     monkeypatch.setattr(db, "engine", engine)
     pw = "walk-" + "through-1"

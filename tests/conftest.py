@@ -1,7 +1,12 @@
+import os
+import tempfile
+
+# The app module-level engine (used by lifespan/start-up tests) must never touch a real file.
+os.environ["DATABASE_URL"] = "sqlite:///" + os.path.join(tempfile.mkdtemp(), "app-under-test.db")
+
 import pytest
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+from tests.dbutil import new_engine
 
 from app.enums import ClaimType, Sensitivity, SourceKind
 from app.models import Base, Chunk, Claim, Evidence, Project, Source
@@ -9,10 +14,7 @@ from app.models import Base, Chunk, Claim, Evidence, Project, Source
 
 @pytest.fixture()
 def session():
-    engine = create_engine(
-        "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
-    )
-    Base.metadata.create_all(engine)
+    engine = new_engine()
     s = sessionmaker(engine, expire_on_commit=False)()
     yield s
     s.close()

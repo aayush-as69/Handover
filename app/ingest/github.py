@@ -45,6 +45,21 @@ def _list(payload, what: str) -> list:
     return payload
 
 
+MAX_PAGES = 5          # hard ceiling on requests per list, whatever max_items says
+
+
+def _paged(client, path: str, what: str, max_items: int, extra: dict | None = None) -> list:
+    """Follow ?page=N until max_items are collected, a short page arrives, or MAX_PAGES is hit."""
+    size = max(1, min(max_items, 100))
+    out: list = []
+    for page in range(1, MAX_PAGES + 1):
+        batch = _list(_get(client, path, what, {**(extra or {}), "per_page": size, "page": page}), what)
+        out.extend(batch)
+        if len(batch) < size or len(out) >= max_items:
+            break
+    return out[:max_items]
+
+
 def _clip(text: str | None) -> str:
     return (text or "")[:_BODY_LIMIT]
 
@@ -71,21 +86,15 @@ def fetch_public_repo(
         timeout=15,
         headers={"Accept": "application/vnd.github+json", "User-Agent": "handover-hackathon-app"},
     )
-    per_page = {"per_page": max(1, min(max_items, 100))}
     try:
         meta = _get(client, f"/repos/{owner}/{repo}", "the repository")
         if not isinstance(meta, dict) or meta.get("private"):
             raise IngestError("only public repositories can be connected")
 
-        commits = _list(_get(client, f"/repos/{owner}/{repo}/commits", "commits", per_page), "commits")
-        issues = _list(
-            _get(client, f"/repos/{owner}/{repo}/issues", "issues", {**per_page, "state": "all"}),
-            "issues",
-        )
-        pulls = _list(
-            _get(client, f"/repos/{owner}/{repo}/pulls", "pull requests", {**per_page, "state": "all"}),
-            "pull requests",
-        )
+        base_repo = f"/repos/{owner}/{repo}"
+        commits = _paged(client, f"{base_repo}/commits", "commits", max_items)
+        issues = _paged(client, f"{base_repo}/issues", "issues", max_items, {"state": "all"})
+        pulls = _paged(client, f"{base_repo}/pulls", "pull requests", max_items, {"state": "all"})
         warnings: list[str] = []
         pull_details: dict[int, dict] = {}
         commit_files: dict[str, list] = {}
