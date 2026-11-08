@@ -89,3 +89,16 @@ ROLE_CLEARANCE = {
 
 
 REVIEWER_ROLES = (Role.admin, Role.approver)
+
+
+class ConflictStatus(str, Enum):
+    open = "open"
+    resolved = "resolved"
+    stale = "stale"      # the sources no longer disagree
+
+
+class QuestionStatus(str, Enum):
+    open = "open"
+    answered = "answered"
+    dismissed = "dismissed"
+    closed = "closed"    # no longer applies (the gap was filled another way)

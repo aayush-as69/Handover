@@ -10,17 +10,20 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .access import effective_sensitivity
+from .conflicts import detect_conflicts
 from .db import get_session
 from .enums import REVIEWER_ROLES, ChangeType, Role, Sensitivity, SourceKind
 from .extract import ExtractionError
 from .extract.llm import llm_from_env
 from .extract.pipeline import run_extraction
 from .extract.rules import RuleExtractor
-from .handover import (HandoverError, acknowledge, approve_handover, build_sections, can_view,
+from .handover import (HandoverError, acknowledge, answered_questions, conflict_notes, approve_handover, build_sections, can_view,
                        get_handover, get_or_create_handover, pending_count, withdraw_handover)
+from .questions import generate_questions
 from .ingest.errors import IngestError
 from .ingest.service import MAX_BYTES, decode_upload, ingest_source
 from .models import Acknowledgement, Source, User
+from .redaction import redact_text
 from .web import check_csrf, current_user, project_for, render
 
 router = APIRouter()
@@ -48,7 +51,7 @@ def _flash(request: Request, msg: str, to: str):
 
 @router.get("/handover")
 def handover_page(request: Request, user: User = Depends(require_user),
-                  session: Session = Depends(get_session)):
+                  session: Session = Depends(get_session), view_as: str = ""):
     project = project_for(session)
     handover = get_handover(session, project)
     if handover is None and user.role in REVIEWER_ROLES:
@@ -57,7 +60,17 @@ def handover_page(request: Request, user: User = Depends(require_user),
     if not can_view(user, handover):
         # Same page whether nothing exists or it is not signed off: reveals nothing.
         return render(request, "handover_pending.html", user, project=project)
-    sections = build_sections(session, project, user)
+    role = user.role
+    if view_as:
+        try:
+            role = Role(view_as)
+        except ValueError:
+            raise HTTPException(status_code=404, detail="Unknown role.")
+        if role != user.role and user.role not in REVIEWER_ROLES:
+            raise HTTPException(status_code=403, detail="Only reviewers can preview another role.")
+    sections = build_sections(session, project, user, role)
+    shown = {c.id for sec in sections for c in sec.claims}
+    hide = lambda text: redact_text(role, text)
     acks = session.scalars(select(Acknowledgement).where(
         Acknowledgement.handover_id == handover.id)).all()
     ack_users = {a.user_id: session.get(User, a.user_id) for a in acks}
@@ -69,7 +82,10 @@ def handover_page(request: Request, user: User = Depends(require_user),
         acks=[(ack_users[a.user_id].display_name, a.acknowledged_at) for a in acks]
         if is_reviewer else [],
         pending=pending_count(session, project) if is_reviewer else 0,
-        sens=effective_sensitivity,
+        sens=effective_sensitivity, view_role=role, previewing=role != user.role,
+        roles=[r.value for r in Role], hide=hide,
+        conflicts=conflict_notes(session, project, shown),
+        answers=answered_questions(session, project, shown),
         approvals={c.id: next((v for v in reversed(c.versions)
                                if v.change_type == ChangeType.approve), None)
                    for s in sections for c in s.claims},
@@ -158,7 +174,10 @@ def extract_claims(request: Request, engine: str = Form("rules"), csrf: str = Fo
         if engine not in ("rules", "llm"):
             raise ExtractionError("unknown extraction engine")
         extractor = RuleExtractor() if engine == "rules" else llm_from_env()
-        report = run_extraction(session, project_for(session), extractor)
+        project = project_for(session)
+        report = run_extraction(session, project, extractor)
+        detect_conflicts(session, project)
+        generate_questions(session, project)
     except ExtractionError as exc:
         session.rollback()
         return _flash(request, f"Extraction failed: {exc}", "/admin/sources")

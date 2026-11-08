@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .access import filter_handover
-from .enums import REVIEWER_ROLES, ClaimType, HandoverStatus, ReviewStatus
+from .enums import REVIEWER_ROLES, ClaimType, HandoverStatus, ReviewStatus, Role
 from .models import Acknowledgement, Claim, Handover, Project, User, utcnow
 
 SECTIONS: list[tuple[str, str, list[ClaimType]]] = [
@@ -82,8 +82,13 @@ def withdraw_handover(session: Session, handover: Handover, user: User) -> None:
     session.flush()
 
 
-def build_sections(session: Session, project: Project, user: User) -> list[Section]:
-    claims = filter_handover(user.role, session.scalars(
+def build_sections(session: Session, project: Project, user: User,
+                   role: Role | None = None) -> list[Section]:
+    """Sections for `role` (defaults to the user's own). Only reviewers may ask for another."""
+    role = role or user.role
+    if role != user.role and user.role not in REVIEWER_ROLES:
+        raise HandoverError("Only reviewers can preview another role.")
+    claims = filter_handover(role, session.scalars(
         select(Claim).where(Claim.project_id == project.id).order_by(Claim.id)).all())
     out = []
     for key, title, types in SECTIONS:
@@ -110,3 +115,36 @@ def acknowledge(session: Session, handover: Handover, user: User) -> bool:
     session.add(Acknowledgement(handover_id=handover.id, user_id=user.id))
     session.flush()
     return True
+
+
+def conflict_notes(session: Session, project: Project, shown: set[int]) -> dict[int, list[tuple[str, str]]]:
+    """For claims on this page: other claims they conflict with, but only ones also on the page.
+
+    Returns claim id -> [(other statement, resolution or "")]. A partner the viewer cannot
+    see is never mentioned, so a warning cannot reveal hidden information.
+    """
+    from .enums import ConflictStatus
+    from .models import Conflict
+
+    claims = {c.id: c for c in session.scalars(select(Claim).where(Claim.project_id == project.id))}
+    notes: dict[int, list[tuple[str, str]]] = {}
+    for cf in session.scalars(select(Conflict).where(
+            Conflict.project_id == project.id, Conflict.status != ConflictStatus.stale)):
+        resolution = f"Resolved by {cf.resolved_by}: {cf.resolution}" if cf.status == ConflictStatus.resolved else ""
+        members = [i for i in cf.claim_ids if i in shown]
+        for i in members:
+            for j in members:
+                if i != j:
+                    notes.setdefault(i, []).append((claims[j].statement, resolution))
+    return notes
+
+
+def answered_questions(session: Session, project: Project, shown: set[int]) -> list:
+    """Answers from the outgoing person, only where every linked claim is on this page."""
+    from .enums import QuestionStatus
+    from .models import Question
+
+    return [q for q in session.scalars(select(Question).where(
+                Question.project_id == project.id, Question.status == QuestionStatus.answered)
+                .order_by(Question.id))
+            if q.claim_ids and all(i in shown for i in q.claim_ids)]

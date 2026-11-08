@@ -34,7 +34,10 @@ Round 2, in development. Working so far:
   role may see, grouped as first week, decisions, risks, dependencies and people. The
   incoming person acknowledges it. Admins can upload sources and run extraction in the browser.
 
-Not built yet: deployment and the Round 3 improvements. See the roadmap below.
+- Round 3 (branch `round3`): conflict detection across sources, a "Questions Before I Leave"
+  checklist, and field-level redaction with a "preview as another role" view
+
+Not built yet: nothing planned beyond Round 3. See the roadmap below.
 
 ## Trust rules the code enforces
 1. A claim is `unsupported` until the verification pass proves otherwise.
@@ -61,6 +64,12 @@ Not built yet: deployment and the Round 3 improvements. See the roadmap below.
     view at once. A person never learns how many claims their role hides.
 13. Only admins can add sources. Uploads are size-limited, must be text, are masked for
     secrets, and the file name is reduced to a plain name.
+14. A conflict is a prompt, never an edit: it does not change a claim's status or confidence,
+    and a warning on the handover only names conflicting claims that reader may already see.
+15. A leaver's answer appears in the handover only when every claim it concerns is visible
+    to that reader, and is labelled as their own words, not a verified fact.
+16. Inside visible claims, emails, phone numbers and (for the most restricted role) money
+    amounts are hidden by role. Reviewers can preview each role's exact view.
 10. Confidence labels come from mechanical checks, never from a model's opinion. An invented
     or paraphrased quote is labelled `unsupported`, not quietly accepted.
 
@@ -95,6 +104,12 @@ python -m app.demo --extract llm
 Keys are read from the environment only and are never stored or logged.
 
 ## Known limitations (so far)
+- Conflict detection is rule based: it knows a fixed list of technology categories (datastore,
+  payment gateway, frontend, backend) plus any `topic`/`value` the LLM extractor fills in. It
+  will miss conflicts outside those, and can flag claims that merely mention a related tool.
+- The checklist questions come from simple text rules (no stated reason, no named owner...).
+  Expect some noise; a reviewer can dismiss a question.
+- Redaction is pattern based (emails, phone numbers, amounts) and leans towards hiding too much.
 - Secret masking is pattern based and leans towards masking too much. It will not catch every
   possible credential format.
 - Chat dates are read as day/month/year unless the file clearly uses month/day/year.
