@@ -38,6 +38,7 @@ async def lifespan(_: FastAPI):
 
 def create_app(secret_key: str | None = None) -> FastAPI:
     from .handover_web import router as handover_router
+    from .round3_web import router as round3_router
     from .web import router
 
     key = secret_key or os.environ.get("SECRET_KEY")
@@ -67,6 +68,7 @@ def create_app(secret_key: str | None = None) -> FastAPI:
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
     app.include_router(router)
     app.include_router(handover_router)
+    app.include_router(round3_router)
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request, exc):

@@ -8,6 +8,10 @@
 Only approved claims appear, and only what your role may see. Each claim shows its evidence.</p>
 
 {% if is_reviewer %}
+<form method="get" class="filters"><label>Preview as
+  <select name="view_as">{% for r in roles %}<option value="{{ r }}" {% if r == view_role.value %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></label>
+  <button>Preview</button></form>
+{% if previewing %}<p class="flash">Previewing what a <strong>{{ view_role.value }}</strong> sees: filtered claims and hidden details. Nothing here is saved.</p>{% endif %}
 <section class="card">
   <form method="post" class="buttons">
     <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -31,11 +35,12 @@ Only approved claims appear, and only what your role may see. Each claim shows i
     <span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span>
     <span class="muted">{{ c.type.value.replace("_", " ") }}</span>
   </div>
-  <p class="statement-sm">{{ c.statement }}</p>
+  <p class="statement-sm">{{ hide(c.statement) }}</p>
+  {% for other, res in conflicts.get(c.id, []) %}<p class="warnbox">Sources disagree: “{{ hide(other) }}” {% if res %}<br>{{ hide(res) }}{% else %}This is not resolved yet.{% endif %}</p>{% endfor %}
   {% set a = approvals[c.id] %}
-  {% if a and a.note %}<p class="note">Reviewer note ({{ a.changed_by }}): “{{ a.note }}”</p>{% endif %}
+  {% if a and a.note %}<p class="note">Reviewer note ({{ a.changed_by }}): “{{ hide(a.note) }}”</p>{% endif %}
   {% for ev in c.evidence %}{% if ev.stance.value == "supports" %}
-  <blockquote class="evidence"><p>“{{ ev.snippet }}”</p>
+  <blockquote class="evidence"><p>“{{ hide(ev.snippet) }}”</p>
   <footer>{{ ev.chunk.source.name }} › {{ ev.chunk.locator }}</footer></blockquote>
   {% endif %}{% endfor %}
 </section>
@@ -43,6 +48,12 @@ Only approved claims appear, and only what your role may see. Each claim shows i
 {% else %}
 <p class="muted">No approved claims are available to you yet.</p>
 {% endfor %}
+
+{% if answers %}
+<h2 id="answers">Answers from {{ handover.outgoing_name }}</h2>
+<p class="muted">In the leaver's own words. These are not checked against the sources.</p>
+{% for q in answers %}<section class="card"><p>{{ hide(q.text) }}</p><p class="note">{{ q.answered_by }}: “{{ hide(q.answer) }}”</p></section>{% endfor %}
+{% endif %}
 
 {% if handover.status.value == "approved" and not is_reviewer %}
 <section class="card">

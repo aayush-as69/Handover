@@ -26,7 +26,9 @@ from .enums import (
     ChangeType,
     ClaimType,
     Confidence,
+    ConflictStatus,
     HandoverStatus,
+    QuestionStatus,
     ReviewStatus,
     Role,
     Sensitivity,
@@ -271,3 +273,55 @@ class Acknowledgement(Base):
     handover_id: Mapped[int] = mapped_column(ForeignKey("handovers.id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     acknowledged_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+def _ids(csv: str) -> list[int]:
+    return [int(x) for x in csv.split(",") if x]
+
+
+class Conflict(Base):
+    """Claims whose sources disagree. Detected mechanically; a person resolves it."""
+
+    __tablename__ = "conflicts"
+    __table_args__ = (UniqueConstraint("project_id", "key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
+    key: Mapped[str] = mapped_column(String(160))
+    topic: Mapped[str] = mapped_column(String(120))
+    reason: Mapped[str] = mapped_column(Text)
+    claim_csv: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[ConflictStatus] = mapped_column(_enum(ConflictStatus),
+                                                   default=ConflictStatus.open)
+    resolution: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    resolved_by: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    resolved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    @property
+    def claim_ids(self) -> list[int]:
+        return _ids(self.claim_csv)
+
+
+class Question(Base):
+    """A gap the outgoing person should fill before leaving ("Questions Before I Leave")."""
+
+    __tablename__ = "questions"
+    __table_args__ = (UniqueConstraint("project_id", "key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"))
+    key: Mapped[str] = mapped_column(String(160))
+    kind: Mapped[str] = mapped_column(String(32))
+    text: Mapped[str] = mapped_column(Text)
+    claim_csv: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[QuestionStatus] = mapped_column(_enum(QuestionStatus),
+                                                   default=QuestionStatus.open)
+    answer: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    answered_by: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    answered_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    @property
+    def claim_ids(self) -> list[int]:
+        return _ids(self.claim_csv)
