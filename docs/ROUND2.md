@@ -18,13 +18,9 @@ Working end to end in the demo:
    incoming person acknowledges it.
 
 ## 2. Architecture
-```
- sources ──► ingest ──► chunks ──► extract ──► claims + evidence ──► verify ──► review
- (notes, chat,  parse, mask   (stored,   rules or LLM    (draft,              (label + reason)  (human)
-  tasks, GitHub) secrets      dated)     (untrusted)      never approved)                          │
-                                                                                                   ▼
-                                          acknowledge ◄── role-filtered handover ◄── sign-off
-```
+![Handover architecture](architecture.png)
+
+Source of the diagram: `docs/architecture.mmd` (Mermaid).
 | Layer | Module | Job |
 |---|---|---|
 | Data model | `app/models.py`, `enums.py` | Claim, evidence, versions, sources, chunks, handover, acknowledgement |
