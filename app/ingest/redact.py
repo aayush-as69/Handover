@@ -7,7 +7,9 @@ a false negative leaks a credential.
 
 from __future__ import annotations
 
+import math
 import re
+from collections import Counter
 from dataclasses import dataclass, field
 
 # key = value / key: value (also JSON "key": "value", DB_PASSWORD=..., client_secret=...), where
@@ -54,6 +56,32 @@ class RedactionResult:
         return bool(self.kinds)
 
 
+# An unlabelled credential still looks random: a long unbroken run of mixed characters. Hashes,
+# UUIDs and ordinary identifiers are recognised and left alone.
+_CANDIDATE = re.compile(r"(?<![A-Za-z0-9+/_=.-])[A-Za-z0-9+/_=-]{24,}(?![A-Za-z0-9+/_=-])")
+_HEX_HASH = re.compile(r"^(?:[0-9a-f]{32}|[0-9a-f]{40}|[0-9a-f]{56}|[0-9a-f]{64})$", re.I)
+_UUID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
+MIN_ENTROPY = 4.0          # bits per character; random base62 of 24+ chars is about 4.3-5.5
+
+
+def _entropy(token: str) -> float:
+    n = len(token)
+    return -sum(c / n * math.log2(c / n) for c in Counter(token).values())
+
+
+def looks_random(token: str) -> bool:
+    if _HEX_HASH.match(token) or _UUID.match(token) or token.startswith("[REDACTED"):
+        return False
+    if any(len(piece) >= 4 and piece.isalpha() and (piece.islower() or piece.istitle())
+           for piece in re.split(r"[^A-Za-z0-9]+", token)):
+        return False                                  # paths and names built from real words
+    classes = sum([any(c.islower() for c in token), any(c.isupper() for c in token),
+                   any(c.isdigit() for c in token), any(c in "+/_=-" for c in token)])
+    if classes < 3 or not any(c.isdigit() for c in token):
+        return False                                  # words, slugs and identifiers
+    return _entropy(token) >= MIN_ENTROPY
+
+
 def redact(text: str) -> RedactionResult:
     kinds: list[str] = []
 
@@ -68,4 +96,12 @@ def redact(text: str) -> RedactionResult:
         return f"{match.group(1)}{match.group(2)}[REDACTED:secret]"
 
     text = _ASSIGNMENT.sub(_mask, text)
+
+    def _mask_random(match: re.Match) -> str:
+        if not looks_random(match.group(0)):
+            return match.group(0)
+        kinds.append("high_entropy")
+        return "[REDACTED:high_entropy]"
+
+    text = _CANDIDATE.sub(_mask_random, text)
     return RedactionResult(text=text, kinds=kinds)

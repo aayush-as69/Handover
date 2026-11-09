@@ -72,7 +72,12 @@ MAX_FAILURES = 5
 WINDOW = timedelta(minutes=5)
 
 
-MAX_FAILURES_PER_IP = 20      # higher than per username: a campus or office shares one address
+# Limits within the 5-minute window. Designed so one office behind one address is not locked
+# out by a few typos, while guessing is still capped from every angle:
+MAX_FAILURES_PER_USER_AND_IP = MAX_FAILURES   # one address guessing one account
+MAX_FAILURES_PER_USER = 20                    # many addresses guessing one account
+MAX_USERNAMES_PER_IP = 15                     # one address trying many accounts (spraying)
+MAX_FAILURES_PER_IP = 100                     # raw volume from one address
 
 
 def client_ip(request, trust_proxy: bool) -> str:
@@ -86,17 +91,67 @@ def client_ip(request, trust_proxy: bool) -> str:
     return (request.client.host if request.client else "unknown")[:45]
 
 
-def login_keys(username: str, ip: str) -> tuple[str, str]:
-    return f"u:{username}", f"ip:{ip}"
+def _pair_key(username: str, ip: str) -> str:
+    return f"ipu:{ip}|{hashlib.sha256(username.encode()).hexdigest()[:16]}"
 
 
 def login_blocked(session: Session, key: str, limit: int | None = None) -> bool:
     since = utcnow() - WINDOW
     n = session.scalar(select(func.count()).select_from(LoginAttempt).where(
         LoginAttempt.key == key, LoginAttempt.at >= since))
-    if limit is None:
-        limit = MAX_FAILURES_PER_IP if key.startswith("ip:") else MAX_FAILURES
-    return (n or 0) >= limit
+    return (n or 0) >= (MAX_FAILURES if limit is None else limit)
+
+
+def login_allowed(session: Session, username: str, ip: str) -> bool:
+    """False if any of the four limits has been reached."""
+    since = utcnow() - WINDOW
+    pair = _pair_key(username, ip)
+    if login_blocked(session, pair, MAX_FAILURES_PER_USER_AND_IP):
+        return False
+    if login_blocked(session, f"u:{username}", MAX_FAILURES_PER_USER):
+        return False
+    if login_blocked(session, f"ip:{ip}", MAX_FAILURES_PER_IP):
+        return False
+    distinct = session.scalar(select(func.count(func.distinct(LoginAttempt.key))).where(
+        LoginAttempt.key.like(f"ipu:{ip}|%"), LoginAttempt.at >= since))
+    return (distinct or 0) < MAX_USERNAMES_PER_IP
+
+
+def record_login_failure_for(session: Session, username: str, ip: str) -> None:
+    session.execute(delete(LoginAttempt).where(LoginAttempt.at < utcnow() - WINDOW))
+    session.add_all([LoginAttempt(key=_pair_key(username, ip)), LoginAttempt(key=f"u:{username}"),
+                     LoginAttempt(key=f"ip:{ip}")])
+    session.commit()
+
+
+def clear_login_failures_for(session: Session, username: str, ip: str) -> None:
+    """A correct password clears that person's own counters, not the address's volume count."""
+    session.execute(delete(LoginAttempt).where(
+        LoginAttempt.key.in_([_pair_key(username, ip), f"u:{username}"])))
+    session.commit()
+
+
+class RateLimiter:
+    """Sliding-window request limiter per key, kept in memory (per server process).
+    A cheap first line of defence; a proxy or CDN limiter in front is still advised."""
+
+    def __init__(self, limit: int, seconds: int = 60, clock=time.monotonic):
+        self.limit, self.seconds, self.clock = limit, seconds, clock
+        self.hits: dict[str, list[float]] = {}
+
+    def allow(self, key: str) -> bool:
+        if self.limit <= 0:
+            return True
+        now = self.clock()
+        recent = [t for t in self.hits.get(key, ()) if now - t < self.seconds]
+        if len(recent) >= self.limit:
+            self.hits[key] = recent
+            return False
+        recent.append(now)
+        self.hits[key] = recent
+        if len(self.hits) > 10_000:                       # bound memory under address churn
+            self.hits = {k: v for k, v in self.hits.items() if v and now - v[-1] < self.seconds}
+        return True
 
 
 def record_login_failure(session: Session, key: str) -> None:

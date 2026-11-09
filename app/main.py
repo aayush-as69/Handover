@@ -5,13 +5,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from . import __version__
 from .config import Settings
+from .security import RateLimiter, client_ip
 from .db import init_db
 
 log = logging.getLogger("handover")
@@ -66,6 +67,23 @@ def create_app(secret_key: str | None = None, config: Settings | None = None) ->
         openapi_url=None if cfg.production else "/openapi.json",
     )
     app.state.cfg = cfg
+
+    general = RateLimiter(cfg.rate_limit_per_min)
+    logins = RateLimiter(cfg.login_rate_per_min)
+    app.state.limiters = (general, logins)
+
+    @app.middleware("http")
+    async def rate_limit(request, call_next):
+        path = request.url.path
+        if path != "/health" and not path.startswith("/static/"):
+            ip = client_ip(request, cfg.trust_proxy)
+            ok = general.allow(ip)
+            if ok and path == "/login" and request.method == "POST":
+                ok = logins.allow(ip)
+            if not ok:
+                return PlainTextResponse("Too many requests. Wait a minute and try again.",
+                                         status_code=429, headers={"Retry-After": "60"})
+        return await call_next(request)
 
     @app.middleware("http")
     async def security_headers(request, call_next):

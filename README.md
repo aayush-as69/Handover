@@ -146,10 +146,14 @@ Keys are read from the environment only and are never stored or logged.
 - **Migrations exist (Alembic) but are minimal.** One initial migration. A database created by
   an older build is refused until you run `python -m app.db adopt` (it stamps a matching schema
   or creates missing tables; anything else is refused untouched). Back up first.
-- **Login lockout is persistent and shared** (database backed): 5 failures in 5 minutes per
-  username and 20 per client address. Behind a proxy set `TRUST_PROXY` so the address is read from
-  the last `X-Forwarded-For` entry; without a proxy, leave it off or the header can be forged.
-  Large networks behind one address share the address limit.
+- **Login limits are persistent and shared** (database backed), within 5 minutes: 5 failures
+  per account per address, 20 per account overall, 15 different accounts tried from one address,
+  100 failures from one address. A few typos in a shared office do not lock anyone out. Behind a
+  proxy set `TRUST_PROXY` so the address is read from the last `X-Forwarded-For` entry; without a
+  proxy leave it off, or the header can be forged.
+- **Request rate limiting is in memory, per server process:** 300 requests a minute and 30 login
+  posts a minute per address (`RATE_LIMIT_PER_MIN`, `LOGIN_RATE_PER_MIN`; 0 turns it off). It is a
+  first defence, not a substitute for a proxy or CDN in front, which the host must provide.
 - **GitHub:** public repositories only; up to 100 items per list across at most 5 pages; files,
   diffs and reviews for the newest 5 pull requests and commits; diffs cut near 1,100
   characters; subject to GitHub's unauthenticated rate limit.
@@ -158,8 +162,9 @@ Keys are read from the environment only and are never stored or logged.
 - **Checklist questions are simple text rules**; expect noise, reviewers can dismiss them.
 - **Redaction and secret masking are pattern based** and lean towards hiding too much. Masking
   covers common cloud, source-host, payment, chat and LLM keys, JWTs, bearer and basic auth
-  headers, URLs with passwords, private key blocks and `password=`/`secret:`-style assignments.
-  It cannot recognise an unlabelled random string.
+  headers, URLs with passwords, private key blocks, `password=`/`secret:`-style assignments, and
+  unlabelled random-looking strings (24+ characters, high entropy). Git hashes, UUIDs, paths and
+  ordinary identifiers are left alone, so a short or word-like secret can still slip through.
 - **Chat dates** are read as day/month/year unless the file clearly uses month/day/year.
 - **The rule-based extractor reads structure only.** Chat meaning, cross-source conflicts and
   recurring problems need the LLM extractor.

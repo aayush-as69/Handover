@@ -29,6 +29,12 @@ build) is refused with instructions. To adopt it:
 5. Practise this restore once before relying on it.
 
 ## Locked-out users
-Lockout is 5 failed sign-ins in 5 minutes per username, and 20 per client address; both clear themselves.
+Lockout limits (per 5 minutes): 5 failures per account and address, 20 per account, 15 different accounts from one address, 100 failures from one address. They clear themselves.
 Set `TRUST_PROXY=true` only behind a proxy that appends the client address (Render does). To clear a username at once,
-delete its rows (`key = 'u:<username>'`, or `'ip:<address>'`) from `login_attempts`.
+delete its rows (`key = 'u:<username>'`, `'ip:<address>'`, or keys starting `'ipu:<address>|'`) from `login_attempts`.
+
+## Rate limiting
+The app limits each address to `RATE_LIMIT_PER_MIN` requests (default 300) and `LOGIN_RATE_PER_MIN`
+login posts (default 30) a minute, returning 429. The counters live in each server process, so with
+several processes the effective limit is higher. For real protection put a rate limiter in front
+(Cloudflare, or your host's edge rules) and keep `TRUST_PROXY=true` so addresses are read correctly.

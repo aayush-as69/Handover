@@ -48,3 +48,44 @@ HARMLESS = [
 def test_ordinary_text_is_left_alone(text):
     r = redact(text)
     assert not r.redacted and r.text == text
+
+
+# ------------------------------------------------ unlabelled random strings
+
+RANDOM = [
+    "9fK2xQ7pLm4Zr8TvB3nYc6WdHs1JaUe0",                 # base62 token
+    "dGhpcyBpcyBhIHNlY3JldCB2YWx1ZSAxMjM0NTY3",         # base64 blob
+    "Zm9vYmFyMTIzNDU2Nzg5MGFiY2RlZkdISUpL",
+    "a8Fk3_Lm9Qz-X2vB7nYc6WdHs1JaUe0pR",                # url-safe token
+]
+
+
+@pytest.mark.parametrize("token", RANDOM)
+def test_unlabelled_random_token_is_masked(token):
+    r = redact(f"the deploy key was {token} for staging")
+    assert token not in r.text and "high_entropy" in r.kinds
+
+
+NOT_SECRETS = [
+    "commit 3f786850e387550fdab836ed7e6dc881de23001b merged",        # git sha1
+    "sha256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "request 550e8400-e29b-41d4-a716-446655440000 failed",           # uuid
+    "see getUserAccountPermissionsHandler for details",              # identifier, no digits
+    "branch feature-add-login-rate-limiting-to-the-api",             # slug
+    "file docs/PRODUCTION_READINESS_REVIEW_NOTES.md",
+    "short token abc123XYZ is fine",                                 # under 24 characters
+    "the quick brown fox jumps over the lazy dog 1234567890",
+    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA1",                      # long but low entropy
+]
+
+
+@pytest.mark.parametrize("text", NOT_SECRETS)
+def test_hashes_ids_and_ordinary_text_are_not_mistaken_for_secrets(text):
+    r = redact(text)
+    assert not r.redacted and r.text == text
+
+
+
+def test_paths_and_dated_file_names_are_not_masked():
+    for text in ("notes/2026-10-03_sprint_review", "notes/2026-09-19_architecture_decisions_v2"):
+        assert redact(text).text == text

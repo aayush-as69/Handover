@@ -22,9 +22,8 @@ from .access import (chunk_visible, clearance_rank, effective_rank_sql, effectiv
 from .db import get_session
 from .enums import REVIEWER_ROLES, ChangeType, Confidence, ReviewStatus, Role
 from .models import Chunk, Claim, Evidence, Project, User
-from .security import (clear_login_failures, client_ip, csrf_ok, login_blocked, login_keys,
-                       new_csrf_token,
-                       record_login_failure, verify_password)
+from .security import (clear_login_failures_for, client_ip, csrf_ok, login_allowed, new_csrf_token,
+                       record_login_failure_for, verify_password)
 from .verify import verify_claim
 
 router = APIRouter()
@@ -128,18 +127,17 @@ def login(request: Request, username: str = Form(""), password: str = Form(""),
           csrf: str = Form(""), session: Session = Depends(get_session)):
     check_csrf(request, csrf)
     key = username.strip().lower()[:64]
-    ukey, ipkey = login_keys(key, client_ip(request, request.app.state.cfg.trust_proxy))
-    if login_blocked(session, ukey) or login_blocked(session, ipkey):
+    ip = client_ip(request, request.app.state.cfg.trust_proxy)
+    if not login_allowed(session, key, ip):
         return render(request, "login.html", None, 429,
                       error="Too many failed attempts. Try again in a few minutes.")
     user = session.scalar(select(User).where(User.username == key))
     # Verify even when the user is unknown, so timing does not reveal which names exist.
     ok = verify_password(password, user.password_hash if user else "pbkdf2$1$00$00")
     if not (user and ok):
-        record_login_failure(session, ukey)
-        record_login_failure(session, ipkey)
+        record_login_failure_for(session, key, ip)
         return render(request, "login.html", None, 401, error="Wrong username or password.")
-    clear_login_failures(session, ukey)           # the address keeps its count: it decays on its own
+    clear_login_failures_for(session, key, ip)    # the address keeps its volume count; it decays
     request.session.clear()                      # new session on login
     request.session["uid"] = user.id
     return RedirectResponse(landing(user), status_code=303)
