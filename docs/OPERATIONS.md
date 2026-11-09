@@ -38,3 +38,18 @@ The app limits each address to `RATE_LIMIT_PER_MIN` requests (default 300) and `
 login posts (default 30) a minute, returning 429. The counters live in each server process, so with
 several processes the effective limit is higher. For real protection put a rate limiter in front
 (Cloudflare, or your host's edge rules) and keep `TRUST_PROXY=true` so addresses are read correctly.
+
+## Dependencies
+`requirements.txt` lists minimum versions; `requirements.lock` pins every package to the exact
+versions the tests ran against, and Render builds from it. To refresh: in a clean virtualenv run
+`pip install pip-tools`, then `pip-compile --strip-extras --no-header --annotation-style=line
+requirements.txt -o requirements.lock`, run the tests, and commit both. CI runs `pip-audit`.
+The lock was verified by installing it into an empty virtualenv and running the suite there.
+
+## Migrations at deployment
+By default the app upgrades the schema when it starts (`MIGRATE_ON_STARTUP=true`), which suits
+Render's free plan. For a controlled rollout set `MIGRATE_ON_STARTUP=false`, run
+`python -m app.db upgrade` first (for example as a pre-deploy command), and the app then refuses
+to start on a schema that is behind. `python -m app.db status` shows the state and
+`python -m app.db downgrade <revision> --yes` rolls back (data in dropped tables is lost, so take
+a backup first). `/health` is liveness; `/ready` also checks the database and schema (503 if not).

@@ -110,7 +110,7 @@ Every label carries a note explaining why, so a reviewer can see what the check 
 
 ## Run it
 ```bash
-pip install -r requirements-dev.txt
+pip install -r requirements.lock -r requirements-dev.txt   # exact tested versions
 pytest                             # SQLite; set TEST_DATABASE_URL=postgresql://... to run on PostgreSQL
 python -m app.demo                 # load the synthetic demo project and print a summary
 python -m app.demo --extract rules # ...and extract draft claims with no API key
