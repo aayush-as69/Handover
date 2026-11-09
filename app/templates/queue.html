@@ -26,12 +26,12 @@
   <thead><tr><th>Claim</th><th>Type</th><th>Confidence</th><th>Sensitivity</th><th>Status</th></tr></thead>
   <tbody>
   {% for c in claims %}
-  <tr>
-    <td><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a></td>
-    <td>{{ c.type.value.replace("_", " ") }}</td>
-    <td><span class="pill {{ c.confidence.value }}">{{ conf_label(c.confidence) }}</span></td>
-    <td><span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span></td>
-    <td>{{ c.review_status.value }}</td>
+  <tr class="{{ c.confidence.value }}">
+    <td data-label="Claim"><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a></td>
+    <td data-label="Type" class="muted">{{ c.type.value.replace("_", " ") }}</td>
+    <td data-label="Confidence"><span class="pill {{ c.confidence.value }}">{{ conf_label(c.confidence) }}</span></td>
+    <td data-label="Sensitivity"><span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span></td>
+    <td data-label="Status" class="muted">{{ c.review_status.value }}</td>
   </tr>
   {% else %}
   <tr><td colspan="5" class="muted">No claims here.</td></tr>
