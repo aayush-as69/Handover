@@ -39,7 +39,7 @@ An external review listed what to fix before production. Status of each item:
 | Request rate limiting | 300 requests and 30 login posts a minute per address, answered with 429 and `Retry-After`; `/health` and static files exempt. In memory per process. |
 | Legacy databases | `python -m app.db adopt [--dry-run]` adopts a pre-migration database safely; tested on SQLite and PostgreSQL. |
 | Secret masking | Added JWTs, bearer/basic auth, credential URLs, LLM/Google/SendGrid/npm/Slack-webhook keys, fine-grained GitHub tokens, PGP blocks and prefixed assignment names (`DB_PASSWORD`) and unlabelled high-entropy strings (hashes, UUIDs, paths and identifiers are exempt). Tested against both secrets and harmless look-alikes. |
-| CI | `.github/workflows/ci.yml` runs tests on SQLite and PostgreSQL plus `pip-audit`. Latest run (9 Nov 2026, commit `a6d9527`): 422 tests passed on SQLite and 422 on PostgreSQL 16 (each includes the browser test), and `pip-audit` found no known vulnerabilities. |
+| CI | `.github/workflows/ci.yml` runs tests on SQLite and PostgreSQL plus `pip-audit`. Latest run (9 Nov 2026, commit `03a770b`): 481 tests passed on SQLite and 482 on PostgreSQL 16 (the skipped ones are the opt-in live-LLM test, and on SQLite the PostgreSQL-only restore test) (each includes the browser test), and `pip-audit` found no known vulnerabilities. |
 
 ## Third review: reliability and verification
 | Item | Status |

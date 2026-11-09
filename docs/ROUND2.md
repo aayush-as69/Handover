@@ -56,7 +56,7 @@ assistant; see `docs/DISCLOSURES.md`. All demo data is synthetic.
 | Conflict detection, gap checklist, redaction views | Built (see `FEATURES.md`) | Planned in Round 1; delivered after the first draft of this document |
 
 ## 6. Testing evidence
-`pytest`: 182 tests passed when this document was first drafted. In the GitHub Actions run of 9 Nov 2026 (commit `a6d9527`) 422 passed on SQLite and 422 on PostgreSQL 16, including a real-browser walkthrough. They cover the data model, access rules, demo data, ingestion, extraction,
+`pytest`: 182 tests passed when this document was first drafted. In the GitHub Actions run of 9 Nov 2026 (commit `03a770b`) 481 passed on SQLite and 482 on PostgreSQL 16, including a real-browser walkthrough. They cover the data model, access rules, demo data, ingestion, extraction,
 verification, login, review actions, handover views, uploads and a full walkthrough from boot
 to acknowledgement. Each trust rule was also checked by mutation: the rule was deliberately
 broken in a scratch copy and the tests had to fail (for example, removing the CSRF check, the
