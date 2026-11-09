@@ -49,7 +49,7 @@ def run(cmd, url) -> None:
     subprocess.run(cmd, check=True, env=env)
 
 
-def main(source: str) -> int:
+def main(source: str, check_schema: bool = True) -> int:
     url = make_url(source.replace("postgres://", "postgresql://", 1))
     scratch = f"restore_check_{uuid.uuid4().hex[:8]}"
     target = url.set(database=scratch)
@@ -70,7 +70,7 @@ def main(source: str) -> int:
             print(f"  {t:24} rows {a[t][0]:>5}  {'same' if t not in bad else 'DIFFERENT'}")
         state = migration_state(dst_engine)
         print(f"restored schema: {state}")
-        if bad or state != "current":
+        if bad or (check_schema and state != "current"):
             print("RESTORE CHECK FAILED", bad or state)
             return 1
         print("restore check passed: every table matches")
@@ -81,6 +81,8 @@ def main(source: str) -> int:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    if len(args) != 1:
         raise SystemExit(__doc__)
-    raise SystemExit(main(sys.argv[1]))
+    # --no-schema-check: for test databases built without migrations
+    raise SystemExit(main(args[0], check_schema="--no-schema-check" not in sys.argv))

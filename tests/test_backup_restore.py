@@ -16,6 +16,6 @@ pytestmark = pytest.mark.skipif(
 def test_dump_and_restore_reproduces_every_table(session, project):
     session.commit()
     script = Path(__file__).parent.parent / "scripts" / "restore_check.py"
-    r = subprocess.run([sys.executable, str(script), PG_URL], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, str(script), PG_URL, "--no-schema-check"], capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "restore check passed" in r.stdout
