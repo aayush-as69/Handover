@@ -10,20 +10,35 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-# key = value / key: value, where the key name suggests a credential.
+# key = value / key: value (also JSON "key": "value", DB_PASSWORD=..., client_secret=...), where
+# the key name suggests a credential. The key may be part of a longer name joined by _ or -.
+_KEYWORDS = (r"api[_-]?key|apikey|secret|token|passwd|password|pwd|passphrase|credentials?|"
+             r"access[_-]?key|private[_-]?key|auth(?:orization)?")
 _ASSIGNMENT = re.compile(
-    r"(?i)\b(api[_-]?key|secret|token|passwd|password|pwd)\b(\s*[:=]\s*)(\S{6,})"
+    r"(?i)(?<![A-Za-z0-9])((?:[A-Za-z0-9]+[_-])*(?:" + _KEYWORDS + r")(?:[_-][A-Za-z0-9]+)*)"
+    r"([\"']?\s*[:=]\s*[\"']?)([^\s\"',;]{6,})"
 )
 
 _PATTERNS = [
-    ("aws_key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    ("aws_key", re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b")),
     ("github_token", re.compile(r"\bgh[pousr]_[A-Za-z0-9]{36,}\b")),
-    ("stripe_key", re.compile(r"\bsk_(?:live|test)_[A-Za-z0-9]{16,}\b")),
+    ("github_token", re.compile(r"\bgithub_pat_[A-Za-z0-9_]{22,}\b")),
+    ("stripe_key", re.compile(r"\b[sr]k_(?:live|test)_[A-Za-z0-9]{16,}\b")),
     ("slack_token", re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}\b")),
+    ("slack_webhook", re.compile(r"https://hooks\.slack\.com/services/[A-Za-z0-9/_-]{20,}")),
+    ("google_api_key", re.compile(r"\bAIza[0-9A-Za-z_-]{35}\b")),
+    ("llm_api_key", re.compile(r"\bsk-(?:ant-|proj-)?[A-Za-z0-9_-]{20,}\b")),
+    ("sendgrid_key", re.compile(r"\bSG\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}\b")),
+    ("npm_token", re.compile(r"\bnpm_[A-Za-z0-9]{36}\b")),
+    ("jwt", re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b")),
+    ("bearer_token", re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{16,}")),
+    ("basic_auth", re.compile(r"(?i)\bbasic\s+[A-Za-z0-9+/]{12,}={0,2}")),
+    # scheme://user:password@host  (databases, brokers, git remotes)
+    ("credential_url", re.compile(r"\b[a-z][a-z0-9+.-]{1,20}://[^\s:/@]+:[^\s@/]{3,}@[^\s/]+")),
     (
         "private_key",
         re.compile(
-            r"-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----"
+            r"-----BEGIN [A-Z ]*PRIVATE KEY(?: BLOCK)?-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY(?: BLOCK)?-----"
         ),
     ),
 ]

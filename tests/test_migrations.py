@@ -64,3 +64,61 @@ def test_the_important_indexes_exist(eng):
            for i in inspect(eng).get_indexes(t)}
     assert ("claims", ("project_id",)) in idx and ("claims", ("review_status",)) in idx
     assert ("evidence", ("claim_id",)) in idx and ("chunks", ("source_id",)) in idx
+
+
+# ------------------------------------------------------------ adopting a pre-migration database
+
+
+def _legacy_with_data(eng):
+    from sqlalchemy.orm import sessionmaker
+
+    from app.models import Project
+    Base.metadata.create_all(eng)
+    with sessionmaker(eng)() as s:
+        s.add(Project(name="Old project", outgoing_member="Riya"))
+        s.commit()
+
+
+def test_matching_legacy_schema_is_adopted_and_data_survives(eng):
+    from app.db import adopt_legacy
+    _legacy_with_data(eng)
+    assert adopt_legacy(eng, dry_run=True) == ["mark the database as migration 0001"]
+    assert "alembic_version" not in inspect(eng).get_table_names()     # dry run changed nothing
+    adopt_legacy(eng)
+    migrate(eng)                                                        # now starts normally
+    with eng.connect() as c:
+        assert c.execute(text("select name from projects")).scalar() == "Old project"
+
+
+def test_legacy_database_missing_whole_tables_gets_them_created(eng):
+    from app.db import adopt_legacy
+    _legacy_with_data(eng)
+    with eng.begin() as c:
+        c.execute(text("DROP TABLE login_attempts"))
+    done = adopt_legacy(eng)
+    assert "create missing table login_attempts" in done
+    migrate(eng)
+    assert "login_attempts" in inspect(eng).get_table_names()
+    with eng.connect() as c:
+        assert c.execute(text("select count(*) from projects")).scalar() == 1
+
+
+def test_legacy_database_with_a_different_column_is_refused_untouched(eng):
+    from app.db import adopt_legacy
+    _legacy_with_data(eng)
+    with eng.begin() as c:
+        c.execute(text("ALTER TABLE projects DROP COLUMN description"))
+    with pytest.raises(MigrationError, match="cannot be fixed safely"):
+        adopt_legacy(eng)
+    assert "alembic_version" not in inspect(eng).get_table_names()
+    with eng.connect() as c:
+        assert c.execute(text("select name from projects")).scalar() == "Old project"
+
+
+def test_adopt_refuses_empty_and_already_migrated_databases(eng):
+    from app.db import adopt_legacy
+    with pytest.raises(MigrationError, match="empty"):
+        adopt_legacy(eng)
+    migrate(eng)
+    with pytest.raises(MigrationError, match="already has migration history"):
+        adopt_legacy(eng)

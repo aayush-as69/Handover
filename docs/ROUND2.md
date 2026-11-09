@@ -69,7 +69,7 @@ adding a test.
 - The rule-based extractor reads structure only; it cannot read chat or spot cross-source conflicts.
 - Verification is a coarse text check. It cannot judge meaning, which is why a human approves every claim.
 - Secret masking is pattern based and may miss unusual formats.
-- Login lockout is stored in the database (per username, not per address).
+- Login lockout is stored in the database, per username and per client address.
 - Sign-offs are immutable numbered releases; editing a signed-off claim makes the release stale until re-signed.
 - The free hosting tier sleeps when idle and its free database may expire; the first request can be slow.
 

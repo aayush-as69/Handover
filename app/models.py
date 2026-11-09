@@ -121,7 +121,7 @@ class Chunk(Base):
     # True when a secret was masked at ingestion. The raw secret is never stored.
     redacted: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    source: Mapped[Source] = relationship(back_populates="chunks")
+    source: Mapped[Source] = relationship(back_populates="chunks", lazy="selectin")
 
 
 class Claim(Base):
@@ -165,7 +165,7 @@ class Claim(Base):
 
     project: Mapped[Project] = relationship(back_populates="claims")
     evidence: Mapped[list[Evidence]] = relationship(
-        back_populates="claim", cascade="all, delete-orphan"
+        back_populates="claim", cascade="all, delete-orphan", lazy="selectin"
     )
     audit_events: Mapped[list["AuditEvent"]] = relationship(
         cascade="save-update", order_by="AuditEvent.id"
@@ -245,7 +245,7 @@ class Evidence(Base):
     snippet_verified: Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
 
     claim: Mapped[Claim] = relationship(back_populates="evidence")
-    chunk: Mapped[Chunk] = relationship()
+    chunk: Mapped[Chunk] = relationship(lazy="selectin")
 
 
 class ClaimVersion(Base):

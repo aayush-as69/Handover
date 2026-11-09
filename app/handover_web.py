@@ -77,7 +77,8 @@ def handover_page(request: Request, user: User = Depends(require_user),
     state = release_state(session, project, handover)
     acks = session.scalars(select(Acknowledgement).where(
         Acknowledgement.release_id == rel.id)).all() if rel else []
-    ack_users = {a.user_id: session.get(User, a.user_id) for a in acks}
+    ack_users = {u.id: u for u in session.scalars(
+        select(User).where(User.id.in_([a.user_id for a in acks])))} if acks else {}
     is_reviewer = user.role in REVIEWER_ROLES
     return render(
         request, "handover.html", user, project=project, handover=handover, sections=sections,
@@ -90,10 +91,20 @@ def handover_page(request: Request, user: User = Depends(require_user),
         roles=[r.value for r in Role], hide=hide,
         conflicts=conflict_notes(session, project, shown),
         answers=answered_questions(session, project, shown),
-        approvals={c.id: next((v for v in reversed(c.versions)
-                               if v.change_type == ChangeType.approve), None)
-                   for s in sections for c in s.claims},
+        approvals=_latest_approvals(session, [c.id for s in sections for c in s.claims]),
     )
+
+
+def _latest_approvals(session, claim_ids):
+    """The newest approval record for each claim, in one query (not one per claim)."""
+    from .models import ClaimVersion
+    out = {cid: None for cid in claim_ids}
+    if claim_ids:
+        for v in session.scalars(select(ClaimVersion).where(
+                ClaimVersion.claim_id.in_(claim_ids), ClaimVersion.change_type == ChangeType.approve)
+                .order_by(ClaimVersion.claim_id, ClaimVersion.version, ClaimVersion.id)):
+            out[v.claim_id] = v
+    return out
 
 
 @router.get("/handover/releases")
@@ -102,11 +113,13 @@ def release_history(request: Request, user: User = Depends(require_user),
     if user.role not in REVIEWER_ROLES:
         raise HTTPException(status_code=403, detail="Only reviewers can see release history.")
     handover = get_handover(session, project_for(session))
-    rows = []
-    for r in (releases(session, handover) if handover else []):
-        n_acks = len(session.scalars(select(Acknowledgement.id).where(
-            Acknowledgement.release_id == r.id)).all())
-        rows.append((r, len(r.entries), n_acks))
+    from sqlalchemy import func
+    rels = releases(session, handover) if handover else []
+    counts = dict(session.execute(
+        select(Acknowledgement.release_id, func.count()).where(
+            Acknowledgement.release_id.in_([r.id for r in rels]))
+        .group_by(Acknowledgement.release_id)).all()) if rels else {}
+    rows = [(r, len(r.entries), counts.get(r.id, 0)) for r in rels]
     return render(request, "releases.html", user, rows=rows)
 
 

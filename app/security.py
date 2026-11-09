@@ -72,11 +72,31 @@ MAX_FAILURES = 5
 WINDOW = timedelta(minutes=5)
 
 
-def login_blocked(session: Session, key: str) -> bool:
+MAX_FAILURES_PER_IP = 20      # higher than per username: a campus or office shares one address
+
+
+def client_ip(request, trust_proxy: bool) -> str:
+    """The caller's address. Behind a proxy (Render) the proxy appends the real address as the
+    LAST X-Forwarded-For entry; earlier entries are client-supplied and can be forged."""
+    if trust_proxy:
+        forwarded = request.headers.get("x-forwarded-for", "")
+        last = forwarded.split(",")[-1].strip()
+        if last:
+            return last[:45]
+    return (request.client.host if request.client else "unknown")[:45]
+
+
+def login_keys(username: str, ip: str) -> tuple[str, str]:
+    return f"u:{username}", f"ip:{ip}"
+
+
+def login_blocked(session: Session, key: str, limit: int | None = None) -> bool:
     since = utcnow() - WINDOW
     n = session.scalar(select(func.count()).select_from(LoginAttempt).where(
         LoginAttempt.key == key, LoginAttempt.at >= since))
-    return (n or 0) >= MAX_FAILURES
+    if limit is None:
+        limit = MAX_FAILURES_PER_IP if key.startswith("ip:") else MAX_FAILURES
+    return (n or 0) >= limit
 
 
 def record_login_failure(session: Session, key: str) -> None:

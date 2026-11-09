@@ -13,15 +13,17 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import select
+from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.orm.exc import StaleDataError
 
-from .access import chunk_visible, effective_sensitivity, filter_review, visible_in_review
+from .access import (chunk_visible, clearance_rank, effective_rank_sql, effective_sensitivity,
+                     sensitivity_from_rank, visible_in_review)
 from .db import get_session
 from .enums import REVIEWER_ROLES, ChangeType, Confidence, ReviewStatus, Role
 from .models import Chunk, Claim, Evidence, Project, User
-from .security import (clear_login_failures, csrf_ok, login_blocked, new_csrf_token,
+from .security import (clear_login_failures, client_ip, csrf_ok, login_blocked, login_keys,
+                       new_csrf_token,
                        record_login_failure, verify_password)
 from .verify import verify_claim
 
@@ -126,16 +128,18 @@ def login(request: Request, username: str = Form(""), password: str = Form(""),
           csrf: str = Form(""), session: Session = Depends(get_session)):
     check_csrf(request, csrf)
     key = username.strip().lower()[:64]
-    if login_blocked(session, key):
+    ukey, ipkey = login_keys(key, client_ip(request, request.app.state.cfg.trust_proxy))
+    if login_blocked(session, ukey) or login_blocked(session, ipkey):
         return render(request, "login.html", None, 429,
                       error="Too many failed attempts. Try again in a few minutes.")
     user = session.scalar(select(User).where(User.username == key))
     # Verify even when the user is unknown, so timing does not reveal which names exist.
     ok = verify_password(password, user.password_hash if user else "pbkdf2$1$00$00")
     if not (user and ok):
-        record_login_failure(session, key)
+        record_login_failure(session, ukey)
+        record_login_failure(session, ipkey)
         return render(request, "login.html", None, 401, error="Wrong username or password.")
-    clear_login_failures(session, key)
+    clear_login_failures(session, ukey)           # the address keeps its count: it decays on its own
     request.session.clear()                      # new session on login
     request.session["uid"] = user.id
     return RedirectResponse(landing(user), status_code=303)
@@ -157,35 +161,44 @@ QUEUE_PAGE = 50
 @router.get("/review")
 def review_queue(request: Request, status: str = "open", confidence: str = "", page: int = 1,
                  user: User = Depends(require_reviewer), session: Session = Depends(get_session)):
+    """Filtering by clearance, status and confidence, counting, ordering and paging all happen in
+    the database; only the page being shown is loaded."""
     project = project_for(session)
-    everything = session.scalars(
-        select(Claim).where(Claim.project_id == project.id).order_by(Claim.id)
-        .options(selectinload(Claim.evidence).selectinload(Evidence.chunk).selectinload(Chunk.source))
-    ).all()
-    claims = filter_review(user.role, everything)
+    rank = effective_rank_sql().label("rank")
+    clearance = clearance_rank(user.role)
+    base = select(Claim.id, Claim.review_status, rank).where(Claim.project_id == project.id).subquery()
+    visible = select(base.c.id, base.c.review_status).where(base.c.rank <= clearance).subquery()
+
     totals = {s.value: 0 for s in ReviewStatus}
-    for c in claims:
-        totals[c.review_status.value] += 1
+    for st, n in session.execute(select(visible.c.review_status, func.count()).group_by(visible.c.review_status)):
+        totals[st.value] = n
+    hidden = session.scalar(select(func.count()).select_from(base).where(base.c.rank > clearance)) or 0
+
+    query = select(Claim, rank).where(Claim.project_id == project.id)
+    query = query.where(rank <= clearance)
     if status == "open":
-        shown = [c for c in claims if c.review_status in (ReviewStatus.generated, ReviewStatus.edited)]
+        query = query.where(Claim.review_status.in_([ReviewStatus.generated, ReviewStatus.edited]))
     elif status in totals:
-        shown = [c for c in claims if c.review_status.value == status]
+        query = query.where(Claim.review_status == ReviewStatus(status))
     else:
-        status, shown = "all", claims
+        status = "all"
     if confidence in {c.value for c in Confidence}:
-        shown = [c for c in shown if c.confidence.value == confidence]
+        query = query.where(Claim.confidence == Confidence(confidence))
     else:
         confidence = ""
+    matching = session.scalar(select(func.count()).select_from(query.order_by(None).subquery())) or 0
     # Riskiest first: conflicting, unsupported, inferred, verified
-    order = {Confidence.conflicting: 0, Confidence.unsupported: 1, Confidence.inferred: 2,
-             Confidence.verified: 3}
-    shown.sort(key=lambda c: (order[c.confidence], c.id))
-    pages = max(1, -(-len(shown) // QUEUE_PAGE))
+    risk = case((Claim.confidence == Confidence.conflicting, 0),
+                (Claim.confidence == Confidence.unsupported, 1),
+                (Claim.confidence == Confidence.inferred, 2), else_=3)
+    pages = max(1, -(-matching // QUEUE_PAGE))
     page = min(max(page, 1), pages)
-    window = shown[(page - 1) * QUEUE_PAGE: page * QUEUE_PAGE]
-    return render(request, "queue.html", user, project=project, claims=window, totals=totals,
-                  status=status, confidence=confidence, sens=effective_sensitivity,
-                  hidden=len(everything) - len(claims), page=page, pages=pages, matching=len(shown))
+    rows = session.execute(query.order_by(risk, Claim.id).limit(QUEUE_PAGE)
+                           .offset((page - 1) * QUEUE_PAGE)).all()
+    level = {c.id: sensitivity_from_rank(r) for c, r in rows}
+    return render(request, "queue.html", user, project=project, claims=[c for c, _ in rows],
+                  totals=totals, status=status, confidence=confidence, sens=lambda c: level[c.id],
+                  hidden=hidden, page=page, pages=pages, matching=matching)
 
 
 @router.get("/review/claims/{claim_id}")

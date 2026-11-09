@@ -33,13 +33,16 @@ An external review listed what to fix before production. Status of each item:
 | Migrations | Alembic, one initial migration, run at startup. |
 | Dev vs production settings | `APP_ENV=production` refuses weak or missing secrets, insecure cookies, SQLite; hides API docs. |
 | LLM client lifecycle | Clients are closed after each use. |
-| Review queue | One query with eager loading, paginated 50 per page. Filtering by clearance still happens in Python. |
+| Review queue | Clearance, status, confidence, counts, ordering and paging all run in SQL (50 per page). A test checks the SQL access rule against the Python rule for every sensitivity combination. |
+| Query counts | Claim evidence, chunks and sources load eagerly; handover, conflicts, questions and release pages no longer query per claim. `tests/test_query_counts.py` fails if a page's query count grows with the number of claims. |
+| Login throttling | Per username (5 / 5 min) and per client address (20 / 5 min), shared through the database; forged `X-Forwarded-For` prefixes are ignored. |
+| Legacy databases | `python -m app.db adopt [--dry-run]` adopts a pre-migration database safely; tested on SQLite and PostgreSQL. |
+| Secret masking | Added JWTs, bearer/basic auth, credential URLs, LLM/Google/SendGrid/npm/Slack-webhook keys, fine-grained GitHub tokens, PGP blocks and prefixed assignment names (`DB_PASSWORD`). Tested against both secrets and harmless look-alikes. |
 | CI | `.github/workflows/ci.yml` runs tests on SQLite and PostgreSQL plus `pip-audit`. Latest run (9 Nov 2026, commit `100ed36`): 354 tests passed on SQLite and 354 on PostgreSQL 16 (each includes the browser test), and `pip-audit` found no known vulnerabilities. |
 
 ## Still needed before real data
 - Run the LLM extractor and semantic check against a real provider and measure them.
 - A real secrets store and HTTPS-only hosting (the Render blueprint sets secure cookies).
-- Rate limiting per client address beyond the per-username lockout, shared across instances.
-- Sensitivity filtering in SQL rather than Python, for large projects.
+- Rate limiting at the network edge (a CDN or proxy), in addition to the database-backed lockout.
 - Not built: multiple projects per deployment, audit-log page, acknowledgement history by name,
   richer conflict visualisation, extraction reporting. See `OPERATIONS.md` for backups.

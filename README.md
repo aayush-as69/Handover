@@ -143,24 +143,30 @@ Keys are read from the environment only and are never stored or logged.
   key and review the output before trusting it.
 - **Deployment is configured but unverified.** `render.yaml` and the production settings are
   tested locally (SQLite and PostgreSQL), not on Render itself.
-- **Migrations exist (Alembic) but are minimal.** One initial migration; a database created
-  without Alembic is refused rather than guessed at. Back up before upgrading.
-- **Login lockout is persistent** (database backed, 5 failures in 5 minutes per username). It is
-  per username, not per address.
+- **Migrations exist (Alembic) but are minimal.** One initial migration. A database created by
+  an older build is refused until you run `python -m app.db adopt` (it stamps a matching schema
+  or creates missing tables; anything else is refused untouched). Back up first.
+- **Login lockout is persistent and shared** (database backed): 5 failures in 5 minutes per
+  username and 20 per client address. Behind a proxy set `TRUST_PROXY` so the address is read from
+  the last `X-Forwarded-For` entry; without a proxy, leave it off or the header can be forged.
+  Large networks behind one address share the address limit.
 - **GitHub:** public repositories only; up to 100 items per list across at most 5 pages; files,
   diffs and reviews for the newest 5 pull requests and commits; diffs cut near 1,100
   characters; subject to GitHub's unauthenticated rate limit.
 - **Conflict detection is rule based:** a fixed list of technology categories plus any
   `topic`/`value` an LLM fills in. It misses others and can flag a mere mention of a related tool.
 - **Checklist questions are simple text rules**; expect noise, reviewers can dismiss them.
-- **Redaction and secret masking are pattern based** and lean towards hiding too much. Neither
-  catches every format.
+- **Redaction and secret masking are pattern based** and lean towards hiding too much. Masking
+  covers common cloud, source-host, payment, chat and LLM keys, JWTs, bearer and basic auth
+  headers, URLs with passwords, private key blocks and `password=`/`secret:`-style assignments.
+  It cannot recognise an unlabelled random string.
 - **Chat dates** are read as day/month/year unless the file clearly uses month/day/year.
 - **The rule-based extractor reads structure only.** Chat meaning, cross-source conflicts and
   recurring problems need the LLM extractor.
 - **Confidential chunks** are not sent to a remote model by default, so LLM mode makes no
   claims from them.
-- **One project per deployment.** The review queue loads in full (no pagination yet).
+- **One project per deployment.** The review queue filters, counts and pages in SQL; other
+  pages load a project's claims in a fixed number of queries (tested not to grow with claim count).
 
 ## Roadmap
 1. Foundation: data model, access rules, demo data (done)

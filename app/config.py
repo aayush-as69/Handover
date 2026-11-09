@@ -33,6 +33,8 @@ class Settings:
         self.demo_mode = (env.get("DEMO_MODE", "").lower() in ("1", "true", "yes", "on"))
         self.demo_password = env.get("DEMO_PASSWORD") or None
         cookie = env.get("COOKIE_SECURE")
+        proxy = env.get("TRUST_PROXY")
+        self.trust_proxy = (self.production if proxy in (None, "") else proxy.lower() in ("1", "true", "yes", "on"))
         self.cookie_secure = (self.production if cookie in (None, "")
                               else cookie.lower() in ("1", "true", "yes", "on"))
 
