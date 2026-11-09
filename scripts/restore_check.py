@@ -9,6 +9,7 @@ drop the scratch database. Exits non-zero on any difference. Needs pg_dump and p
 from __future__ import annotations
 
 import hashlib
+import os
 import subprocess
 import sys
 import tempfile
@@ -39,6 +40,11 @@ def pg_args(url) -> list[str]:
 
 
 def run(cmd, url) -> None:
+    # Use client tools of the same major version as the server (set PG_BIN to their directory):
+    # a newer pg_dump writes settings an older server rejects when restoring.
+    bindir = os.environ.get("PG_BIN")
+    if bindir:
+        cmd = [str(Path(bindir) / cmd[0]), *cmd[1:]]
     env = {"PGPASSWORD": url.password or "", "PATH": "/usr/bin:/usr/local/bin:/bin"}
     subprocess.run(cmd, check=True, env=env)
 

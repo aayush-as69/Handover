@@ -29,7 +29,8 @@ build) is refused with instructions. To adopt it:
 5. Practise this restore before relying on it. `python scripts/restore_check.py <DATABASE_URL>`
    does the whole exercise for you: dumps the database, restores it into a scratch database,
    compares the row count and a checksum of every table, confirms the schema is current, and
-   deletes the scratch copy. It exits non-zero on any difference.
+   deletes the scratch copy. It exits non-zero on any difference. Use `pg_dump`/`pg_restore` of the same major version as the
+   database (set `PG_BIN` to their folder): a newer client writes settings an older server rejects.
 
 Exercised on 9 Nov 2026 against a local PostgreSQL 16 holding the demo project: all 15 tables
 matched (48 claims, 87 chunks, 48 claim versions, 48 audit events and the rest) and the restored

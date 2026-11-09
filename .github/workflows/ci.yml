@@ -24,6 +24,7 @@ jobs:
         run: python -m pytest -q
       - name: Tests on PostgreSQL
         env:
+          PG_BIN: /usr/lib/postgresql/16/bin
           TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/handover_test
         run: python -m pytest -q
       - name: Dependency vulnerabilities
