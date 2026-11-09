@@ -34,7 +34,7 @@ An external review listed what to fix before production. Status of each item:
 | Dev vs production settings | `APP_ENV=production` refuses weak or missing secrets, insecure cookies, SQLite; hides API docs. |
 | LLM client lifecycle | Clients are closed after each use. |
 | Review queue | One query with eager loading, paginated 50 per page. Filtering by clearance still happens in Python. |
-| CI | `.github/workflows/ci.yml` runs tests on SQLite and PostgreSQL plus `pip-audit`. Not yet run on GitHub. |
+| CI | `.github/workflows/ci.yml` runs tests on SQLite and PostgreSQL plus `pip-audit`. Latest run (9 Nov 2026, commit `100ed36`): 354 tests passed on SQLite and 354 on PostgreSQL 16 (each includes the browser test), and `pip-audit` found no known vulnerabilities. |
 
 ## Still needed before real data
 - Run the LLM extractor and semantic check against a real provider and measure them.

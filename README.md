@@ -25,10 +25,12 @@ Built for the CodeFrontier hackathon (We Code Coders), by team STARTEND.
 Roles: `admin`, `approver`, `viewer`, `restricted`. The server decides access; the UI never does.
 
 ## Status
-Feature-complete for the planned scope. Tested with 354 tests on SQLite and
-PostgreSQL 16, plus a real-browser walkthrough and CI. Hosting is configured for Render
-(`render.yaml`) but has not been verified on Render itself, and the LLM paths have never been
-run against a live model. Both are listed under "Known limitations".
+Feature-complete for the planned scope. Latest GitHub Actions run (9 Nov 2026, commit
+`100ed36`): 354 tests passed on SQLite and 354 on PostgreSQL 16, including a real-browser
+walkthrough, and `pip-audit` found no known vulnerabilities. Run `pytest` for the current count.
+Hosting is configured for Render (`render.yaml`) but has not been verified on Render itself, and
+the LLM paths have never been run against a live model. Both are listed under "Known
+limitations".
 
 Not built: multiple projects per deployment, an audit-log page, acknowledgement history by
 name, richer conflict visualisation, and rate limiting shared across servers.
