@@ -116,6 +116,16 @@ def create_app(secret_key: str | None = None, config: Settings | None = None) ->
                                     "code": exc.status_code, "message": exc.detail},
             status_code=exc.status_code)
 
+    @app.exception_handler(Exception)
+    async def unexpected_error(request, exc):
+        """Anything unforeseen: log the detail for operators, show the person nothing internal."""
+        log.exception("unhandled error on %s %s", request.method, request.url.path)
+        from .web import templates
+        return templates.TemplateResponse(
+            request, "error.html", {"user": None, "csrf": "", "flash": None, "code": 500,
+                                    "message": "Something went wrong on our side. Nothing was lost; try again."},
+            status_code=500)
+
     @app.get("/health")
     def health() -> dict:
         """Liveness: the process is up. Says nothing about the database."""

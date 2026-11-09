@@ -16,6 +16,10 @@ jobs:
         with: {python-version: "3.12", cache: pip}
       - run: pip install -r requirements.lock -r requirements-dev.txt
       - run: python -m playwright install --with-deps chromium
+      - name: PostgreSQL 16 client tools (for the backup/restore test)
+        run: |
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-16
       - name: Tests on SQLite
         run: python -m pytest -q
       - name: Tests on PostgreSQL

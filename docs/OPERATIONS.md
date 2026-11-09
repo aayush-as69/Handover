@@ -26,7 +26,14 @@ build) is refused with instructions. To adopt it:
 2. `pg_restore --no-owner --dbname "$NEW_DATABASE_URL" handover-YYYY-MM-DD.dump`
 3. Point `DATABASE_URL` at it and restart. Startup checks the migration version.
 4. Log in and open `/handover/releases` to confirm releases and acknowledgements are intact.
-5. Practise this restore once before relying on it.
+5. Practise this restore before relying on it. `python scripts/restore_check.py <DATABASE_URL>`
+   does the whole exercise for you: dumps the database, restores it into a scratch database,
+   compares the row count and a checksum of every table, confirms the schema is current, and
+   deletes the scratch copy. It exits non-zero on any difference.
+
+Exercised on 9 Nov 2026 against a local PostgreSQL 16 holding the demo project: all 15 tables
+matched (48 claims, 87 chunks, 48 claim versions, 48 audit events and the rest) and the restored
+schema was current. It has **not** been run on Render's database; do that once after deploying.
 
 ## Locked-out users
 Lockout limits (per 5 minutes): 5 failures per account and address, 20 per account, 15 different accounts from one address, 100 failures from one address. They clear themselves.
@@ -53,3 +60,11 @@ Render's free plan. For a controlled rollout set `MIGRATE_ON_STARTUP=false`, run
 to start on a schema that is behind. `python -m app.db status` shows the state and
 `python -m app.db downgrade <revision> --yes` rolls back (data in dropped tables is lost, so take
 a backup first). `/health` is liveness; `/ready` also checks the database and schema (503 if not).
+
+## Live LLM check
+No model has been called yet in development. With any OpenAI-compatible provider (Gemini, OpenAI,
+Groq, a local Ollama) run:
+`LIVE_LLM_TEST=1 LLM_BASE_URL=... LLM_API_KEY=... LLM_MODEL=... python -m pytest tests/test_live_llm.py -v -s`
+It sends one invented note and checks every quote the model cites exists word for word. For
+Gemini, the base URL is `https://generativelanguage.googleapis.com/v1beta/openai`. Then run
+`python -m app.demo --extract llm` to see the full pipeline and read the report it prints.

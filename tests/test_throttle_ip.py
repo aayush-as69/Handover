@@ -130,3 +130,32 @@ def test_login_posts_have_their_own_tighter_limit(env):
     c = client(app)
     codes = [attempt(c, "nobody", ip="2.2.2.2") for _ in range(5)]
     assert codes[:3] == [401] * 3 and set(codes[3:]) == {429}
+
+
+# ------------------------------------------------------------ several workers
+
+
+def test_login_limits_are_shared_between_server_processes(env):
+    """Two app instances (as two workers would be) over one database see the same failures."""
+    from app.main import create_app
+    from app.security import MAX_FAILURES
+    app_a, _ = env
+    app_b = create_app(secret_key="b" * 40)
+    app_b.dependency_overrides = dict(app_a.dependency_overrides)
+    for a in (app_a, app_b):
+        a.state.cfg.trust_proxy = True
+        for limiter in a.state.limiters:
+            limiter.limit = 0
+    ca, cb = client(app_a), client(app_b)
+    for _ in range(MAX_FAILURES):
+        assert attempt(ca, "meera", ip="5.5.5.5") == 401         # all failures go to worker A
+    assert attempt(cb, "meera", PW, ip="5.5.5.5") == 429          # worker B already knows
+    assert attempt(cb, "meera", PW, ip="6.6.6.6") == 303
+
+
+def test_request_rate_counters_are_per_process_and_that_is_documented(env):
+    """The request limiter is in memory: each worker counts separately (see OPERATIONS.md)."""
+    from app.main import create_app
+    app_a, _ = env
+    app_b = create_app(secret_key="b" * 40)
+    assert app_a.state.limiters[0] is not app_b.state.limiters[0]

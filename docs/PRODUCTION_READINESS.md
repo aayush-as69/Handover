@@ -41,8 +41,24 @@ An external review listed what to fix before production. Status of each item:
 | Secret masking | Added JWTs, bearer/basic auth, credential URLs, LLM/Google/SendGrid/npm/Slack-webhook keys, fine-grained GitHub tokens, PGP blocks and prefixed assignment names (`DB_PASSWORD`) and unlabelled high-entropy strings (hashes, UUIDs, paths and identifiers are exempt). Tested against both secrets and harmless look-alikes. |
 | CI | `.github/workflows/ci.yml` runs tests on SQLite and PostgreSQL plus `pip-audit`. Latest run (9 Nov 2026, commit `a6d9527`): 422 tests passed on SQLite and 422 on PostgreSQL 16 (each includes the browser test), and `pip-audit` found no known vulnerabilities. |
 
+## Third review: reliability and verification
+| Item | Status |
+|---|---|
+| Health vs readiness | `/health` is liveness; `/ready` checks the database and that migrations are current, returns 503 with a fixed reason (no internals). Tested with an unreachable and a behind-schema database. |
+| Locked dependencies | `requirements.lock` pins every package; Render and CI build from it. Verified by installing it in an empty virtualenv and running the suite there (429 passed, browser test skipped without Playwright). |
+| Adversarial redaction | 36 tests of awkward forms (YAML, curl `-u`, quoted phrases, spoken passwords, zero-width and full-width disguises, short passwords) plus ordinary sentences that must survive. Gaps found and fixed. One documented gap remains: a secret spelled out across a sentence. |
+| Human approval stays mandatory | Tests assert extraction and verification never approve a claim, `verify.py` never writes `review_status`, a viewer cannot approve, and unapproved claims never reach a handover. |
+| Controlled migrations | `MIGRATE_ON_STARTUP=false` makes the app refuse a stale schema; `python -m app.db upgrade / status / downgrade --yes`. Tested: upgrade, rollback, upgrade again. Default stays on for Render's free plan. |
+| Test-client warning | Resolved by adding `httpx2` to the dev requirements. |
+| Shared throttling across workers | Tested with two app instances on one database: failures through one block the other. The request-rate counters are per process (documented). |
+| Forged forwarding headers | Tested: forged leading entries and ignored headers without `TRUST_PROXY`. |
+| Unexpected errors | Tests for a database failure (plain page, no SQL or traceback) and for seven provider failure modes (unreachable, 401, 429, 5xx, non-JSON, empty, truncated JSON): a message, nothing stored. |
+| Backup and restore | `scripts/restore_check.py` exercised on PostgreSQL 16 with the demo data (all tables match). Not yet done on Render. |
+| Live provider test | `tests/test_live_llm.py` is ready and skipped until you set `LIVE_LLM_TEST=1` and the `LLM_*` variables. Not run, because no key is available here. |
+
 ## Still needed before real data
-- Run the LLM extractor and semantic check against a real provider and measure them.
+- Run the live provider test and the full LLM pipeline (`tests/test_live_llm.py`, `python -m app.demo --extract llm`) and review the output.
+- Deploy on Render, then run `scripts/restore_check.py` against its database once.
 - A real secrets store and HTTPS-only hosting (the Render blueprint sets secure cookies).
 - A proxy or CDN rate limiter in front of the app. The host provides it; the in-app limiter is per process and cannot replace it.
 - Not built: multiple projects per deployment, audit-log page, acknowledgement history by name,

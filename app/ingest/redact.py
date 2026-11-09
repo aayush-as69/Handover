@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import math
 import re
+import unicodedata
 from collections import Counter
 from dataclasses import dataclass, field
 
@@ -20,6 +21,27 @@ _ASSIGNMENT = re.compile(
     r"(?i)(?<![A-Za-z0-9])((?:[A-Za-z0-9]+[_-])*(?:" + _KEYWORDS + r")(?:[_-][A-Za-z0-9]+)*)"
     r"([\"']?\s*[:=]\s*[\"']?)([^\s\"',;]{6,})"
 )
+
+_PLACEHOLDERS = {"none", "null", "true", "false", "todo", "tbd", "yes", "no", "n/a", "xxxx", "****", "redacted"}
+
+# A short value is only masked when the key plainly means a password (not for "token: 30m").
+_PASSWORDY = re.compile(
+    r"(?i)(?<![A-Za-z0-9])((?:[A-Za-z0-9]+[_-])*(?:password|passwd|pwd|passphrase|secret)"
+    r"(?:[_-][A-Za-z0-9]+)*)([\"']?\s*[:=]\s*[\"']?)([^\s\"',;]{4,5})(?![^\s\"',;])"
+)
+# password = 'a phrase with spaces' (value quoted, so it may contain spaces)
+_QUOTED = re.compile(
+    r"(?i)(?<![A-Za-z0-9])((?:[A-Za-z0-9]+[_-])*(?:" + _KEYWORDS + r")(?:[_-][A-Za-z0-9]+)*)"
+    r"(\s*[:=]\s*)([\"'])([^\"'\n]{6,200})\3"
+)
+# Said in a sentence: "the password is Hunter2Hunter2". Needs a digit, capital or symbol so that
+# ordinary prose such as "the password is required" is left alone.
+_SPOKEN = re.compile(
+    r"(?i)\b(password|passcode|passphrase|pwd|pin|secret|api key|token)\s+(?:is|was|=)\s*:?\s*"
+    r"([^\s\"',;]{6,})"
+)
+# curl -u user:password / --user user:password
+_CURL_USER = re.compile(r"(?i)(\s(?:-u|--user)[ =]+)([^\s:]+):([^\s]{3,})")
 
 _PATTERNS = [
     ("aws_key", re.compile(r"\b(?:AKIA|ASIA)[0-9A-Z]{16}\b")),
@@ -82,7 +104,22 @@ def looks_random(token: str) -> bool:
     return _entropy(token) >= MIN_ENTROPY
 
 
+_INVISIBLE = dict.fromkeys(map(ord, "\u200b\u200c\u200d\u200e\u200f\u2060\ufeff\u00ad"))
+
+
 def redact(text: str) -> RedactionResult:
+    """Mask secrets. Text disguised with invisible characters or full-width letters is also
+    checked in its plain form; if that reveals a secret, the plain, masked text is kept."""
+    plain = unicodedata.normalize("NFKC", text.translate(_INVISIBLE))
+    result = _redact(text)
+    if plain != text:
+        disguised = _redact(plain)
+        if len(disguised.kinds) > len(result.kinds):
+            return disguised
+    return result
+
+
+def _redact(text: str) -> RedactionResult:
     kinds: list[str] = []
 
     for kind, pattern in _PATTERNS:
@@ -96,6 +133,40 @@ def redact(text: str) -> RedactionResult:
         return f"{match.group(1)}{match.group(2)}[REDACTED:secret]"
 
     text = _ASSIGNMENT.sub(_mask, text)
+
+    def _mask_short(match: re.Match) -> str:
+        value = match.group(3)
+        if value.startswith("[REDACTED:") or value.lower() in _PLACEHOLDERS:
+            return match.group(0)
+        kinds.append("secret")
+        return f"{match.group(1)}{match.group(2)}[REDACTED:secret]"
+
+    text = _PASSWORDY.sub(_mask_short, text)
+
+    def _mask_quoted(match: re.Match) -> str:
+        if match.group(4).startswith("[REDACTED:") or match.group(4).lower() in _PLACEHOLDERS:
+            return match.group(0)
+        kinds.append("secret")
+        return f"{match.group(1)}{match.group(2)}{match.group(3)}[REDACTED:secret]{match.group(3)}"
+
+    text = _QUOTED.sub(_mask_quoted, text)
+
+    def _mask_spoken(match: re.Match) -> str:
+        value = match.group(2)
+        if value.startswith("[REDACTED:") or value.lower() in _PLACEHOLDERS:
+            return match.group(0)
+        if not any(c.isdigit() or c.isupper() or not c.isalnum() for c in value):
+            return match.group(0)                    # plain lowercase word: ordinary prose
+        kinds.append("secret")
+        return match.group(0).replace(value, "[REDACTED:secret]")
+
+    text = _SPOKEN.sub(_mask_spoken, text)
+
+    def _mask_curl(match: re.Match) -> str:
+        kinds.append("credential_url")
+        return f"{match.group(1)}{match.group(2)}:[REDACTED:credential_url]"
+
+    text = _CURL_USER.sub(_mask_curl, text)
 
     def _mask_random(match: re.Match) -> str:
         if not looks_random(match.group(0)):
