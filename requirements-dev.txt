@@ -1,2 +1,4 @@
 -r requirements.txt
 pytest>=8
+playwright>=1.45      # browser end-to-end test (skipped if Chromium is missing)
+pip-audit

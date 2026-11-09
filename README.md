@@ -109,11 +109,13 @@ Every label carries a note explaining why, so a reviewer can see what the check 
 ## Run it
 ```bash
 pip install -r requirements-dev.txt
-pytest
+pytest                             # SQLite; set TEST_DATABASE_URL=postgresql://... to run on PostgreSQL
 python -m app.demo                 # load the synthetic demo project and print a summary
 python -m app.demo --extract rules # ...and extract draft claims with no API key
 DEMO_PASSWORD=choose-one python -m app.demo --extract rules   # demo logins: meera (approver), riya (admin), kabir (viewer), rao (restricted)
 uvicorn app.main:app --reload      # then open /login (set SECRET_KEY for stable sessions)
+# Production: APP_ENV=production needs SECRET_KEY (32+ chars), PostgreSQL DATABASE_URL, secure cookies.
+# Migrations run at startup. See docs/OPERATIONS.md for backups and recovery.
 ```
 
 ### Using an LLM for extraction

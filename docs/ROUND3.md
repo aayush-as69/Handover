@@ -1,5 +1,7 @@
 # Round 3: the three committed improvements
 
+Merged into `main` on 9 Nov 2026. Later hardening is listed in `PRODUCTION_READINESS.md`.
+
 All three work on the demo project with no API key, and are covered by `tests/test_round3.py`.
 
 ## 1. Cross-source conflict detection (`app/conflicts.py`, page `/conflicts`)
@@ -28,7 +30,7 @@ own words, only when every claim they concern is visible to the reader.
 A reviewer can preview any role's exact view. Other roles cannot ask to see a different role.
 
 ## Testing
-215 tests pass. Each rule was checked by deliberately breaking it in a scratch copy
+354 tests pass across the project (SQLite and PostgreSQL), including these features. Each rule was checked by deliberately breaking it in a scratch copy
 (ignoring rejected claims, leaking hidden conflict partners, showing partial answers,
 disabling redaction, weakening a role's policy, letting viewers preview, ignoring clearance on
 questions, overwriting answers, asking about GitHub-only items). Two survived at first

@@ -53,10 +53,10 @@ assistant; see `docs/DISCLOSURES.md`. All demo data is synthetic.
 |---|---|---|
 | React front end | Server-rendered pages (Jinja2, no JavaScript) | Solo build; smaller attack surface; every access check stays on the server |
 | LLM-led extraction | Rule-based extractor plus an LLM extractor behind one interface | No API key was available at build time; the rule-based path works offline and is fully tested |
-| Conflict detection, gap checklist, redaction views | Not built yet | Committed for Round 3 (section 8) |
+| Conflict detection, gap checklist, redaction views | Built after this submission was drafted (see `ROUND3.md`) | Committed for Round 3 (section 8) |
 
 ## 6. Testing evidence
-`pytest`: 182 tests pass, covering data model, access rules, demo data, ingestion, extraction,
+`pytest`: 354 tests pass today (182 at first drafting) on SQLite and PostgreSQL 16, plus a real-browser walkthrough; they cover covering data model, access rules, demo data, ingestion, extraction,
 verification, login, review actions, handover views, uploads and a full walkthrough from boot
 to acknowledgement. Each trust rule was also checked by mutation: the rule was deliberately
 broken in a scratch copy and the tests had to fail (for example, removing the CSRF check, the
@@ -69,11 +69,11 @@ adding a test.
 - The rule-based extractor reads structure only; it cannot read chat or spot cross-source conflicts.
 - Verification is a coarse text check. It cannot judge meaning, which is why a human approves every claim.
 - Secret masking is pattern based and may miss unusual formats.
-- Login throttling is in memory (single server process) and resets on restart.
-- The handover is one live view per project, not versioned snapshots.
+- Login lockout is stored in the database (per username, not per address).
+- Sign-offs are immutable numbered releases; editing a signed-off claim makes the release stale until re-signed.
 - The free hosting tier sleeps when idle and its free database may expire; the first request can be slow.
 
-## 8. Round 3 commitments
+## 8. Round 3 commitments (built, see `ROUND3.md`)
 1. Cross-source conflict detection: group claims by topic and value, flag disagreements between sources.
 2. "Questions Before I Leave": a checklist of missing owners, reasons and open items for the leaver.
 3. Redaction and multiple role views: field-level redaction inside a claim, with per-role previews.

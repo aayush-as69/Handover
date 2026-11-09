@@ -49,7 +49,11 @@ workplace material is used. The "API key" in the demo chat is invented.
 
 ## Round 3 features
 - No new libraries or services. Written with Claude's assistance; reviewed and tested by the team member.
-- Built on the `round3` branch; `main` remains the Round 2 submission until merged.
+- Merged into `main` on 9 Nov 2026. The Round 2 state is commit `b0cfeb4`.
 
 ## Hardening pass
-- No new libraries. Written with Claude's assistance; reviewed and tested by the team member.
+- New libraries: `alembic` (database migrations), `itsdangerous` (session signing). Test and CI
+  tools only: `playwright` (browser test), `pip-audit` (dependency check).
+- Written with Claude's assistance; reviewed and tested by the team member.
+- No LLM or other external service was called while building; model paths were tested with
+  simulated replies only.
