@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Releases{% endblock %}
+{% block body %}
+<p><a href="/handover">← Handover</a></p>
+<h1>Release history</h1>
+<p class="muted">Each sign-off is kept as it was. Claims are listed by id and version, so a release can never be quietly rewritten.</p>
+<table><thead><tr><th>Release</th><th>Signed off by</th><th>When (UTC)</th><th>Claims</th><th>Acknowledged by</th></tr></thead>
+<tbody>{% for r, n, acks in rows %}<tr><td>{{ r.number }}</td><td>{{ r.approved_by_name }}</td><td>{{ r.approved_at.strftime("%Y-%m-%d %H:%M") }}</td><td>{{ n }}</td><td>{{ acks }}</td></tr>
+{% else %}<tr><td colspan="5" class="muted">No releases yet.</td></tr>{% endfor %}</tbody></table>
+{% endblock %}

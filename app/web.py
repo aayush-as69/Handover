@@ -14,18 +14,22 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm.exc import StaleDataError
 
 from .access import chunk_visible, effective_sensitivity, filter_review, visible_in_review
 from .db import get_session
 from .enums import REVIEWER_ROLES, ChangeType, Confidence, ReviewStatus, Role
-from .models import Chunk, Claim, Project, User
-from .security import LoginThrottle, csrf_ok, new_csrf_token, verify_password
+from .models import Chunk, Claim, Evidence, Project, User
+from .security import (clear_login_failures, csrf_ok, login_blocked, new_csrf_token,
+                       record_login_failure, verify_password)
 from .verify import verify_claim
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
-throttle = LoginThrottle()
+CONFIDENCE_LABELS = {"verified": "quote-verified", "inferred": "inferred",
+                     "conflicting": "conflicting", "unsupported": "unsupported"}
+templates.env.globals["conf_label"] = lambda c: CONFIDENCE_LABELS[getattr(c, "value", c)]
 
 MAX_STATEMENT = 1000
 MAX_NOTE = 1000
@@ -85,6 +89,11 @@ def project_for(session: Session) -> Project:
     return project
 
 
+def _flash_stale(request: Request) -> None:
+    request.session["flash"] = ("Someone else changed this claim at the same moment, so your change "
+                                "was not saved. Review the latest version and try again.")
+
+
 def get_reviewable(session: Session, user: User, claim_id: int) -> Claim:
     claim = session.get(Claim, claim_id)
     # Same answer whether it is missing or above clearance: do not reveal that it exists.
@@ -117,16 +126,16 @@ def login(request: Request, username: str = Form(""), password: str = Form(""),
           csrf: str = Form(""), session: Session = Depends(get_session)):
     check_csrf(request, csrf)
     key = username.strip().lower()[:64]
-    if throttle.blocked(key):
+    if login_blocked(session, key):
         return render(request, "login.html", None, 429,
                       error="Too many failed attempts. Try again in a few minutes.")
     user = session.scalar(select(User).where(User.username == key))
     # Verify even when the user is unknown, so timing does not reveal which names exist.
     ok = verify_password(password, user.password_hash if user else "pbkdf2$1$00$00")
     if not (user and ok):
-        throttle.fail(key)
+        record_login_failure(session, key)
         return render(request, "login.html", None, 401, error="Wrong username or password.")
-    throttle.reset(key)
+    clear_login_failures(session, key)
     request.session.clear()                      # new session on login
     request.session["uid"] = user.id
     return RedirectResponse(landing(user), status_code=303)
@@ -142,12 +151,18 @@ def logout(request: Request, csrf: str = Form("")):
 # ------------------------------------------------------------------ review queue
 
 
+QUEUE_PAGE = 50
+
+
 @router.get("/review")
-def review_queue(request: Request, status: str = "open", confidence: str = "",
+def review_queue(request: Request, status: str = "open", confidence: str = "", page: int = 1,
                  user: User = Depends(require_reviewer), session: Session = Depends(get_session)):
     project = project_for(session)
-    claims = filter_review(user.role, session.scalars(
-        select(Claim).where(Claim.project_id == project.id).order_by(Claim.id)).all())
+    everything = session.scalars(
+        select(Claim).where(Claim.project_id == project.id).order_by(Claim.id)
+        .options(selectinload(Claim.evidence).selectinload(Evidence.chunk).selectinload(Chunk.source))
+    ).all()
+    claims = filter_review(user.role, everything)
     totals = {s.value: 0 for s in ReviewStatus}
     for c in claims:
         totals[c.review_status.value] += 1
@@ -165,10 +180,12 @@ def review_queue(request: Request, status: str = "open", confidence: str = "",
     order = {Confidence.conflicting: 0, Confidence.unsupported: 1, Confidence.inferred: 2,
              Confidence.verified: 3}
     shown.sort(key=lambda c: (order[c.confidence], c.id))
-    return render(request, "queue.html", user, project=project, claims=shown, totals=totals,
+    pages = max(1, -(-len(shown) // QUEUE_PAGE))
+    page = min(max(page, 1), pages)
+    window = shown[(page - 1) * QUEUE_PAGE: page * QUEUE_PAGE]
+    return render(request, "queue.html", user, project=project, claims=window, totals=totals,
                   status=status, confidence=confidence, sens=effective_sensitivity,
-                  hidden=len(session.scalars(select(Claim).where(Claim.project_id == project.id)).all())
-                  - len(claims))
+                  hidden=len(everything) - len(claims), page=page, pages=pages, matching=len(shown))
 
 
 @router.get("/review/claims/{claim_id}")
@@ -181,19 +198,35 @@ def claim_detail(claim_id: int, request: Request, user: User = Depends(require_r
     for v in claim.versions:
         history.append((v, word_diff(prev, v.statement) if prev is not None and prev != v.statement else None))
         prev = v.statement
-    return render(request, "claim.html", user, claim=claim, evidence=evidence,
+    from .conflicts import visible_members
+    from .enums import ConflictStatus
+    from .models import Conflict
+    all_claims = {c.id: c for c in session.scalars(select(Claim).where(Claim.project_id == claim.project_id))}
+    disputes = []
+    for cf in session.scalars(select(Conflict).where(Conflict.project_id == claim.project_id,
+                                                     Conflict.status != ConflictStatus.stale)):
+        if claim.id in cf.claim_ids:
+            others = [m for m in visible_members(user.role, cf, all_claims) if m.id != claim.id]
+            if others:
+                disputes.append((cf, others))
+    return render(request, "claim.html", user, claim=claim, evidence=evidence, disputes=disputes,
                   history=list(reversed(history)), sensitivity=effective_sensitivity(claim),
                   max_statement=MAX_STATEMENT)
 
 
 @router.post("/review/claims/{claim_id}/{action}")
 def claim_action(claim_id: int, action: str, request: Request, csrf: str = Form(""),
-                 note: str = Form(""), statement: str = Form(""),
+                 note: str = Form(""), statement: str = Form(""), version: str = Form(""),
                  user: User = Depends(require_reviewer), session: Session = Depends(get_session)):
     check_csrf(request, csrf)
     claim = get_reviewable(session, user, claim_id)
     note = note.strip()[:MAX_NOTE] or None
     who = user.display_name
+
+    if version.strip() != str(claim.version):
+        request.session["flash"] = ("This claim was changed by someone else while you were looking at "
+                                    "it. Review the latest version and try again.")
+        return RedirectResponse(f"/review/claims/{claim.id}", status_code=303)
 
     def back(msg: str):
         request.session["flash"] = msg
@@ -202,8 +235,9 @@ def claim_action(claim_id: int, action: str, request: Request, csrf: str = Form(
     if action == "approve":
         if claim.review_status == ReviewStatus.approved:
             return back("Already approved.")
-        if claim.confidence != Confidence.verified and not note:
-            return back("This claim is not fully verified. Add a note saying why you accept it.")
+        from .semantic import has_doubt
+        if (claim.confidence != Confidence.verified or has_doubt(claim)) and not note:
+            return back("This claim is not fully verified, or a model doubted it. Add a note saying why you accept it.")
         claim.approve(who, note)
         msg = "Approved."
     elif action == "reject":
@@ -230,7 +264,12 @@ def claim_action(claim_id: int, action: str, request: Request, csrf: str = Form(
         msg = "Saved. The edited claim must be approved again, and its confidence was re-checked."
     else:
         raise HTTPException(status_code=404, detail="Unknown action.")
-    session.commit()
+    try:
+        session.commit()
+    except StaleDataError:
+        session.rollback()
+        _flash_stale(request)
+        return RedirectResponse(f"/review/claims/{claim.id}", status_code=303)
     return back(msg)
 
 

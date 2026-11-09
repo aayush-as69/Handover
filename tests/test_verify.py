@@ -117,7 +117,7 @@ def test_a_contradicting_quote_that_cannot_be_found_does_not_count(session, proj
     c = claim_with(session, project, "PostgreSQL is the only datastore",
                    "PostgreSQL is the only datastore", "PostgreSQL is the only datastore",
                    extra=[("a quote nobody ever wrote", Stance.contradicts)])
-    assert verify_claim(c) == Confidence.verified
+    assert verify_claim(c) == Confidence.inferred            # any missing quote blocks "verified"
     assert "1 other quote(s) could not be found" in c.verification_note
 
 
@@ -144,7 +144,9 @@ def test_verifying_changes_the_label_but_never_the_review_status(session, projec
     verify_claim(c)
     verify_claim(c)                                  # safe to repeat
     assert c.review_status == ReviewStatus.approved and c.confidence == Confidence.verified
-    c.evidence[0].snippet = "this was tampered with later"
+    # stored evidence cannot be rewritten (see test_integrity); a quote that no longer matches
+    # its source is still caught if the source text itself ever differs
+    c.evidence[0].chunk.text = "the source now says something else entirely"
     assert verify_claim(c) == Confidence.unsupported
     assert c.review_status == ReviewStatus.approved  # a human still decides what to do about it
 
@@ -203,3 +205,43 @@ def test_a_model_cannot_pass_off_invented_quotes_as_evidence(session, demo_proje
     assert by_statement["The team picked MongoDB for speed"].confidence == Confidence.unsupported
     # nothing is approved automatically, whatever the label
     assert {c.review_status for c in by_statement.values()} == {ReviewStatus.generated}
+
+
+def test_a_claim_with_too_few_distinctive_terms_cannot_be_verified(session, project):
+    c = claim_with(session, project, "Redis", "Seat locks will go in Redis, Redis it is",
+                   "Seat locks will go in Redis, Redis it is")
+    assert verify_claim(c) == Confidence.inferred
+    assert "too few distinctive terms" in c.verification_note
+
+
+def test_coverage_threshold_is_sixty_percent(session, project):
+    # 3 of 5 key terms in the quote = 60%: verified; 2 of 5 = 40%: inferred
+    ok = claim_with(session, project, "Riya Kabir Meera sandbox payments",
+                    "Riya Kabir Meera discussed lunch", "Riya Kabir Meera discussed lunch")
+    assert verify_claim(ok) == Confidence.verified
+    low = claim_with(session, project, "Riya Kabir Meera sandbox payments",
+                     "Riya Kabir discussed lunch", "Riya Kabir discussed lunch")
+    assert verify_claim(low) == Confidence.inferred
+
+
+def test_one_valid_and_one_invalid_supporting_quote_is_not_verified(session, project):
+    c = claim_with(session, project, "Seat locks will go in Redis", "Seat locks will go in Redis",
+                   "Seat locks will go in Redis",
+                   extra=[("a quote that was never written", Stance.supports)])
+    assert verify_claim(c) == Confidence.inferred
+    assert [e.snippet_verified for e in c.evidence] == [True, False]
+    assert "any quote it cites is missing" in c.verification_note
+
+
+def test_rule_built_claims_with_a_missing_quote_are_not_verified_either(session, project):
+    c = claim_with(session, project, "Task T7 (QR check-in at the venue) has no owner",
+                   "T7: QR check-in at the venue | owner: UNASSIGNED",
+                   "T7: QR check-in at the venue | owner: UNASSIGNED",
+                   extractor="rules-v1", extra=[("not in the source at all", Stance.supports)])
+    assert verify_claim(c) == Confidence.inferred
+
+
+def test_all_quotes_valid_stays_verified(session, project):
+    c = claim_with(session, project, "Seat locks will go in Redis", "Seat locks will go in Redis today",
+                   "Seat locks will go in Redis", extra=[("go in Redis today", Stance.supports)])
+    assert verify_claim(c) == Confidence.verified

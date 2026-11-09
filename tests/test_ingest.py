@@ -162,7 +162,7 @@ def test_task_file_errors_are_clear():
 
 def test_snapshot_becomes_dated_chunks_in_time_order():
     res = parse_github(read("github_snapshot.json"), "snap")
-    assert len(res.chunks) == 12 + 6 + 4
+    assert len(res.chunks) == 12 + 6 + 4 + 4     # PR #10 adds files, a diff, a review and a comment
     dates = [c.occurred_at for c in res.chunks]
     assert dates == sorted(dates)
     mongo = next(c for c in res.chunks if c.locator == "commit 7c2e8d1")

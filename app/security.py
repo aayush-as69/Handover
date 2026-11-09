@@ -57,3 +57,34 @@ class LoginThrottle:
 
     def reset(self, key: str) -> None:
         self._fails.pop(key, None)
+
+
+# ---------------------------------------------------------------- lockout kept in the database
+
+from datetime import timedelta  # noqa: E402
+
+from sqlalchemy import delete, func, select  # noqa: E402
+from sqlalchemy.orm import Session  # noqa: E402
+
+from .models import LoginAttempt, utcnow  # noqa: E402
+
+MAX_FAILURES = 5
+WINDOW = timedelta(minutes=5)
+
+
+def login_blocked(session: Session, key: str) -> bool:
+    since = utcnow() - WINDOW
+    n = session.scalar(select(func.count()).select_from(LoginAttempt).where(
+        LoginAttempt.key == key, LoginAttempt.at >= since))
+    return (n or 0) >= MAX_FAILURES
+
+
+def record_login_failure(session: Session, key: str) -> None:
+    session.execute(delete(LoginAttempt).where(LoginAttempt.at < utcnow() - WINDOW))
+    session.add(LoginAttempt(key=key))
+    session.commit()
+
+
+def clear_login_failures(session: Session, key: str) -> None:
+    session.execute(delete(LoginAttempt).where(LoginAttempt.key == key))
+    session.commit()

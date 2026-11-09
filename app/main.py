@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import os
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -11,8 +11,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from . import __version__
+from .config import Settings
 from .db import init_db
 
+log = logging.getLogger("handover")
 STATIC = Path(__file__).parent / "static"
 
 _HEADERS = {
@@ -25,22 +27,29 @@ _HEADERS = {
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
+    settings = app.state.cfg
     init_db()
-    password = os.environ.get("DEMO_PASSWORD")
-    if os.environ.get("DEMO_MODE", "").lower() in ("1", "true", "yes") and password:
+    if settings.demo_mode and settings.demo_password:
         from .db import SessionLocal
         from .demo import bootstrap_demo
         with SessionLocal() as session:
-            bootstrap_demo(session, password)
+            bootstrap_demo(session, settings.demo_password)
     yield
 
 
-def create_app(secret_key: str | None = None) -> FastAPI:
+SESSION_HOURS = 8
+
+
+def create_app(secret_key: str | None = None, config: Settings | None = None) -> FastAPI:
     from .handover_web import router as handover_router
+    from .round3_web import router as round3_router
     from .web import router
 
-    key = secret_key or os.environ.get("SECRET_KEY")
+    cfg = config or Settings()
+    for w in cfg.validate():                       # production problems raise ConfigError here
+        log.warning(w)
+    key = secret_key or cfg.secret_key
     if not key:
         # No fixed key: sessions simply end when the server restarts. Safe, never a default.
         import secrets
@@ -51,22 +60,32 @@ def create_app(secret_key: str | None = None) -> FastAPI:
         description="Evidence-linked, permission-aware knowledge handover.",
         version=__version__,
         lifespan=lifespan,
+        # The interactive API docs and schema are for development only.
+        docs_url=None if cfg.production else "/docs",
+        redoc_url=None,
+        openapi_url=None if cfg.production else "/openapi.json",
     )
+    app.state.cfg = cfg
 
     @app.middleware("http")
     async def security_headers(request, call_next):
         response = await call_next(request)
         for k, v in _HEADERS.items():
             response.headers.setdefault(k, v)
+        if request.url.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "public, max-age=3600"
+        if cfg.cookie_secure:
+            response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
         return response
 
     app.add_middleware(
-        SessionMiddleware, secret_key=key, same_site="lax", max_age=8 * 3600,
-        https_only=os.environ.get("COOKIE_SECURE", "").lower() in ("1", "true", "yes"),
+        SessionMiddleware, secret_key=key, session_cookie="handover_session", same_site="lax",
+        max_age=SESSION_HOURS * 3600, https_only=cfg.cookie_secure,
     )
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
     app.include_router(router)
     app.include_router(handover_router)
+    app.include_router(round3_router)
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request, exc):

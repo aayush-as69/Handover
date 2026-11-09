@@ -5,7 +5,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,sans-
 a{color:var(--acc)}
 .top{display:flex;gap:1rem;align-items:center;padding:.7rem 1rem;border-bottom:1px solid var(--line);background:var(--card)}
 .brand{font-weight:700;text-decoration:none;color:var(--fg)}
-.top nav{flex:1}.top nav a{margin-right:1rem}
+.top nav{flex:1;display:flex;gap:1rem;flex-wrap:wrap}
 .who{display:flex;gap:.6rem;align-items:center;margin:0}
 main{max-width:980px;margin:0 auto;padding:1rem}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem 1.2rem;margin:.8rem 0}
@@ -39,3 +39,4 @@ th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--line);ve
 mark{background:#ffd54a;color:#000}
 hr{border:0;border-top:1px solid var(--line);margin:1rem 0}
 .statement-sm{font-size:1.05rem;margin:.5rem 0}
+.warnbox{border:1px solid var(--warn);border-radius:6px;padding:.4rem .7rem;color:var(--warn);margin:.4rem 0}

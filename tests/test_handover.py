@@ -1,3 +1,4 @@
+import html
 import io
 
 import pytest
@@ -43,7 +44,7 @@ def test_non_reviewers_see_nothing_until_signoff(env):
     approve_claims(app, Session, ids)
     k = login(app, "kabir")
     page = k.get("/handover")
-    assert "No handover has been shared" in page.text
+    assert "No handover is available to you" in page.text
     with Session() as s:
         assert not any(s.get(Claim, i).statement in page.text for i in ids)
     assert 'class="evidence' not in page.text
@@ -117,9 +118,13 @@ def test_rejecting_or_editing_a_claim_removes_it_at_once(env):
     with Session() as s:
         s1, s2 = (s.get(Claim, i).statement for i in ids)
     k = login(app, "kabir")
-    assert s1 in k.get("/handover").text.replace("&#39;", "'") or True
+    page = k.get("/handover").text
+    assert html.escape(s1) in page and html.escape(s2) in page
     act(m, ids[0], "reject")
     act(m, ids[1], "edit", statement="A completely different statement now")
+    page = k.get("/handover").text
+    assert html.escape(s1) not in page and html.escape(s2) not in page
+    assert "A completely different statement now" not in page
     with Session() as s:
         proj = s.scalar(select(Project))
         viewer = s.scalar(select(User).where(User.username == "kabir"))
@@ -131,9 +136,9 @@ def test_withdraw_hides_it_again(env):
     m = approve_claims(app, Session, public_ids(Session)[:2])
     m.post("/handover/approve", data={"csrf": token(m, "/handover")})
     k = login(app, "kabir")
-    assert "No handover has been shared" not in k.get("/handover").text
+    assert "No handover is available to you" not in k.get("/handover").text
     m.post("/handover/withdraw", data={"csrf": token(m, "/handover")})
-    assert "No handover has been shared" in k.get("/handover").text
+    assert "No handover is available to you" in k.get("/handover").text
 
 
 def test_handover_actions_need_csrf(env):

@@ -72,12 +72,16 @@ def bootstrap_demo(session: Session, password: str) -> None:
 
     Nothing is approved here. A reviewer still has to do that.
     """
+    from .conflicts import detect_conflicts
     from .handover import get_or_create_handover
+    from .questions import generate_questions
     from .models import Claim
 
     project = load_demo_project(session, password=password)
     if session.scalar(select(Claim.id).where(Claim.project_id == project.id)) is None:
         run_extraction(session, project, RuleExtractor())
+    detect_conflicts(session, project)
+    generate_questions(session, project)
     get_or_create_handover(session, project)
     session.commit()
 
@@ -103,8 +107,11 @@ def main() -> None:
 
         if args.extract:
             try:
-                extractor = RuleExtractor() if args.extract == "rules" else llm_from_env()
-                report = run_extraction(session, project, extractor)
+                if args.extract == "rules":
+                    report = run_extraction(session, project, RuleExtractor())
+                else:
+                    with llm_from_env() as extractor:
+                        report = run_extraction(session, project, extractor)
             except ExtractionError as exc:
                 raise SystemExit(f"Extraction failed: {exc}")
             session.commit()

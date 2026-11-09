@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Conflicts{% endblock %}
+{% block body %}
+<h1>Conflicts between sources</h1>
+<p class="muted">Found by rule, not by opinion: claims that say different things about the same topic. A conflict never changes a claim by itself. Decide which is right, then edit or reject the others.</p>
+<form method="post" action="/conflicts/detect"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Check again</button></form>
+{% for cf, members in rows %}
+<section class="card">
+  <div class="meta"><span class="pill {{ 'conflicting' if cf.status.value == 'open' else 'verified' }}">{{ cf.status.value }}</span><strong>{{ cf.topic }}</strong></div>
+  <p>{{ cf.reason }}</p>
+  <ul>{% for c in members %}<li><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a> <span class="muted">({{ c.review_status.value }})</span></li>{% endfor %}</ul>
+  {% if cf.status.value == "resolved" %}
+    <p class="note">Resolved by {{ cf.resolved_by }}: “{{ cf.resolution }}”</p>
+    <form method="post" action="/conflicts/{{ cf.id }}/reopen"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Reopen</button></form>
+  {% else %}
+  <form method="post" action="/conflicts/{{ cf.id }}/resolve" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>How was it resolved? <input name="note" maxlength="1000" required></label>
+    <button class="primary">Mark resolved</button>
+  </form>
+  {% endif %}
+</section>
+{% else %}<p class="muted">No conflicts found.</p>{% endfor %}
+{% endblock %}

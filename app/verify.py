@@ -1,6 +1,8 @@
 """Verification pass: decide how far each claim can be trusted, from mechanical checks.
 
-Labels (never set by a model):
+Labels (never set by a model). "verified" is shorthand for QUOTE-verified: the evidence exists
+and is consistent with the claim. It does NOT mean the claim is true, current or complete;
+that is what the human approval is for.
   verified     At least one supporting quote was found WORD FOR WORD in its source, and the
                claim's key terms, numbers and negation agree with the quotes. (Claims built by
                the rule-based extractor are derived mechanically from the quote, so the quote
@@ -17,6 +19,7 @@ approves every claim.
 
 from __future__ import annotations
 
+import json
 import re
 from collections import Counter
 from dataclasses import dataclass, field
@@ -26,10 +29,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .enums import ChangeType, Confidence, Stance
-from .models import Claim, Project, utcnow
+from .models import AuditEvent, Claim, Project, utcnow
 
 MIN_SNIPPET_CHARS = 10
-SUPPORT_THRESHOLD = 0.5
+SUPPORT_THRESHOLD = 0.6
+MIN_KEY_TERMS = 2
 
 _STOP = set(
     """a an the and or but if then than so as of in on at to for from by with about into over
@@ -154,6 +158,8 @@ def verify_claim(claim: Claim) -> Confidence:
             t for t in claim_terms - quote_terms if any(c.isdigit() for c in t)
         )
         problems = []
+        if len(claim_terms) < MIN_KEY_TERMS:
+            problems.append("the claim has too few distinctive terms to compare with the quotes")
         if score < SUPPORT_THRESHOLD:
             problems.append(f"only {score:.0%} of the claim's key terms appear in the quotes")
         if missing_numbers:
@@ -168,10 +174,21 @@ def verify_claim(claim: Claim) -> Confidence:
 
     if failed and label != Confidence.unsupported:
         note += f" {failed} other quote(s) could not be found."
+        if label == Confidence.verified:
+            # A claim is only quote-verified if EVERY quote it cites checks out. One invented
+            # quote means the author cannot be trusted to have cited carefully.
+            label = Confidence.inferred
+            note += " A claim cannot be verified while any quote it cites is missing from the sources."
+    changed = claim.verified_at is None or claim.confidence != label or claim.verification_note != note
     claim.confidence = label
     claim.support_score = score
     claim.verification_note = note
     claim.verified_at = utcnow()
+    if changed:     # an unchanged re-check adds no noise; every change is on the record
+        claim.audit_events.append(AuditEvent(
+            actor="verifier", action="verify",
+            detail=json.dumps({"confidence": label.value, "note": note, "score": score,
+                               "evidence": json.loads(claim.evidence_snapshot())})))
     return label
 
 

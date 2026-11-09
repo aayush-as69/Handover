@@ -34,7 +34,10 @@ Round 2, in development. Working so far:
   role may see, grouped as first week, decisions, risks, dependencies and people. The
   incoming person acknowledges it. Admins can upload sources and run extraction in the browser.
 
-Not built yet: deployment and the Round 3 improvements. See the roadmap below.
+- Round 3 (branch `round3`): conflict detection across sources, a "Questions Before I Leave"
+  checklist, and field-level redaction with a "preview as another role" view
+
+Not built yet: nothing planned beyond Round 3. See the roadmap below.
 
 ## Trust rules the code enforces
 1. A claim is `unsupported` until the verification pass proves otherwise.
@@ -53,6 +56,8 @@ Not built yet: deployment and the Round 3 improvements. See the roadmap below.
    claims without valid evidence are dropped, and source text is fenced inside the prompt as
    data, never instructions.
 9. Draft claims start as `generated`. The pipeline never approves anything: a human does.
+10. Confidence labels come from mechanical checks, never from a model's opinion. An invented
+    or paraphrased quote is labelled `unsupported`, not quietly accepted.
 11. The review queue and every claim action re-check role and clearance on the server. A claim
     above a reviewer's clearance returns "not found". Approving a claim that is not `verified`
     needs a written reason, and editing a claim re-runs the verification check.
@@ -61,13 +66,37 @@ Not built yet: deployment and the Round 3 improvements. See the roadmap below.
     view at once. A person never learns how many claims their role hides.
 13. Only admins can add sources. Uploads are size-limited, must be text, are masked for
     secrets, and the file name is reduced to a plain name.
-10. Confidence labels come from mechanical checks, never from a model's opinion. An invented
-    or paraphrased quote is labelled `unsupported`, not quietly accepted.
+14. A conflict is a prompt, never an edit: it does not change a claim's status or confidence,
+    and a warning on the handover only names conflicting claims that reader may already see.
+15. A leaver's answer appears in the handover only when every claim it concerns is visible
+    to that reader, and is labelled as their own words, not a verified fact.
+16. Inside visible claims, emails, phone numbers and (for the most restricted role) money
+    amounts are hidden by role. Reviewers can preview each role's exact view.
+17. Releases are immutable. A sign-off records which claims at which versions were approved,
+    by whom and when. A claim edited, rejected or reopened afterwards drops out of the shared
+    handover until the next release (fail closed). Acknowledgements belong to one release.
+18. History is append-only. Claim versions (with the full state after each change),
+    verification results, releases and quoted evidence cannot be updated or deleted; the
+    database layer refuses it.
+19. One handover per project, one copy of identical source content, one acknowledgement per
+    person per release: all enforced by unique constraints, and creation, upload and
+    acknowledgement handle simultaneous requests by keeping the winner.
+20. Failed sign-ins are counted in the database, so lockout survives restarts and several
+    server processes.
+21. Model replies are validated for shape and type (a chunk id must be a real integer, text
+    must be text, sizes are bounded, control characters stripped). The optional model
+    "second opinion" can only add a warning that makes approval need a written reason. It
+    never changes a label, and never sees confidential claims.
+22. A claim cannot be `verified` while any quote it cites is missing from the sources: one
+    valid quote beside one invented quote makes it `inferred`, with a note saying why.
+23. If a signed-off claim is later edited, rejected or reopened, the release is stale:
+    non-reviewers see nothing and cannot acknowledge until a reviewer signs off again as a new
+    release. Approving extra claims does not invalidate a release.
 
 ## Confidence labels
 | Label | Meaning |
 |---|---|
-| verified | A supporting quote was found word for word in its source, and the claim's key terms, numbers and negation agree with it. |
+| verified (shown as "quote-verified") | A supporting quote was found word for word in its source, and the claim's key terms (at least two, at least 60%), numbers and negation agree with it. It does **not** mean the claim is true, current or complete. A person decides that. |
 | inferred | Quotes were found, but the claim says more than they do (extra terms, numbers or dates, or a flipped negation). A human must judge it. |
 | conflicting | A quote found in the sources contradicts the claim. |
 | unsupported | No quote could be found in any source, or there is no evidence. |
@@ -94,23 +123,37 @@ python -m app.demo --extract llm
 ```
 Keys are read from the environment only and are never stored or logged.
 
-## Known limitations (so far)
-- Secret masking is pattern based and leans towards masking too much. It will not catch every
-  possible credential format.
-- Chat dates are read as day/month/year unless the file clearly uses month/day/year.
-- Live GitHub reading covers public repositories only, up to 100 commits, issues and pull
-  requests, and is limited by GitHub's unauthenticated rate limit.
-- The handover is one per project and not versioned: it always shows what is approved now. Login throttling is kept in memory, so it resets on restart.
-- The rule-based extractor reads structure only. It cannot understand chat, spot conflicts
-  between sources or find recurring problems; those need the LLM extractor.
-- The LLM extractor is tested against simulated provider responses. Its quality on a live
-  model has to be checked by running it with a real key and reviewing the output.
-- Confidential chunks are not sent to a remote model by default, so no claims are generated
-  from them in LLM mode.
-- Verification is a coarse text check. It catches invented quotes, drifting paraphrase,
-  made-up numbers and flipped negation. It cannot judge meaning, which is why a human approves
-  every claim. Detecting conflicts between claims from different sources, and finding missing
-  reasons and owners, are separate features that are not built yet.
+## Known limitations
+- **Verification is a text check, not understanding.** It catches invented quotes, drifting
+  paraphrase, made-up numbers and flipped negation. It cannot judge meaning, so a human approves
+  every claim and the label reads "quote-verified". A cited quote that is missing downgrades the
+  whole claim.
+- **Sign-off is conservative.** Any edit, rejection or reopening of a signed-off claim hides
+  the handover from non-reviewers until a new release is signed. Safe, but it can interrupt
+  readers over a small fix.
+- **LLM paths were never run live.** The LLM extractor and the semantic second opinion are tested
+  only against simulated provider replies. Run `python -m app.demo --extract llm` with a real
+  key and review the output before trusting it.
+- **Deployment is configured but unverified.** `render.yaml` and the production settings are
+  tested locally (SQLite and PostgreSQL), not on Render itself.
+- **Migrations exist (Alembic) but are minimal.** One initial migration; a database created
+  without Alembic is refused rather than guessed at. Back up before upgrading.
+- **Login lockout is persistent** (database backed, 5 failures in 5 minutes per username). It is
+  per username, not per address.
+- **GitHub:** public repositories only; up to 100 items per list across at most 5 pages; files,
+  diffs and reviews for the newest 5 pull requests and commits; diffs cut near 1,100
+  characters; subject to GitHub's unauthenticated rate limit.
+- **Conflict detection is rule based:** a fixed list of technology categories plus any
+  `topic`/`value` an LLM fills in. It misses others and can flag a mere mention of a related tool.
+- **Checklist questions are simple text rules**; expect noise, reviewers can dismiss them.
+- **Redaction and secret masking are pattern based** and lean towards hiding too much. Neither
+  catches every format.
+- **Chat dates** are read as day/month/year unless the file clearly uses month/day/year.
+- **The rule-based extractor reads structure only.** Chat meaning, cross-source conflicts and
+  recurring problems need the LLM extractor.
+- **Confidential chunks** are not sent to a remote model by default, so LLM mode makes no
+  claims from them.
+- **One project per deployment.** The review queue loads in full (no pagination yet).
 
 ## Roadmap
 1. Foundation: data model, access rules, demo data (done)

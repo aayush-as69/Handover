@@ -222,6 +222,38 @@ def _iso(value: str | None) -> Optional[datetime]:
         return None
 
 
+MAX_DIFFS_PER_ITEM = 10
+_PATCH_LIMIT = 1100
+
+
+def _file_entries(raw, warnings: list[str], where: str) -> list[dict]:
+    """Normalise a files list: plain names or {filename, additions, deletions, patch} objects."""
+    out = []
+    for f in raw if isinstance(raw, list) else []:
+        if isinstance(f, str) and f.strip():
+            out.append({"filename": f.strip()})
+        elif isinstance(f, dict) and isinstance(f.get("filename"), str) and f["filename"].strip():
+            out.append(f)
+        else:
+            warnings.append(f"{where}: a file entry was not understood and was skipped")
+    return out
+
+
+def _file_label(f: dict) -> str:
+    a, d = f.get("additions"), f.get("deletions")
+    counts = f" (+{a}/-{d})" if isinstance(a, int) and isinstance(d, int) else ""
+    return f"{f['filename']}{counts}"
+
+
+def _diff_chunks(files: list[dict], label: str, when, author) -> list:
+    out = []
+    for f in [f for f in files if isinstance(f.get("patch"), str) and f["patch"].strip()][:MAX_DIFFS_PER_ITEM]:
+        patch = f["patch"][:_PATCH_LIMIT] + (" …[diff cut]" if len(f["patch"]) > _PATCH_LIMIT else "")
+        out.append((when, 3, ParsedChunk(
+            f"diff of {f['filename']} in {label}:\n{patch}", f"{label} › diff {f['filename']}", author, when)))
+    return out
+
+
 def parse_github(text: str, name: str) -> ParseResult:
     try:
         data = json.loads(text)
@@ -232,14 +264,17 @@ def parse_github(text: str, name: str) -> ParseResult:
     ):
         raise IngestError("the GitHub file needs at least one of: commits, issues, pulls")
 
+    warnings: list[str] = [w for w in data.get("warnings") or [] if isinstance(w, str)][:5]
     items: list[tuple[Optional[datetime], int, ParsedChunk]] = []
     for c in data.get("commits") or []:
-        files = ", ".join(c.get("files") or [])
-        body = f"commit {c.get('sha', '?')} by {c.get('author', 'unknown')}: {c.get('message', '')}"
+        sha = c.get("sha", "?")
+        files = _file_entries(c.get("files"), warnings, f"commit {sha}")
+        body = f"commit {sha} by {c.get('author', 'unknown')}: {c.get('message', '')}"
         if files:
-            body += f". Files: {files}"
+            body += ". Files: " + ", ".join(_file_label(f) for f in files)
         when = _iso(c.get("date"))
-        items.append((when, 0, ParsedChunk(body, f"commit {c.get('sha', '?')}", c.get("author"), when)))
+        items.append((when, 0, ParsedChunk(body, f"commit {sha}", c.get("author"), when)))
+        items += _diff_chunks(files, f"commit {sha}", when, c.get("author"))
     for i in data.get("issues") or []:
         assignees = ", ".join(i.get("assignees") or []) or "none"
         body = (
@@ -249,17 +284,45 @@ def parse_github(text: str, name: str) -> ParseResult:
         when = _iso(i.get("created"))
         items.append((when, 1, ParsedChunk(body, f"issue #{i.get('number')}", i.get("author"), when)))
     for p in data.get("pulls") or []:
+        num = p.get("number")
+        label = f"pull request #{num}"
         body = (
-            f"pull request #{p.get('number')} [{p.get('state', '?')}] {p.get('title', '')}: "
+            f"pull request #{num} [{p.get('state', '?')}] {p.get('title', '')}: "
             f"{p.get('body', '')} Opened by {p.get('author', 'unknown')}."
         )
         when = _iso(p.get("created"))
-        items.append((when, 2, ParsedChunk(body, f"pull request #{p.get('number')}", p.get("author"), when)))
+        items.append((when, 2, ParsedChunk(body, label, p.get("author"), when)))
+        files = _file_entries(p.get("files"), warnings, label)
+        if files:
+            listing = ", ".join(_file_label(f) for f in files[:30])
+            items.append((when, 3, ParsedChunk(
+                f"{label} changes {len(files)} file(s): {listing}", f"{label} › files",
+                p.get("author"), when)))
+            items += _diff_chunks(files, label, when, p.get("author"))
+        for r in p.get("reviews") or []:
+            if not isinstance(r, dict) or not isinstance(r.get("body", ""), str):
+                warnings.append(f"{label}: a review was not understood and was skipped")
+                continue
+            who, state = r.get("author", "unknown"), str(r.get("state", "COMMENTED")).upper()
+            if not (r.get("body") or "").strip() and state == "COMMENTED":
+                continue
+            rwhen = _iso(r.get("submitted")) or when
+            items.append((rwhen, 4, ParsedChunk(
+                f"review on {label} by {who} [{state}]: {(r.get('body') or '')[:MAX_CHUNK_CHARS - 200]}",
+                f"{label} › review by {who}", who, rwhen)))
+        for cm in p.get("comments") or []:
+            if not isinstance(cm, dict) or not isinstance(cm.get("body"), str) or not cm["body"].strip():
+                continue
+            who, path = cm.get("author", "unknown"), cm.get("path", "a file")
+            cwhen = _iso(cm.get("created")) or when
+            items.append((cwhen, 5, ParsedChunk(
+                f"comment on {path} in {label} by {who}: {cm['body'][:MAX_CHUNK_CHARS - 200]}",
+                f"{label} › comment on {path}", who, cwhen)))
 
     if not items:
         raise IngestError("the GitHub file contains no commits, issues or pull requests")
     items.sort(key=lambda t: (t[0] or datetime.min, t[1]))
-    return ParseResult([c for _, _, c in items], [])
+    return ParseResult([c for _, _, c in items], warnings)
 
 
 PARSERS: dict[SourceKind, Callable[[str, str], ParseResult]] = {

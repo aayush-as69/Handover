@@ -12,6 +12,7 @@
   {% if user %}
   <nav>
     {% if user.role.value in ("admin", "approver") %}<a href="/review">Review queue</a>{% endif %}
+    {% if user.role.value in ("admin", "approver") %}<a href="/conflicts">Conflicts</a><a href="/questions">Questions</a>{% endif %}
     <a href="/handover">Handover</a>
     {% if user.role.value == "admin" %}<a href="/admin/sources">Sources</a>{% endif %}
   </nav>

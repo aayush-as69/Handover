@@ -8,25 +8,59 @@ from __future__ import annotations
 
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+import re
+
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
 
 from .enums import ClaimType, Confidence, ReviewStatus, Sensitivity, Stance
 
 
+_CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+MAX_CLAIMS_PER_REPLY = 200
+
+
+def _clean(v: str) -> str:
+    return _CONTROL.sub("", v).strip()
+
+
 class EvidenceIn(BaseModel):
-    chunk_id: int
-    snippet: str = Field(min_length=1, description="Exact text copied from the chunk")
+    """Model output is untrusted: exact types, bounded sizes, no control characters."""
+
+    chunk_id: StrictInt                      # a JSON string, float or boolean is rejected
+    snippet: StrictStr = Field(min_length=1, max_length=2000,
+                               description="Exact text copied from the chunk")
     stance: Stance = Stance.supports
+
+    @field_validator("snippet")
+    @classmethod
+    def _snippet(cls, v: str) -> str:
+        v = _clean(v)
+        if not v:
+            raise ValueError("snippet is empty")
+        return v
 
 
 class ExtractedClaim(BaseModel):
-    statement: str = Field(min_length=3)
+    statement: StrictStr = Field(min_length=3, max_length=1000)
     type: ClaimType
-    topic: Optional[str] = None
-    value: Optional[str] = None
-    owner: Optional[str] = None
+    topic: Optional[StrictStr] = Field(default=None, max_length=120)
+    value: Optional[StrictStr] = Field(default=None, max_length=200)
+    owner: Optional[StrictStr] = Field(default=None, max_length=128)
     # A claim with no valid evidence is dropped by the extraction pipeline, never stored.
-    evidence: list[EvidenceIn] = Field(default_factory=list)
+    evidence: list[EvidenceIn] = Field(default_factory=list, max_length=10)
+
+    @field_validator("statement")
+    @classmethod
+    def _statement(cls, v: str) -> str:
+        v = " ".join(_clean(v).split())
+        if len(v) < 3:
+            raise ValueError("statement is empty")
+        return v
+
+    @field_validator("topic", "value", "owner")
+    @classmethod
+    def _short(cls, v):
+        return (_clean(v) or None) if v is not None else None
 
 
 class ExtractionResult(BaseModel):

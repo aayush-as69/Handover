@@ -46,3 +46,10 @@ workplace material is used. The "API key" in the demo chat is invented.
 - New library: `psycopg` (PostgreSQL driver). Deployment is described in `render.yaml`.
 - The hosted demo uses synthetic data only and the demo password is set in the host's
   dashboard, not in this repository.
+
+## Round 3 features
+- No new libraries or services. Written with Claude's assistance; reviewed and tested by the team member.
+- Built on the `round3` branch; `main` remains the Round 2 submission until merged.
+
+## Hardening pass
+- No new libraries. Written with Claude's assistance; reviewed and tested by the team member.

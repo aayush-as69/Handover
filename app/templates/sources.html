@@ -20,6 +20,7 @@
     <button name="engine" value="rules">Run rule-based extraction</button>
     {% if llm_ready %}<button name="engine" value="llm">Run LLM extraction</button>{% endif %}
   </form>
+  {% if llm_ready %}<form method="post" action="/admin/sources/semantic"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Run model second opinion (advisory)</button></form>{% endif %}
   {% if not llm_ready %}<p class="muted">LLM extraction is off: no LLM_BASE_URL, LLM_API_KEY and LLM_MODEL are set on the server.</p>{% endif %}
   <p class="muted">Draft claims are never approved automatically.</p>
 </section>

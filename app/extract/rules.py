@@ -34,6 +34,7 @@ _TASK = re.compile(
 _ISSUE = re.compile(r"^issue #(\d+) \[(\w+)\] (.*?): ", re.S)
 _PULL = re.compile(r"^pull request #(\d+) \[(\w+)\] (.*?): ", re.S)
 _COMMIT = re.compile(r"^commit (\w+) by (.*?): (.*?)(?:\. Files: .*)?$", re.S)
+_REVIEW = re.compile(r"^review on pull request #(\d+) by (.*?) \[CHANGES_REQUESTED\]: (.+)$", re.S)
 _UNFINISHED = re.compile(r"\b(temp|temporary|wip|hack|fixme|workaround|prototype|not wired)\b", re.I)
 
 
@@ -117,6 +118,11 @@ def _from_github(chunk: ChunkView) -> list[ExtractedClaim]:
         return [ExtractedClaim(
             statement=f"Pull request #{m[1]} is still open: {m[3]}", type=ClaimType.next_action,
             evidence=_ev(chunk, text[: m.end() - 2]),
+        )]
+    if m := _REVIEW.match(text):
+        return [ExtractedClaim(
+            statement=f"Pull request #{m[1]} has changes requested by {m[2]}: {m[3]}",
+            type=ClaimType.risk, evidence=_ev(chunk, m[3]),
         )]
     if (m := _COMMIT.match(text)) and _UNFINISHED.search(m[3]):
         return [ExtractedClaim(

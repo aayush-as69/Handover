@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Questions Before I Leave{% endblock %}
+{% block body %}
+<h1>Questions Before I Leave</h1>
+<p class="muted">Gaps found by rule: missing reasons, missing owners, unanswered questions, undocumented promises and unresolved conflicts. Answers are shown in the handover as the leaver's own words, not as verified facts. {{ open_n }} of {{ total }} still open.</p>
+<form method="post" action="/questions/refresh"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Refresh questions</button></form>
+{% for q, linked in items %}
+<section class="card">
+  <div class="meta"><span class="pill {{ 'verified' if q.status.value == 'answered' else ('inferred' if q.status.value == 'open' else '') }}">{{ q.status.value }}</span><span class="muted">{{ q.kind.replace("_", " ") }}</span></div>
+  <p>{{ q.text }}</p>
+  <p class="muted">{% for c in linked %}<a href="/review/claims/{{ c.id }}">claim {{ c.id }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+  {% if q.status.value == "answered" %}
+    <p class="note">Answer ({{ q.answered_by }}): “{{ q.answer }}”</p>
+    <form method="post" action="/questions/{{ q.id }}/reopen"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Reopen</button></form>
+  {% elif q.status.value == "dismissed" %}
+    <form method="post" action="/questions/{{ q.id }}/reopen"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Reopen</button></form>
+  {% else %}
+  <form method="post" action="/questions/{{ q.id }}/answer" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label>Your answer <textarea name="text" rows="2" maxlength="1500" required></textarea></label>
+    <div class="buttons"><button class="primary">Save answer</button>
+    <button formaction="/questions/{{ q.id }}/dismiss" formnovalidate>Not relevant</button></div>
+  </form>
+  {% endif %}
+</section>
+{% else %}<p class="muted">No questions.</p>{% endfor %}
+{% endblock %}

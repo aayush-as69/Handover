@@ -7,12 +7,13 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db import get_session
+from tests.dbutil import new_engine
 from app.demo import load_demo_project
 from app.enums import ChangeType, Confidence, ReviewStatus, Sensitivity
 from app.extract.pipeline import run_extraction
 from app.extract.rules import RuleExtractor
 from app.main import create_app
-from app.models import Base, Chunk, Claim
+from app.models import Chunk, Claim
 from app.security import LoginThrottle, hash_password, verify_password
 from app import web
 
@@ -21,9 +22,7 @@ PW = "demo-" + "pass-123"
 
 @pytest.fixture()
 def env():
-    engine = create_engine("sqlite://", connect_args={"check_same_thread": False},
-                           poolclass=StaticPool)
-    Base.metadata.create_all(engine)
+    engine = new_engine()
     Session = sessionmaker(engine, expire_on_commit=False)
     with Session() as s:
         project = load_demo_project(s, password=PW)
@@ -39,7 +38,6 @@ def env():
             s.close()
 
     app.dependency_overrides[get_session] = override
-    web.throttle = LoginThrottle()
     return app, Session
 
 
@@ -74,8 +72,10 @@ def a_claim(Session, *, confidential):
 
 
 def act(c, cid, action, **data):
-    t = token(c, f"/review/claims/{cid}")
-    return c.post(f"/review/claims/{cid}/{action}", data={"csrf": t, **data})
+    html = c.get(f"/review/claims/{cid}").text
+    t = re.search(r'name="csrf" value="([^"]+)"', html).group(1)
+    v = re.search(r'name="version" value="(\d+)"', html).group(1)
+    return c.post(f"/review/claims/{cid}/{action}", data={"csrf": t, "version": v, **data})
 
 
 # ------------------------------------------------------------ passwords / throttle
@@ -353,3 +353,118 @@ def test_version_history_shows_a_word_diff(env):
 
 def test_word_diff():
     assert web.word_diff("a b c", "a x c") == [("same", "a"), ("del", "b"), ("ins", "x"), ("same", "c")]
+
+
+def test_citation_does_not_repeat_the_file_name(env):
+    app, Session = env
+    c = login(app, "meera")
+    cid = a_claim(Session, confidential=False)
+    html = c.get(f"/review/claims/{cid}").text
+    import re as _re
+    for line in _re.findall(r"<footer>(.*?)</footer>", html, _re.S):
+        m = _re.search(r"([\w.-]+\.(?:md|txt|csv|json))", line)
+        if m:
+            assert line.count(m.group(1)) == 1
+
+
+def test_ui_says_quote_verified_and_explains_its_limit(env):
+    app, Session = env
+    c = login(app, "meera")
+    html = c.get("/review?status=all").text
+    assert "quote-verified" in html
+    cid = a_claim(Session, confidential=False)
+    page = c.get(f"/review/claims/{cid}").text
+    assert "does not mean the claim is true, current or complete" in page
+
+
+def test_claim_page_shows_when_a_claim_is_disputed(env):
+    app, Session = env
+    from app.models import Claim as C
+    c = login(app, "meera")
+    from app.conflicts import detect_conflicts
+    from app.models import Project as P
+    with Session() as s:
+        detect_conflicts(s, s.scalar(select(P)))
+        s.commit()
+        redis = s.scalars(select(C).where(C.statement.contains("Seat locks will go in Redis"))).one().id
+    assert "Disputed" in c.get(f"/review/claims/{redis}").text
+
+
+# ------------------------------------------------------------ concurrent changes
+
+
+def test_a_stale_form_cannot_overwrite_a_newer_change(env):
+    app, Session = env
+    a, b = login(app, "meera"), login(app, "riya")
+    cid = a_claim(Session, confidential=False)
+    html = a.get(f"/review/claims/{cid}").text          # both reviewers open the same version
+    t = re.search(r'name="csrf" value="([^"]+)"', html).group(1)
+    v = re.search(r'name="version" value="(\d+)"', html).group(1)
+    act(b, cid, "edit", statement="Riya changed the wording first")
+    r = a.post(f"/review/claims/{cid}/approve", data={"csrf": t, "version": v})
+    assert r.status_code == 303
+    with Session() as s:
+        claim = s.get(Claim, cid)
+        assert claim.review_status == ReviewStatus.edited       # Meera's approval did not land
+        assert claim.statement == "Riya changed the wording first"
+    assert "changed by someone else" in a.get(f"/review/claims/{cid}").text
+
+
+def test_a_missing_version_is_refused(env):
+    app, Session = env
+    c = login(app, "meera")
+    cid = a_claim(Session, confidential=False)
+    r = c.post(f"/review/claims/{cid}/approve", data={"csrf": token(c, f"/review/claims/{cid}")})
+    assert r.status_code == 303
+    with Session() as s:
+        assert s.get(Claim, cid).review_status == ReviewStatus.generated
+
+
+def test_two_sessions_writing_the_same_claim_cannot_both_succeed(env):
+    from sqlalchemy.orm.exc import StaleDataError
+    _, Session = env
+    cid = a_claim(Session, confidential=False)
+    s1, s2 = Session(), Session()
+    c1, c2 = s1.get(Claim, cid), s2.get(Claim, cid)
+    c1.approve("Meera")
+    s1.commit()
+    with pytest.raises(StaleDataError):
+        c2.reject("Riya")                         # c2 still holds the version it read earlier
+        s2.commit()
+    s2.rollback()
+    s3 = Session()
+    claim = s3.get(Claim, cid)
+    assert claim.review_status == ReviewStatus.approved and [v.version for v in claim.versions] == [1, 2]
+    for x in (s1, s2, s3):
+        x.close()
+
+
+def test_approval_invalidation_is_visible_in_the_ui(env):
+    app, Session = env
+    m = login(app, "meera")
+    cid = a_claim(Session, confidential=False)
+    act(m, cid, "approve")
+    m.get("/handover")
+    m.post("/handover/approve", data={"csrf": token(m, "/handover")})
+    k = login(app, "kabir")
+    assert "I have read this handover" in k.get("/handover").text
+    act(m, cid, "edit", statement="A reworded claim after sign-off")
+    assert "No handover is available to you" in k.get("/handover").text
+    assert "sign-off is out of date" in m.get("/handover").text
+    act(m, cid, "approve", note="re-checked")
+    m.post("/handover/approve", data={"csrf": token(m, "/handover")})
+    assert "I have read this handover" in k.get("/handover").text
+
+
+
+def test_review_queue_is_paginated_and_clamps_the_page(env, monkeypatch):
+    import app.web as web
+    monkeypatch.setattr(web, "QUEUE_PAGE", 5)
+    app, _ = env
+    c = login(app, "meera")
+    p1 = c.get("/review?status=all&page=1").text
+    assert "Page 1 of" in p1 and "Next" in p1 and "Previous" not in p1
+    assert p1.count('href="/review/claims/') == 5
+    last = c.get("/review?status=all&page=9999").text      # clamped to the last page
+    assert "Previous" in last and "Next &rarr;" not in last
+    assert c.get("/review?status=all&page=-3").text.count('href="/review/claims/') == 5

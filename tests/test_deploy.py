@@ -7,6 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.config import _normalise_db_url
+from tests.dbutil import new_engine
 
 
 @pytest.mark.parametrize("given,expected", [
@@ -25,9 +26,7 @@ def test_demo_mode_boots_a_usable_site_and_a_full_walkthrough_works(monkeypatch)
     from app.main import create_app
     from app.models import Base, Claim
 
-    engine = create_engine("sqlite://", connect_args={"check_same_thread": False},
-                           poolclass=StaticPool)
-    Base.metadata.create_all(engine)
+    engine = new_engine()
     monkeypatch.setattr(db, "SessionLocal", sessionmaker(engine, expire_on_commit=False))
     monkeypatch.setattr(db, "engine", engine)
     pw = "walk-" + "through-1"
@@ -63,8 +62,11 @@ def test_demo_mode_boots_a_usable_site_and_a_full_walkthrough_works(monkeypatch)
             target = next(c.id for c in claims if c.sensitivity.value == "team"
                           and c.confidence.value == "verified")
         sign_in(boss, "meera")
+        page = boss.get(f"/review/claims/{target}").text
+        version = re.search(r'name="version" value="(\d+)"', page).group(1)
         assert boss.post(f"/review/claims/{target}/approve",
-                         data={"csrf": tok(boss, f"/review/claims/{target}")}).status_code == 303
+                         data={"csrf": tok(boss, f"/review/claims/{target}"),
+                               "version": version}).status_code == 303
         assert boss.post("/handover/approve", data={"csrf": tok(boss, "/handover")}).status_code == 303
         sign_in(kabir, "kabir")
         page = kabir.get("/handover")
