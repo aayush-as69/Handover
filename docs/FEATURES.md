@@ -1,8 +1,8 @@
-# Round 3: the three committed improvements
+# Conflict detection, questions and redaction
 
-Merged into `main` on 9 Nov 2026. Later hardening is listed in `PRODUCTION_READINESS.md`.
+Later hardening is listed in `PRODUCTION_READINESS.md`.
 
-All three work on the demo project with no API key, and are covered by `tests/test_round3.py`.
+All three work on the demo project with no API key, and are covered by `tests/test_conflicts_questions.py`.
 
 ## 1. Cross-source conflict detection (`app/conflicts.py`, page `/conflicts`)
 - Rule 1: claims with the same `topic` and different `value` conflict.

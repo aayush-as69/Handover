@@ -15,7 +15,7 @@ from app.handover import (HandoverError, acknowledge, approve_handover, build_se
 from app.ingest.service import ingest_source
 from app.models import (Acknowledgement, AuditEvent, Claim, ClaimVersion, Evidence, Handover,
                         HandoverRelease, ImmutableError, Project, Source, User)
-from tests.test_round3 import add_claim
+from tests.test_conflicts_questions import add_claim
 from tests.test_web import PW, a_claim, act, client, env, login, token  # noqa: F401
 
 

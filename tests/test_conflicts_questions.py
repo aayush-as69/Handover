@@ -304,7 +304,7 @@ def test_unapproved_claims_answers_are_not_shown(env):
     assert "Cassandra" not in page and "SECRET-ANSWER" in page and page.count("SECRET-ANSWER") == 1
 
 
-def test_round3_pages_are_reviewer_only(env):
+def test_insight_pages_are_reviewer_only(env):
     app, Session = env
     for who in ("kabir", "rao"):
         c = login(app, who)

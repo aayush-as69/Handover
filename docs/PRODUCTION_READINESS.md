@@ -15,9 +15,9 @@ An external review listed what to fix before production. Status of each item:
 | 8 | Stronger meaning of `verified` | Done. Shown as "quote-verified", needs 2+ distinctive terms and 60% coverage, the UI states what it does not mean, and disputed claims show their conflicts. |
 | 9 | Validate LLM response types | Done (envelope, content parts, strict ids, sizes, control characters, caps, truncation). 46 tests. |
 | 10 | GitHub files, diffs, PR reviews | Done (parser, live fetch with a request budget, rule for "changes requested", secrets in diffs masked). |
-| 11 | Cross-source conflict detection | Done in Round 3 (see `ROUND3.md`). |
-| 12 | Questions Before I Leave | Done in Round 3. |
-| 13 | Field-level redaction | Done in Round 3. |
+| 11 | Cross-source conflict detection | Done (see `FEATURES.md`). |
+| 12 | Questions Before I Leave | Done. |
+| 13 | Field-level redaction | Done. |
 | 14 | Better semantic evidence evaluation | Partly. An optional model second opinion exists, advisory only. It has not been run against a live model, so its quality is unknown. |
 
 ## Second review: tests, performance, correctness

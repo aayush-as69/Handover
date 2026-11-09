@@ -10,7 +10,7 @@ from app.extract.llm import OpenAICompatibleExtractor
 from app.models import AuditEvent, Claim
 from app.semantic import LLMJudge, Judgement, has_doubt, parse_judgement, semantic_review
 from app.verify import verify_claim
-from tests.test_round3 import add_claim
+from tests.test_conflicts_questions import add_claim
 from tests.test_web import PW, a_claim, act, client, env, login, token  # noqa: F401
 
 

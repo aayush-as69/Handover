@@ -43,7 +43,7 @@ SESSION_HOURS = 8
 
 def create_app(secret_key: str | None = None, config: Settings | None = None) -> FastAPI:
     from .handover_web import router as handover_router
-    from .round3_web import router as round3_router
+    from .insights_web import router as insights_router
     from .web import router
 
     cfg = config or Settings()
@@ -85,7 +85,7 @@ def create_app(secret_key: str | None = None, config: Settings | None = None) ->
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
     app.include_router(router)
     app.include_router(handover_router)
-    app.include_router(round3_router)
+    app.include_router(insights_router)
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request, exc):

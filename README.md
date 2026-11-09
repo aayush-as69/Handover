@@ -25,7 +25,7 @@ Built for the CodeFrontier hackathon (We Code Coders), by team STARTEND.
 Roles: `admin`, `approver`, `viewer`, `restricted`. The server decides access; the UI never does.
 
 ## Status
-Rounds 1 and 2 are submitted; Round 3 (polish) is merged. Tested with 354 tests on SQLite and
+Feature-complete for the planned scope. Tested with 354 tests on SQLite and
 PostgreSQL 16, plus a real-browser walkthrough and CI. Hosting is configured for Render
 (`render.yaml`) but has not been verified on Render itself, and the LLM paths have never been
 run against a live model. Both are listed under "Known limitations".
@@ -37,7 +37,7 @@ name, richer conflict visualisation, and rate limiting shared across servers.
 | File | Contents |
 |---|---|
 | `docs/ROUND2.md` | Round 2 build document: architecture, trust rules, testing, limitations |
-| `docs/ROUND3.md` | Conflict detection, Questions Before I Leave, role redaction |
+| `docs/FEATURES.md` | Conflict detection, Questions Before I Leave, role redaction |
 | `docs/PRODUCTION_READINESS.md` | External review items and their status |
 | `docs/OPERATIONS.md` | Production settings, migrations, backups, recovery |
 | `docs/DISCLOSURES.md` | Libraries, services and AI assistance used |

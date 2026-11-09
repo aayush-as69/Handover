@@ -47,9 +47,8 @@ workplace material is used. The "API key" in the demo chat is invented.
 - The hosted demo uses synthetic data only and the demo password is set in the host's
   dashboard, not in this repository.
 
-## Round 3 features
+## Conflict detection, questions and redaction
 - No new libraries or services. Written with Claude's assistance; reviewed and tested by the team member.
-- Merged into `main` on 9 Nov 2026. The Round 2 state is commit `b0cfeb4`.
 
 ## Hardening pass
 - New libraries: `alembic` (database migrations), `itsdangerous` (session signing). Test and CI

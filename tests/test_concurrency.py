@@ -17,7 +17,7 @@ from app.models import (Acknowledgement, Base, Claim, Handover, HandoverRelease,
                         Project, Source, User)
 from app.security import login_blocked, record_login_failure
 from tests.dbutil import PG_URL, on_postgres
-from tests.test_round3 import add_claim
+from tests.test_conflicts_questions import add_claim
 
 N = 8
 

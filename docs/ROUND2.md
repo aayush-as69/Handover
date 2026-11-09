@@ -53,7 +53,7 @@ assistant; see `docs/DISCLOSURES.md`. All demo data is synthetic.
 |---|---|---|
 | React front end | Server-rendered pages (Jinja2, no JavaScript) | Solo build; smaller attack surface; every access check stays on the server |
 | LLM-led extraction | Rule-based extractor plus an LLM extractor behind one interface | No API key was available at build time; the rule-based path works offline and is fully tested |
-| Conflict detection, gap checklist, redaction views | Built after this submission was drafted (see `ROUND3.md`) | Committed for Round 3 (section 8) |
+| Conflict detection, gap checklist, redaction views | Built (see `FEATURES.md`) | Planned in Round 1; delivered after the first draft of this document |
 
 ## 6. Testing evidence
 `pytest`: 354 tests pass today (182 at first drafting) on SQLite and PostgreSQL 16, plus a real-browser walkthrough; they cover covering data model, access rules, demo data, ingestion, extraction,
@@ -73,7 +73,7 @@ adding a test.
 - Sign-offs are immutable numbered releases; editing a signed-off claim makes the release stale until re-signed.
 - The free hosting tier sleeps when idle and its free database may expire; the first request can be slow.
 
-## 8. Round 3 commitments (built, see `ROUND3.md`)
+## 8. Additional features (built, see `FEATURES.md`)
 1. Cross-source conflict detection: group claims by topic and value, flag disagreements between sources.
 2. "Questions Before I Leave": a checklist of missing owners, reasons and open items for the leaver.
 3. Redaction and multiple role views: field-level redaction inside a claim, with per-role previews.
