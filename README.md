@@ -26,7 +26,7 @@ Roles: `admin`, `approver`, `viewer`, `restricted`. The server decides access; t
 
 ## Status
 Feature-complete for the planned scope. Latest GitHub Actions run (9 Nov 2026, commit
-`100ed36`): 354 tests passed on SQLite and 354 on PostgreSQL 16, including a real-browser
+`4438d29`): 402 tests passed on SQLite and 402 on PostgreSQL 16, including a real-browser
 walkthrough, and `pip-audit` found no known vulnerabilities. Run `pytest` for the current count.
 Hosting is configured for Render (`render.yaml`) but has not been verified on Render itself, and
 the LLM paths have never been run against a live model. Both are listed under "Known
