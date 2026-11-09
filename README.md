@@ -34,10 +34,13 @@ Round 2, in development. Working so far:
   role may see, grouped as first week, decisions, risks, dependencies and people. The
   incoming person acknowledges it. Admins can upload sources and run extraction in the browser.
 
-- Round 3 (branch `round3`): conflict detection across sources, a "Questions Before I Leave"
-  checklist, and field-level redaction with a "preview as another role" view
+- Also built: conflict detection across sources, a "Questions Before I Leave" checklist,
+  field-level redaction with a "preview as another role" view, immutable numbered releases,
+  Alembic migrations, and production settings (`APP_ENV=production`)
 
-Not built yet: nothing planned beyond Round 3. See the roadmap below.
+Not built yet: multiple projects per deployment, an audit-log page, acknowledgement history by
+name, richer conflict visualisation, and rate limiting shared across servers. See "Known
+limitations" below and `docs/PRODUCTION_READINESS.md`.
 
 ## Trust rules the code enforces
 1. A claim is `unsupported` until the verification pass proves otherwise.
