@@ -38,13 +38,13 @@ Source of the diagram: `docs/architecture.mmd` (Mermaid).
 - Confidential passages are never sent to a remote model unless explicitly allowed.
 - Model output is untrusted: evidence must point at a passage the model was given.
 - Nothing is approved automatically. Approving a not-fully-verified claim needs a written reason.
-- The handover is a live view of approved claims, so a rejected or edited claim disappears at once.
+- A sign-off is an immutable numbered release. Editing, rejecting or reopening a signed-off claim makes the release stale, so non-reviewers see nothing until it is signed again.
 - Login: salted PBKDF2 hashes, lockout after repeated failures, CSRF tokens on every form,
   signed session cookies, security headers, output escaping.
 
 ## 4. Libraries, services and AI use
 FastAPI, Uvicorn, SQLAlchemy, Pydantic, Jinja2, python-multipart, HTTPX, itsdangerous,
-psycopg, pytest. Services: GitHub public REST API (read only), Render (hosting + PostgreSQL),
+psycopg, alembic, pytest (tests: playwright, pip-audit). Services: GitHub public REST API (read only), Render (hosting + PostgreSQL),
 and an optional OpenAI-compatible LLM chosen by the operator. Claude was used as a coding
 assistant; see `docs/DISCLOSURES.md`. All demo data is synthetic.
 

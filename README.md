@@ -9,38 +9,38 @@ before anyone sees it, and each viewer only sees what their role allows.
 
 Built for the CodeFrontier hackathon (We Code Coders), by team STARTEND.
 
+## What it does
+1. **Ingest** meeting notes, chat exports, task CSVs and public GitHub repositories (commits,
+   issues, pull requests, changed files, reviews). Secrets are masked before anything is stored.
+2. **Extract** draft claims, each pointing at exact quotes. A rule-based extractor runs locally
+   with no key; an optional LLM extractor (any OpenAI-compatible provider) also reads chat.
+3. **Verify** every quote against its source. Each claim gets a confidence label with a reason.
+4. **Review** each claim beside its evidence: approve, edit, reject or reopen, with version
+   history and word-level diffs. Conflicts between sources and "Questions Before I Leave"
+   (missing owners, reasons, open items) are raised for the reviewer.
+5. **Sign off** as an immutable, numbered release. Each person then sees only the approved
+   claims their role allows, with emails, phone numbers and amounts redacted by role.
+   Reviewers can preview any role. The incoming person acknowledges the release.
+
+Roles: `admin`, `approver`, `viewer`, `restricted`. The server decides access; the UI never does.
+
 ## Status
-Round 2, in development. Working so far:
-- Claim data model with evidence, confidence, sensitivity, review status and version history
-- Access rules enforced in the core (sensitivity is inherited from evidence; only approved
-  claims reach a handover; rejected claims never appear)
-- Synthetic demo project with deliberately planted traps (`data/demo/`)
-- Source ingestion: meeting notes, chat exports, task CSVs and GitHub data become dated,
-  addressable chunks. Secrets are masked before anything is stored. Public GitHub
-  repositories can be read live (no credentials); a bundled snapshot works offline.
+Rounds 1 and 2 are submitted; Round 3 (polish) is merged. Tested with 354 tests on SQLite and
+PostgreSQL 16, plus a real-browser walkthrough and CI. Hosting is configured for Render
+(`render.yaml`) but has not been verified on Render itself, and the LLM paths have never been
+run against a live model. Both are listed under "Known limitations".
 
-- Claim extraction into draft, evidence-linked claims, with two interchangeable extractors:
-  a rule-based baseline that runs locally with no key (structured notes, tasks and GitHub
-  only), and an LLM extractor for any OpenAI-compatible provider (also reads chat)
+Not built: multiple projects per deployment, an audit-log page, acknowledgement history by
+name, richer conflict visualisation, and rate limiting shared across servers.
 
-- Verification pass: every quoted snippet is checked against its source, and each claim gets
-  a confidence label with a plain-language reason (see "Confidence labels" below)
-
-- Login (salted PBKDF2, lockout after repeated failures, CSRF tokens, security headers) and a
-  review screen: each claim beside its quoted evidence, the confidence label with its reason,
-  approve / edit / reject / reopen, and a version history with word-level diffs
-
-- Handover: an approver signs it off, then each person sees only the approved claims their
-  role may see, grouped as first week, decisions, risks, dependencies and people. The
-  incoming person acknowledges it. Admins can upload sources and run extraction in the browser.
-
-- Also built: conflict detection across sources, a "Questions Before I Leave" checklist,
-  field-level redaction with a "preview as another role" view, immutable numbered releases,
-  Alembic migrations, and production settings (`APP_ENV=production`)
-
-Not built yet: multiple projects per deployment, an audit-log page, acknowledgement history by
-name, richer conflict visualisation, and rate limiting shared across servers. See "Known
-limitations" below and `docs/PRODUCTION_READINESS.md`.
+## Documents
+| File | Contents |
+|---|---|
+| `docs/ROUND2.md` | Round 2 build document: architecture, trust rules, testing, limitations |
+| `docs/ROUND3.md` | Conflict detection, Questions Before I Leave, role redaction |
+| `docs/PRODUCTION_READINESS.md` | External review items and their status |
+| `docs/OPERATIONS.md` | Production settings, migrations, backups, recovery |
+| `docs/DISCLOSURES.md` | Libraries, services and AI assistance used |
 
 ## Trust rules the code enforces
 1. A claim is `unsupported` until the verification pass proves otherwise.
