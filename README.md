@@ -180,6 +180,10 @@ Keys are read from the environment only and are never stored or logged.
 4. Verification pass and confidence labels (done)
 5. Login and review screen with version history (done)
 6. Handover sign-off, filtered role views, acknowledgement, source upload (done)
-7. Deployment, tests and architecture document
+7. Deployment configuration, tests and architecture document (built: `render.yaml`, 400+ tests
+   with CI on SQLite and PostgreSQL, `docs/`; **not yet verified:** a live Render deployment, a
+   live LLM provider run, and a backup restore on the hosting platform)
+8. Later: multiple projects per deployment, an audit-log page, acknowledgement history by person,
+   better conflict visualisation, extraction reports, better evaluation of semantic checks
 
 See `docs/DISCLOSURES.md` for AI assistance, libraries and data.

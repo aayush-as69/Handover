@@ -97,11 +97,22 @@ def main(argv: list[str] | None = None) -> None:
     a = sub.add_parser("adopt", help="put a pre-migration database under Alembic control")
     a.add_argument("--dry-run", action="store_true", help="show what would happen, change nothing")
     sub.add_parser("upgrade", help="apply migrations")
+    d = sub.add_parser("downgrade", help="roll the schema back (data in dropped tables is lost)")
+    d.add_argument("revision", help="target revision, e.g. base")
+    d.add_argument("--yes", action="store_true", help="confirm you have a backup")
+    sub.add_parser("status", help="show whether migrations are current")
     args = parser.parse_args(argv)
     try:
         if args.cmd == "adopt":
             for line in adopt_legacy(dry_run=args.dry_run):
                 print(("would: " if args.dry_run else "done: ") + line)
+        elif args.cmd == "downgrade":
+            if not args.yes:
+                raise MigrationError("Refusing without --yes. Take a backup first.")
+            downgrade(args.revision)
+            print(f"rolled back to {args.revision}")
+        elif args.cmd == "status":
+            print(migration_state())
         else:
             migrate()
             print("database is up to date")
@@ -109,8 +120,47 @@ def main(argv: list[str] | None = None) -> None:
         raise SystemExit(f"error: {exc}")
 
 
-def init_db() -> None:
-    migrate()
+def migration_state(eng=None) -> str:
+    """'current', 'behind' (migrations pending) or 'unmigrated' (no history at all)."""
+    from alembic.script import ScriptDirectory
+    eng = eng or engine
+    with eng.connect() as conn:
+        if "alembic_version" not in set(inspect(conn).get_table_names()):
+            return "unmigrated"
+        from alembic.migration import MigrationContext
+        have = MigrationContext.configure(conn).get_current_revision()
+    head = ScriptDirectory(str(ROOT / "migrations")).get_current_head()
+    return "current" if have == head else "behind"
+
+
+def check_ready(eng=None) -> tuple[bool, str]:
+    """For the readiness endpoint: can we reach the database, and is the schema up to date?
+    The reason is a short fixed word, never an error message (which could expose internals)."""
+    try:
+        state = migration_state(eng)
+    except Exception:  # noqa: BLE001 - any failure means "not ready"
+        return False, "database unreachable"
+    return (state == "current"), ("ready" if state == "current" else f"migrations {state}")
+
+
+def downgrade(revision: str, eng=None) -> None:
+    """Roll the schema back (see docs/OPERATIONS.md: take a backup first; data in dropped
+    columns and tables is lost)."""
+    eng = eng or engine
+    with eng.begin() as conn:
+        command.downgrade(alembic_config(conn), revision)
+
+
+def init_db(upgrade: bool = True) -> None:
+    """Start-up. With upgrade=False (MIGRATE_ON_STARTUP=false) the app never changes the schema:
+    it refuses to start unless migrations were already applied by `python -m app.db upgrade`."""
+    if upgrade:
+        migrate()
+        return
+    state = migration_state()
+    if state != "current":
+        raise MigrationError(f"The database schema is {state}. Run `python -m app.db upgrade` "
+                             "before starting, or set MIGRATE_ON_STARTUP=true.")
 
 
 def get_session():

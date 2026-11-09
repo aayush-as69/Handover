@@ -22,6 +22,11 @@ WEAK_PASSWORDS = {"password", "password1", "12345678", "123456789", "demo", "dem
                   "letmein123", "qwertyuiop"}
 
 
+def _flag_in(env, name: str, default: bool) -> bool:
+    raw = env.get(name)
+    return default if raw is None or raw == "" else raw.lower() in ("1", "true", "yes", "on")
+
+
 class Settings:
     """Development (default) is forgiving. Production (APP_ENV=production) is strict."""
 
@@ -35,6 +40,7 @@ class Settings:
         cookie = env.get("COOKIE_SECURE")
         self.rate_limit_per_min = int(env.get("RATE_LIMIT_PER_MIN") or 300)        # 0 turns it off
         self.login_rate_per_min = int(env.get("LOGIN_RATE_PER_MIN") or 30)
+        self.migrate_on_startup = _flag_in(env, "MIGRATE_ON_STARTUP", True)
         proxy = env.get("TRUST_PROXY")
         self.trust_proxy = (self.production if proxy in (None, "") else proxy.lower() in ("1", "true", "yes", "on"))
         self.cookie_secure = (self.production if cookie in (None, "")

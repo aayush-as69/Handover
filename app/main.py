@@ -4,16 +4,17 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
-from fastapi.responses import PlainTextResponse, RedirectResponse
+from fastapi import Depends, FastAPI
+from fastapi.responses import JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from . import __version__
 from .config import Settings
 from .security import RateLimiter, client_ip
-from .db import init_db
+from .db import check_ready, get_session, init_db
 
 log = logging.getLogger("handover")
 STATIC = Path(__file__).parent / "static"
@@ -30,7 +31,7 @@ _HEADERS = {
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = app.state.cfg
-    init_db()
+    init_db(settings.migrate_on_startup)
     if settings.demo_mode and settings.demo_password:
         from .db import SessionLocal
         from .demo import bootstrap_demo
@@ -75,7 +76,7 @@ def create_app(secret_key: str | None = None, config: Settings | None = None) ->
     @app.middleware("http")
     async def rate_limit(request, call_next):
         path = request.url.path
-        if path != "/health" and not path.startswith("/static/"):
+        if path not in ("/health", "/ready") and not path.startswith("/static/"):
             ip = client_ip(request, cfg.trust_proxy)
             ok = general.allow(ip)
             if ok and path == "/login" and request.method == "POST":
@@ -117,7 +118,14 @@ def create_app(secret_key: str | None = None, config: Settings | None = None) ->
 
     @app.get("/health")
     def health() -> dict:
+        """Liveness: the process is up. Says nothing about the database."""
         return {"status": "ok", "version": __version__}
+
+    @app.get("/ready")
+    def ready(session: Session = Depends(get_session)):
+        """Readiness: the database answers and the schema is current. 503 otherwise."""
+        ok, reason = check_ready(session.get_bind())
+        return JSONResponse({"status": reason}, status_code=200 if ok else 503)
 
     return app
 

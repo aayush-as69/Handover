@@ -32,9 +32,9 @@ def test_demo_mode_boots_a_usable_site_and_a_full_walkthrough_works(monkeypatch)
     pw = "walk-" + "through-1"
     monkeypatch.setenv("DEMO_MODE", "1")
     monkeypatch.setenv("DEMO_PASSWORD", pw)
-    monkeypatch.setattr(db, "init_db", lambda: None)
+    monkeypatch.setattr(db, "init_db", lambda *a, **k: None)
     import app.main as main
-    monkeypatch.setattr(main, "init_db", lambda: None)
+    monkeypatch.setattr(main, "init_db", lambda *a, **k: None)
 
     app = create_app(secret_key="k")
     from app.web import get_session  # noqa: F401
