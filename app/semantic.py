@@ -77,6 +77,15 @@ class LLMJudge:
         self._llm = extractor
         self.name = extractor.name
 
+    def close(self) -> None:
+        self._llm.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.close()
+
     def judge(self, statement: str, quotes: list[str]) -> Judgement:
         body = "CLAIM:\n<<<\n" + statement + "\n>>>\nQUOTES:\n" + "\n".join(
             f"<<<\n{q}\n>>>" for q in quotes)

@@ -454,3 +454,17 @@ def test_approval_invalidation_is_visible_in_the_ui(env):
     act(m, cid, "approve", note="re-checked")
     m.post("/handover/approve", data={"csrf": token(m, "/handover")})
     assert "I have read this handover" in k.get("/handover").text
+
+
+
+def test_review_queue_is_paginated_and_clamps_the_page(env, monkeypatch):
+    import app.web as web
+    monkeypatch.setattr(web, "QUEUE_PAGE", 5)
+    app, _ = env
+    c = login(app, "meera")
+    p1 = c.get("/review?status=all&page=1").text
+    assert "Page 1 of" in p1 and "Next" in p1 and "Previous" not in p1
+    assert p1.count('href="/review/claims/') == 5
+    last = c.get("/review?status=all&page=9999").text      # clamped to the last page
+    assert "Previous" in last and "Next &rarr;" not in last
+    assert c.get("/review?status=all&page=-3").text.count('href="/review/claims/') == 5

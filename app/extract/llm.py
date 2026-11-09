@@ -109,8 +109,20 @@ class OpenAICompatibleExtractor:
         self._url = base_url.rstrip("/") + "/chat/completions"
         self._key = api_key
         self._model = model
+        self._owns_client = client is None
         self._client = client or httpx.Client(timeout=timeout)
         self._batch_chars = batch_chars
+
+    def close(self) -> None:
+        """Release the HTTP connection pool (only if this object created the client)."""
+        if self._owns_client:
+            self._client.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.close()
 
     def _chat(self, messages: list[dict], json_mode: bool = True) -> str:
         payload = {"model": self._model, "messages": messages, "temperature": 0}

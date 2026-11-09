@@ -116,3 +116,16 @@ def test_a_huge_claim_list_is_capped():
 def test_wrong_top_level_shapes_are_rejected(content):
     with pytest.raises(ValueError):
         parse_model_output(content)
+
+
+def test_extractor_closes_only_a_client_it_created():
+    import httpx
+    from app.extract.llm import OpenAICompatibleExtractor
+    mine = httpx.Client()
+    OpenAICompatibleExtractor(base_url="http://x", api_key="k", model="m", client=mine).close()
+    assert not mine.is_closed                      # caller-owned client is left alone
+    own = OpenAICompatibleExtractor(base_url="http://x", api_key="k", model="m")
+    with own:
+        pass
+    assert own._client.is_closed
+    mine.close()

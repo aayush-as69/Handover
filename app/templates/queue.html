@@ -38,4 +38,11 @@
   {% endfor %}
   </tbody>
 </table>
+{% if pages > 1 %}
+<nav class="pager" aria-label="Pages">
+  {% if page > 1 %}<a href="/review?status={{ status }}&confidence={{ confidence }}&page={{ page - 1 }}">&larr; Previous</a>{% endif %}
+  <span class="muted">Page {{ page }} of {{ pages }} ({{ matching }} claims)</span>
+  {% if page < pages %}<a href="/review?status={{ status }}&confidence={{ confidence }}&page={{ page + 1 }}">Next &rarr;</a>{% endif %}
+</nav>
+{% endif %}
 {% endblock %}
