@@ -14,13 +14,13 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy.orm.exc import StaleDataError
 
 from .access import chunk_visible, effective_sensitivity, filter_review, visible_in_review
 from .db import get_session
 from .enums import REVIEWER_ROLES, ChangeType, Confidence, ReviewStatus, Role
-from .models import Chunk, Claim, Project, User
+from .models import Chunk, Claim, Evidence, Project, User
 from .security import (clear_login_failures, csrf_ok, login_blocked, new_csrf_token,
                        record_login_failure, verify_password)
 from .verify import verify_claim
@@ -151,12 +151,18 @@ def logout(request: Request, csrf: str = Form("")):
 # ------------------------------------------------------------------ review queue
 
 
+QUEUE_PAGE = 50
+
+
 @router.get("/review")
-def review_queue(request: Request, status: str = "open", confidence: str = "",
+def review_queue(request: Request, status: str = "open", confidence: str = "", page: int = 1,
                  user: User = Depends(require_reviewer), session: Session = Depends(get_session)):
     project = project_for(session)
-    claims = filter_review(user.role, session.scalars(
-        select(Claim).where(Claim.project_id == project.id).order_by(Claim.id)).all())
+    everything = session.scalars(
+        select(Claim).where(Claim.project_id == project.id).order_by(Claim.id)
+        .options(selectinload(Claim.evidence).selectinload(Evidence.chunk).selectinload(Chunk.source))
+    ).all()
+    claims = filter_review(user.role, everything)
     totals = {s.value: 0 for s in ReviewStatus}
     for c in claims:
         totals[c.review_status.value] += 1
@@ -174,10 +180,12 @@ def review_queue(request: Request, status: str = "open", confidence: str = "",
     order = {Confidence.conflicting: 0, Confidence.unsupported: 1, Confidence.inferred: 2,
              Confidence.verified: 3}
     shown.sort(key=lambda c: (order[c.confidence], c.id))
-    return render(request, "queue.html", user, project=project, claims=shown, totals=totals,
+    pages = max(1, -(-len(shown) // QUEUE_PAGE))
+    page = min(max(page, 1), pages)
+    window = shown[(page - 1) * QUEUE_PAGE: page * QUEUE_PAGE]
+    return render(request, "queue.html", user, project=project, claims=window, totals=totals,
                   status=status, confidence=confidence, sens=effective_sensitivity,
-                  hidden=len(session.scalars(select(Claim).where(Claim.project_id == project.id)).all())
-                  - len(claims))
+                  hidden=len(everything) - len(claims), page=page, pages=pages, matching=len(shown))
 
 
 @router.get("/review/claims/{claim_id}")

@@ -107,8 +107,11 @@ def main() -> None:
 
         if args.extract:
             try:
-                extractor = RuleExtractor() if args.extract == "rules" else llm_from_env()
-                report = run_extraction(session, project, extractor)
+                if args.extract == "rules":
+                    report = run_extraction(session, project, RuleExtractor())
+                else:
+                    with llm_from_env() as extractor:
+                        report = run_extraction(session, project, extractor)
             except ExtractionError as exc:
                 raise SystemExit(f"Extraction failed: {exc}")
             session.commit()

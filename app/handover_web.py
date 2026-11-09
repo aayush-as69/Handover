@@ -145,7 +145,8 @@ def semantic_check(request: Request, csrf: str = Form(""), user: User = Depends(
     check_csrf(request, csrf)
     from .semantic import judge_from_env, semantic_review
     try:
-        report = semantic_review(session, project_for(session), judge_from_env())
+        with judge_from_env() as judge:
+            report = semantic_review(session, project_for(session), judge)
     except ExtractionError as exc:
         session.rollback()
         return _flash(request, f"Semantic check failed: {exc}", "/admin/sources")
@@ -207,9 +208,12 @@ def extract_claims(request: Request, engine: str = Form("rules"), csrf: str = Fo
     try:
         if engine not in ("rules", "llm"):
             raise ExtractionError("unknown extraction engine")
-        extractor = RuleExtractor() if engine == "rules" else llm_from_env()
         project = project_for(session)
-        report = run_extraction(session, project, extractor)
+        if engine == "rules":
+            report = run_extraction(session, project, RuleExtractor())
+        else:
+            with llm_from_env() as extractor:
+                report = run_extraction(session, project, extractor)
         detect_conflicts(session, project)
         generate_questions(session, project)
     except ExtractionError as exc:
