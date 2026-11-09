@@ -30,7 +30,7 @@ own words, only when every claim they concern is visible to the reader.
 A reviewer can preview any role's exact view. Other roles cannot ask to see a different role.
 
 ## Testing
-The whole project suite (402 tests in the 9 Nov 2026 CI run, on SQLite and PostgreSQL) includes tests for these features. Each rule was checked by deliberately breaking it in a scratch copy
+The whole project suite (422 tests in the 9 Nov 2026 CI run, on SQLite and PostgreSQL) includes tests for these features. Each rule was checked by deliberately breaking it in a scratch copy
 (ignoring rejected claims, leaking hidden conflict partners, showing partial answers,
 disabling redaction, weakening a role's policy, letting viewers preview, ignoring clearance on
 questions, overwriting answers, asking about GitHub-only items). Two survived at first
