@@ -1,4 +1,14 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+
 # 05 — Database Design
+
+<sub>Handover · Product and engineering documentation</sub>
+
+</div>
+
+---
 
 ## 1. Database technology
 
