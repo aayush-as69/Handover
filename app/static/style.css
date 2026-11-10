@@ -711,3 +711,23 @@ small{font-size:.86rem;line-height:1.55}
   html{font-size:16px}
   .login-roles span{font-size:.8rem}
 }
+
+/* Keep small labels readable; reserve the smallest scale for decorative markers only. */
+.lp-eyebrow,.login-kicker{font-size:.84rem}
+.lp-visual-top{font-size:.84rem}
+.lp-demo-tag,.login-demo-tag{font-size:.74rem}
+.lp-relationship span{font-size:.84rem}
+.lp-draft-bottom{font-size:.86rem}
+.lp-step-number{font-size:.88rem}
+.lp-password-note{font-size:.9rem}
+.login-status{font-size:.8rem}
+.login-demo-heading>span:first-child{font-size:.78rem}
+.login-story-bottom{font-size:.82rem}
+.login-roles span{font-size:.86rem}
+@media (max-width:600px){
+  .login-benefits strong{font-size:.84rem}
+  .login-benefits small{font-size:.82rem}
+}
+@media (max-width:380px){
+  .login-roles span{font-size:.84rem}
+}
