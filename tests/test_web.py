@@ -542,7 +542,7 @@ def test_login_page_has_accessible_split_layout_and_password_toggle():
     assert 'data-password-toggle' in html and 'aria-pressed="false"' in html
     assert "meera" in html and "riya" in html and "kabir" in html and "rao" in html
     import re
-    script = re.search(r'<script src="(/static/login\\.js\\?v=[0-9a-f]{10})" defer></script>', html)
+    script = re.search(r'<script src="(/static/login\.js\?v=[0-9a-f]{10})" defer></script>', html)
     assert script
     js = c.get(script.group(1)).text
     assert 'input.type = reveal ? "text" : "password"' in js
