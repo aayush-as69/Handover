@@ -547,6 +547,24 @@ def test_login_page_has_accessible_split_layout_and_password_toggle():
     js = c.get(script.group(1)).text
     assert 'passwordInput.type = reveal ? "text" : "password"' in js
 
+def test_login_page_only_exposes_configured_demo_password():
+    from fastapi.testclient import TestClient
+    from app.config import Settings
+    from app.main import create_app
+
+    disabled = TestClient(create_app(
+        secret_key="k" * 40,
+        config=Settings({"APP_ENV": "test", "DEMO_MODE": "0", "DEMO_PASSWORD": "handover123"}),
+    )).get("/login").text
+    assert 'data-demo-password=""' in disabled
+
+    enabled = TestClient(create_app(
+        secret_key="k" * 40,
+        config=Settings({"APP_ENV": "test", "DEMO_MODE": "1", "DEMO_PASSWORD": "handover123"}),
+    )).get("/login").text
+    assert 'data-demo-password="handover123"' in enabled
+    assert "Choose a member to fill both sign-in fields." in enabled
+
 
 def test_sitewide_typography_uses_readable_defaults():
     from fastapi.testclient import TestClient
