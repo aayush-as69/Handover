@@ -561,3 +561,34 @@ def test_sitewide_typography_uses_readable_defaults():
     assert "body{font-size:1rem;line-height:1.6}" in css
     assert "th{font-size:.92rem" in css
     assert ".pill{font-size:.86rem" in css
+
+
+def test_workspace_pages_render_after_ui_refresh(env):
+    import re
+    app, _ = env
+    reviewer = login(app, "meera")
+    admin = login(app, "riya")
+
+    pages = [
+        (reviewer, "/review?status=all", "queue-header"),
+        (reviewer, "/conflicts", "work-card-grid"),
+        (reviewer, "/questions", "question-summary"),
+        (reviewer, "/handover", "handover-page"),
+        (reviewer, "/handover/releases", "Published releases"),
+        (admin, "/admin/sources", "source-tools"),
+    ]
+    for browser, path, marker in pages:
+        response = browser.get(path)
+        assert response.status_code == 200, path
+        assert marker in response.text, path
+
+    queue = reviewer.get("/review?status=all").text
+    claim = re.search(r'href="(/review/claims/\\d+)"', queue)
+    assert claim
+    detail = reviewer.get(claim.group(1))
+    assert detail.status_code == 200 and "claim-page" in detail.text
+
+    source = re.search(r'href="(/review/chunks/\\d+[^"]*)"', detail.text)
+    if source:
+        source_page = reviewer.get(source.group(1).replace("&amp;", "&"))
+        assert source_page.status_code == 200 and "source-document" in source_page.text
