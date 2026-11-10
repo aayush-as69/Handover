@@ -1,4 +1,14 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+
 # Handover: Round 2 build document
+
+<sub>Handover · Product and engineering documentation</sub>
+
+</div>
+
+---
 
 Team STARTEND (solo) · CodeFrontier, We Code Coders · Repository: https://github.com/aayush-as69/Handover
 
