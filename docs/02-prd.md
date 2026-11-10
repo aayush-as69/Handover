@@ -1,5 +1,11 @@
 <div align="center">
 
+<div align="right">
+<img src="assets/handover-logo.svg" alt="Handover" width="38" />
+</div>
+
+> [Documentation index](README.md) · [Project home](../README.md)
+
 <img src="assets/handover-logo.svg" alt="Handover" width="48" />
 
 # 02 — Product Requirements Document
@@ -67,3 +73,8 @@ Make project handover evidence-backed, reviewable and permission-aware so that t
 ## 6. Out of scope
 
 The current product does not claim multi-project hosting, a dedicated audit-log page, richer conflict visualization, or live-LLM quality guarantees.
+
+
+---
+
+[← Documentation index](README.md) · [Project home](../README.md)
