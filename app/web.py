@@ -126,7 +126,9 @@ def landing(user: Optional[User]) -> str:
 
 
 @router.get("/")
-def home(user: Optional[User] = Depends(current_user)):
+def home(request: Request, user: Optional[User] = Depends(current_user)):
+    if user is None:
+        return render(request, "landing.html", None)
     return RedirectResponse(landing(user), status_code=303)
 
 

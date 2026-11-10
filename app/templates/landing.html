@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Keep project knowledge{% endblock %}
+{% block body %}
+<div class="bento">
+  <div class="tile s8 hero">
+    <p class="eyebrow">Evidence-linked knowledge handover</p>
+    <h1>Keep critical project knowledge from leaving with people.</h1>
+    <p class="lead">Handover turns notes, chat, task exports and public GitHub activity into a handover where every claim points to the exact words it came from. A person reviews and approves it before anyone relies on it.</p>
+    <p class="buttons"><a class="button primary" href="/login">Sign in to the demo</a>
+      <a class="button" href="https://github.com/aayush-as69/Handover">View the code</a></p>
+  </div>
+  <div class="tile s4 stack">
+    <p class="eyebrow">What the label means</p>
+    <p><span class="pill verified">quote-verified</span> The quotes exist in the sources and fit the claim.</p>
+    <p><span class="pill inferred">inferred</span> The claim goes beyond its quote.</p>
+    <p><span class="pill conflicting">conflicting</span> A source contradicts it.</p>
+    <p><span class="pill unsupported">unsupported</span> No usable quote was found.</p>
+    <p class="muted">Quote-verified is not the same as true. That judgement stays with the reviewer.</p>
+  </div>
+
+  <div class="tile s4"><p class="eyebrow">1. Collect</p><h2>Bring in what exists</h2>
+    <p>Meeting notes, team chat, task exports and public GitHub issues, commits and pull requests. Secrets are masked on the way in.</p></div>
+  <div class="tile s4"><p class="eyebrow">2. Review</p><h2>Check every claim</h2>
+    <p>Each draft claim shows its quotes, a computed label and its history. Riskiest claims come first. Nothing is approved automatically.</p></div>
+  <div class="tile s4"><p class="eyebrow">3. Hand over</p><h2>Publish a release</h2>
+    <p>Approved claims form a numbered, unchangeable release. Each person sees only what their role may see.</p></div>
+
+  <div class="tile s12 flush shot">
+    <img src="{{ asset_url('img/queue.jpg') }}" width="1400" alt="The review queue: counts of claims to review, approved and rejected, and a list of claims with confidence labels." loading="lazy">
+  </div>
+
+  <div class="tile s6"><p class="eyebrow">Built to be checked</p><h2>Conflicts and open questions</h2>
+    <p>Handover flags where sources disagree, for example one note saying PostgreSQL is the only datastore while a commit adds Mongo. It also lists what the outgoing person should still answer: owners, reasons and open decisions.</p></div>
+  <div class="tile s6"><p class="eyebrow">Safe by design</p><h2>Permissions enforced on the server</h2>
+    <p>Sensitivity levels run from public to confidential, and a claim is as sensitive as its most sensitive source. Restricted material is hidden from roles without clearance, not just greyed out.</p></div>
+
+  <div class="tile s12 flush shot">
+    <img src="{{ asset_url('img/claim.jpg') }}" width="1400" alt="A claim with its supporting quote, the reason for its label and the decision form." loading="lazy">
+  </div>
+
+  <div class="tile s12 stack">
+    <h2>Try it</h2>
+    <p>The demo uses an invented project, CampusEvents, so nothing real is exposed. Sign in as a reviewer, open the queue, and approve or reject a claim.</p>
+    <p class="buttons"><a class="button primary" href="/login">Sign in to the demo</a></p>
+    <p class="muted">Built for the CodeFrontier hackathon by team STARTEND.</p>
+  </div>
+</div>
+{% endblock %}

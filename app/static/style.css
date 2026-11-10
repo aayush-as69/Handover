@@ -166,3 +166,12 @@ del{background:var(--bad-bg);color:var(--bad);border-radius:4px;padding:0 .15em}
 @media (max-width:760px){
   .brand-mark{width:27px;height:27px}
 }
+
+/* ---- landing page */
+.hero h1{font-size:2.9rem;max-width:18ch}
+.lead{font-size:1.15rem;color:var(--mut);max-width:60ch}
+a.button{display:inline-block;font-weight:550;padding:.6rem 1.3rem;border-radius:999px;border:1px solid var(--line);color:var(--fg)}
+a.button:hover{text-decoration:none;background:var(--tile-2)}
+a.button.primary{background:var(--acc);color:var(--on-acc);border-color:var(--acc)}
+.shot img{display:block;width:100%;height:auto}
+@media (max-width:760px){.hero h1{font-size:2rem}}
