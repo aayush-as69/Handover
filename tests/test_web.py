@@ -554,7 +554,7 @@ def test_sitewide_typography_uses_readable_defaults():
     c = TestClient(create_app(secret_key="k" * 40))
     html = c.get("/login").text
     import re
-    css_url = re.search(r'href="(/static/style\\.css\\?v=[0-9a-f]{10})"', html)
+    css_url = re.search(r'href="(/static/style\.css\?v=[0-9a-f]{10})"', html)
     assert css_url
     css = c.get(css_url.group(1)).text
     assert "html{font-size:17px}" in css
