@@ -1,5 +1,11 @@
 # 08 — API & Route Reference
 
+<div align="right">
+<img src="assets/handover-logo.svg" alt="Handover" width="38" />
+</div>
+
+> [Documentation index](README.md) · [Project home](../README.md)
+
 Handover is primarily a server-rendered web application. The repository deliberately disables interactive FastAPI API docs in production. This reference therefore documents the implemented browser/health routes rather than exposing an automatically generated production API schema.
 
 ## Public/system routes
@@ -63,3 +69,8 @@ Supported handover actions include `approve`, `withdraw` and `acknowledge`.
 ## Error behavior
 
 The application renders user-facing error pages for HTTP errors and uses a generic 500 response for unexpected exceptions. Review access intentionally returns “not found” when a claim exists but is above the user's clearance, avoiding information disclosure about hidden records.
+
+
+---
+
+[← Documentation index](README.md) · [Project home](../README.md)
