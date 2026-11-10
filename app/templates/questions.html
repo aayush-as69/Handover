@@ -11,12 +11,12 @@
       <span>{{ total }} total questions</span>
     </div>
   </header>
-  <div class="section-heading"><div><p class="page-eyebrow">CONTEXT GAPS</p><h2>Follow-up questions</h2></div>
+  <div class="section-heading"><div><p class="page-eyebrow">CONTEXT GAPS</p><h2>Follow-up questions</h2></div><div class="table-tools"><label class="table-search"><span class="sr-only">Search questions</span><input type="search" placeholder="Search questions..." data-live-search data-search-target="#question-list" data-search-count="#question-search-count"></label><span class="panel-hint" id="question-search-count">{{ total }} item(s)</span></div>
     <form method="post" action="/questions/refresh"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Refresh questions</button></form>
   </div>
-  <div class="bento work-card-grid">
+  <div class="bento work-card-grid" id="question-list">
   {% for q, linked in items %}
-    <section class="tile s6 work-card question-card">
+    <section class="tile s6 work-card question-card" data-search-item>
       <div class="work-card-head">
         <div class="meta"><span class="pill {{ 'verified' if q.status.value == 'answered' else ('inferred' if q.status.value == 'open' else '') }}">{{ q.status.value }}</span><span class="muted">{{ q.kind.replace("_", " ") }}</span></div>
       </div>
