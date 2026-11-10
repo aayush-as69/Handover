@@ -4,14 +4,14 @@
 
 # Handover
 
-### Project knowledge that survives team changes.
+### When someone leaves, the reasons shouldn’t.
 
-**Turn scattered project context into evidence-backed, reviewable handovers.**
+**Evidence-backed project knowledge transfer.** Turn scattered project context into reviewable handovers.
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Ready-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Tests](https://img.shields.io/badge/Tests-484%20passing-brightgreen)](docs/09-testing.md)
+[![Tests](https://img.shields.io/badge/Tests-487%20passing-brightgreen)](docs/09-testing.md)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 [Overview](#why-handover) · [Features](#what-it-does) · [Architecture](#how-it-works) · [Quick start](#quick-start) · [Documentation](#documentation)
@@ -85,27 +85,6 @@ Decisions live in meeting notes. Ownership is buried in task boards. Risks are s
 
 <img src="docs/architecture.svg" alt="Handover system architecture" width="100%" />
 
-<details>
-<summary><strong>Explore the knowledge pipeline</strong></summary>
-
-```mermaid
-flowchart TD
-    A["Project sources<br/>Notes · Chat · Tasks · GitHub"] --> B["Parse and normalize"]
-    B --> C["Secret redaction"]
-    C --> D["Store sources and chunks"]
-    D --> E["Extract candidate claims<br/>Rules or optional LLM"]
-    E --> F["Validate evidence references"]
-    F --> G["Mechanical verification"]
-    G --> H["Human review"]
-    H -->|Approve| I["Immutable numbered release"]
-    H -->|Edit / Reject / Reopen| J["Review again or exclude"]
-    I --> K["Role and sensitivity filtering"]
-    K --> L["Field-level redaction"]
-    L --> M["Incoming teammate"]
-```
-
-</details>
-
 ### Confidence labels
 
 | Label | What it tells you |
@@ -117,31 +96,15 @@ flowchart TD
 
 Verification and approval are separate. A person—not the model—decides whether a claim belongs in the published handover.
 
-## Interface
+## Product preview
 
-The application uses server-rendered pages with a responsive bento-style layout, light/dark device preference, accessible focus states and reduced-motion support.
-
-| Workflow | What to inspect |
-|---|---|
-| Review queue | Prioritized claims, confidence labels and filters |
-| Claim detail | Supporting quotes, source links, review actions and version history |
-| Conflicts | Potential disagreements across project sources |
-| Questions | Missing ownership, decisions and unresolved context |
-| Handover | Approved, role-filtered release content |
-| Sources | Imported evidence and extraction actions |
-
-Captured from the synthetic demo as the reviewer `meera`, with the review-queue examples loaded.
+The review queue lists claims riskiest first, each with its confidence label. Opening a claim shows the exact quote beside it.
 
 ![Review queue](docs/assets/screenshots/review-queue.png)
 
-| | |
-|---|---|
-| ![Claim detail](docs/assets/screenshots/claim-evidence.png) | ![Conflicts](docs/assets/screenshots/conflicts.png) |
-| ![Questions Before I Leave](docs/assets/screenshots/questions.png) | ![Handover](docs/assets/screenshots/handover-release.png) |
+![A claim with its evidence](docs/assets/screenshots/claim-evidence.png)
 
-On a phone the grid folds to one column and the claim table becomes stacked cards:
-
-<img src="docs/assets/screenshots/mobile-queue.png" alt="Review queue on a phone" width="320" />
+More screens, including conflicts, questions, the handover and the phone layout, are in the [screenshot gallery](docs/assets/screenshots/README.md).
 
 ## Tech stack
 
@@ -254,30 +217,15 @@ python -m pytest -q tests/test_ingest.py
 
 For PostgreSQL testing, set `TEST_DATABASE_URL` to a test database before running pytest. See the [testing guide](docs/09-testing.md).
 
-**Latest local run:** 484 passed, 2 skipped (SQLite, 11 Nov 2026). **Historical CI evidence:** the run recorded on 9 November 2026 reported 481 passing tests on SQLite and 482 on PostgreSQL 16, with no known vulnerabilities reported by `pip-audit`. This is a historical result, not a claim that the current checkout has just been tested.
+**Latest local run:** 487 passed, 2 skipped (SQLite, 11 Nov 2026). **Historical CI evidence:** the run recorded on 9 November 2026 reported 481 passing tests on SQLite and 482 on PostgreSQL 16, with no known vulnerabilities reported by `pip-audit`. This is a historical result, not a claim that the current checkout has just been tested.
 
 ## Documentation
 
-The documentation is organized as a practical engineering guide.
+Detailed guides live in [`docs/`](docs/README.md).
 
-| # | Guide | What it covers |
-|---:|---|---|
-| 01 | [Project overview](docs/01-project-overview.md) | Problem, users, workflows and scope |
-| 02 | [Product requirements](docs/02-prd.md) | Requirements and acceptance criteria |
-| 03 | [Software requirements](docs/03-srs.md) | Functional and non-functional requirements |
-| 04 | [System architecture](docs/04-architecture.md) | Components, boundaries and data flows |
-| 05 | [Database design](docs/05-database-design.md) | Entities, relationships and invariants |
-| 06 | [Technical implementation](docs/06-technical-implementation.md) | Modules and processing pipelines |
-| 07 | [Security architecture](docs/07-security.md) | Authentication, authorization and trust boundaries |
-| 08 | [API and routes](docs/08-api-reference.md) | Browser, health and readiness routes |
-| 09 | [Testing guide](docs/09-testing.md) | Test strategy and traceability |
-| 10 | [Development setup](docs/10-development.md) | Environment and local workflow |
-| 11 | [Deployment and operations](docs/11-deployment-operations.md) | Render, migrations, backup and recovery |
-| 12 | [User and demo guide](docs/12-user-demo-guide.md) | Step-by-step product walkthrough |
-| 13 | [Limitations and roadmap](docs/13-limitations-roadmap.md) | Known boundaries and proposed work |
-| 14 | [Documentation audit](docs/14-documentation-coverage.md) | Coverage and verification checklist |
-
-Additional references: [Features](docs/FEATURES.md) · [Operations](docs/OPERATIONS.md) · [Production readiness](docs/PRODUCTION_READINESS.md) · [Disclosures](docs/DISCLOSURES.md) · [Round 2 notes](docs/ROUND2.md).
+- **Product:** [Overview](docs/01-project-overview.md) · [Product requirements](docs/02-prd.md) · [Software requirements](docs/03-srs.md) · [User and demo guide](docs/12-user-demo-guide.md) · [Features](docs/FEATURES.md)
+- **Engineering:** [Architecture](docs/04-architecture.md) · [Database design](docs/05-database-design.md) · [Implementation](docs/06-technical-implementation.md) · [Security](docs/07-security.md) · [API and routes](docs/08-api-reference.md) · [Testing](docs/09-testing.md) · [Development setup](docs/10-development.md)
+- **Operations:** [Deployment and operations](docs/11-deployment-operations.md) · [Production readiness](docs/PRODUCTION_READINESS.md) · [Limitations and roadmap](docs/13-limitations-roadmap.md) · [Disclosures](docs/DISCLOSURES.md)
 
 ## Repository map
 

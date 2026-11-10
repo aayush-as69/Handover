@@ -2,36 +2,42 @@
 
 <img src="../handover-logo.svg" alt="Handover" width="52" />
 
-# Application screenshots
+# Screenshot gallery
 
-**A visual walkthrough of the real product**
+Real captures of the running application, taken from the synthetic demo as the reviewer `meera`. The two most useful ones are also in the [main README](../../../README.md).
 
 </div>
 
+## Review queue
+Claims riskiest first, with confidence labels, counts and filters. The demo includes four deliberately weak draft claims so every label appears.
+
+![Review queue](review-queue.png)
+
+## Claim verification
+The exact quote beside the claim, the reason for its label, the decision form and the version history.
+
+![Claim with evidence](claim-evidence.png)
+
+## Conflicts
+Where sources disagree.
+
+![Conflicts](conflicts.png)
+
+## Questions Before I Leave
+Gaps in ownership, reasons and open decisions for the outgoing person to answer.
+
+![Questions](questions.png)
+
+## Handover preview
+Approved claims only, each with its quote. This capture was taken after approving five quote-verified claims in a local copy of the demo.
+
+![Handover preview](handover-release.png)
+
+## On a phone
+The grid folds to one column and the claim table becomes stacked cards.
+
+<img src="mobile-queue.png" alt="Review queue on a phone" width="320" />
+
 ---
 
-These captures were taken from a running local demo using the synthetic dataset, as the reviewer `meera`. Retake them if the interface changes.
-
-## Recommended captures
-
-| Filename | Screen | What it explains |
-|---|---|---|
-| `review-queue.png` | Review queue | Claim triage, status and confidence filters |
-| `claim-evidence.png` | Claim detail | Evidence quotes, source references and review actions |
-| `conflicts.png` | Conflicts | How disagreements across sources are surfaced |
-| `questions.png` | Questions Before I Leave | Gaps in ownership, decisions and project context |
-| `handover-release.png` | Handover | A published release with role-based visibility |
-| `sources.png` | Sources | Ingested material and extraction controls (not captured yet) |
-| `mobile-queue.png` | Review queue on a phone | Responsive layout |
-
-## Capture checklist
-
-1. Start the app using the synthetic demo dataset.
-2. Use the demo accounts documented in the [root README](../../../README.md).
-3. Keep passwords, environment variables, personal information and confidential text out of view.
-4. Use a consistent desktop viewport, such as 1440 × 900.
-5. Capture the real running page; do not reconstruct the interface in an image editor.
-6. Save PNG files with the exact lowercase filenames listed above.
-7. Link each capture from the relevant section of the root README or guide.
-
-> Screenshots are real captures, not mockups.
+To retake these, run the demo locally, sign in as `meera`, and capture at about 1280 × 860. Keep passwords and environment values out of view, and use real captures, not mockups.
