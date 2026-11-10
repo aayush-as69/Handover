@@ -1,4 +1,14 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+
 # 12 — User & Demo Guide
+
+<sub>Handover · Product and engineering documentation</sub>
+
+</div>
+
+---
 
 ## 1. Start the demo
 
