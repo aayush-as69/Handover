@@ -1,4 +1,14 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+
 # Disclosures
+
+<sub>Handover · Product and engineering documentation</sub>
+
+</div>
+
+---
 
 Required by the event rules (templates, reused code, external services, AI assistance).
 
