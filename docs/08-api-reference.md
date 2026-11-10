@@ -1,4 +1,14 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+
 # 08 — API & Route Reference
+
+<sub>Handover · Product and engineering documentation</sub>
+
+</div>
+
+---
 
 <div align="right">
 <img src="assets/handover-logo.svg" alt="Handover" width="38" />
