@@ -54,6 +54,11 @@
   </section>
   {% endif %}
 
+  {% if sections %}
+  <nav class="handover-toc" aria-label="Handover sections"><span>JUMP TO</span>{% for sec in sections %}<a href="#{{ sec.key }}">{{ sec.title }}</a>{% endfor %}</nav>
+  {% endif %}
+  <div id="handover-content">
+    <div class="handover-search-row"><label class="table-search"><span class="sr-only">Search handover content</span><input type="search" placeholder="Search approved knowledge..." data-live-search data-search-target="#handover-content" data-search-items="[data-handover-item]" data-search-count="#handover-search-count"></label><span class="panel-hint" id="handover-search-count">Search this release</span></div>
   {% for sec in sections %}
   <section class="handover-section">
     <div class="section-heading"><div><p class="page-eyebrow">APPROVED KNOWLEDGE</p><h2 id="{{ sec.key }}">{{ sec.title }}</h2></div><span class="panel-hint">{{ sec.claims|length }} item(s)</span></div>
@@ -79,6 +84,8 @@
   {% else %}
   <section class="empty-state"><span class="empty-state-icon">—</span><h2>No approved claims yet</h2><p class="muted">There are no approved claims available to you in this handover.</p></section>
   {% endfor %}
+    <section class="empty-state search-empty" data-search-empty hidden><h2>No matching handover items</h2><p class="muted">Try searching for a different decision, owner or dependency.</p></section>
+  </div>
 
   {% if answers %}
   <section class="handover-section">
