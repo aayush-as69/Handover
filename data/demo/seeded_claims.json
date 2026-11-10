@@ -1,0 +1,30 @@
+[
+  {
+    "note": "Overstates its quote: adds a date and an outcome the quote does not contain",
+    "type": "decision", "topic": "seat locks",
+    "statement": "Redis seat locks cut double bookings by half and shipped on 4 October.",
+    "source": "team_chat.txt", "anchor": "put seat locks in redis btw",
+    "quote": "put seat locks in redis btw, compose file updated", "stance": "supports"
+  },
+  {
+    "note": "A quote in the sources contradicts the claim",
+    "type": "risk", "topic": "seat locks",
+    "statement": "Double booking is fixed and the Redis seat locks stopped it.",
+    "source": "team_chat.txt", "anchor": "double booking happened again",
+    "quote": "double booking happened again after the redis lock change", "stance": "contradicts"
+  },
+  {
+    "note": "The quote does not exist in any source",
+    "type": "owner", "topic": "refund policy",
+    "statement": "Arjun owns the refund policy decision and will announce it at launch.",
+    "source": "notes/2026-10-03_sprint_review.md", "anchor": "Refund policy",
+    "quote": "Arjun will own the refund policy and announce it at launch", "stance": "supports"
+  },
+  {
+    "note": "Says the opposite of its quote (negation differs)",
+    "type": "dependency", "topic": "mongo event feed",
+    "statement": "The Mongo event feed is not used by anything.",
+    "source": "team_chat.txt", "anchor": "is the mongo feed still used",
+    "quote": "is the mongo feed still used for anything", "stance": "supports"
+  }
+]

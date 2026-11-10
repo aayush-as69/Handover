@@ -35,3 +35,9 @@ A four-person club team built **CampusEvents**, an app for discovering club even
 The expected file describes the traps intentionally planted in the sample. Tests and later evaluation use it to check whether the application handles those cases correctly.
 
 > Use this dataset to explore ingestion, extraction, verification, review, redaction and role-filtered handover behavior. Do not treat sample identities or credentials as real.
+
+## Seeded review examples
+`seeded_claims.json` holds four deliberately weak draft claims (two inferred, one conflicting, one
+unsupported) so the demo shows every confidence label without an LLM key. They are marked
+`demo-seed`, and their labels are computed by the normal verifier, not written by hand. Like every
+claim they start unapproved and need a reviewer.

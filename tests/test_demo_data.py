@@ -24,7 +24,7 @@ def test_manifest_lists_only_files_that_exist():
     # and every file on disk is declared
     declared = {s["path"] for s in manifest["sources"]}
     on_disk = {p.relative_to(DEMO).as_posix() for p in DEMO.rglob("*") if p.is_file()}
-    assert on_disk - declared == {"README.md", "manifest.json", "expected.json"}
+    assert on_disk - declared == {"README.md", "manifest.json", "expected.json", "seeded_claims.json"}
 
 
 def test_manifest_covers_every_role_and_source_kind():

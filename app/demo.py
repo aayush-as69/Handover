@@ -67,6 +67,44 @@ def load_demo_project(session: Session, demo_dir: Path = DEMO_DIR,
     return project
 
 
+def seed_review_examples(session: Session, project: Project, demo_dir: Path = DEMO_DIR) -> int:
+    """Add a few deliberately weak draft claims so the demo shows every confidence label.
+
+    They are marked as demo-seed claims and go through the same verifier as any other claim;
+    their labels are computed, not written. Safe to call repeatedly.
+    """
+    from .enums import ClaimType, Stance
+    from .extract.pipeline import _higher
+    from .models import Chunk, Claim, Evidence, Source
+    from .verify import verify_claims
+
+    path = demo_dir / "seeded_claims.json"
+    if not path.exists():
+        return 0
+    have = set(session.scalars(select(Claim.statement).where(
+        Claim.project_id == project.id, Claim.extractor == "demo-seed")))
+    created = []
+    for item in json.loads(path.read_text(encoding="utf-8")):
+        if item["statement"] in have:
+            continue
+        chunk = session.scalars(select(Chunk).join(Source).where(
+            Source.project_id == project.id, Source.name == Path(item["source"]).name,
+            Chunk.text.contains(item["anchor"]))).first()
+        if chunk is None:
+            continue
+        claim = Claim.create(
+            project_id=project.id, statement=item["statement"], type=ClaimType(item["type"]),
+            created_by="demo-seed", topic=item.get("topic"), sensitivity=_higher(
+                Sensitivity.team, chunk.sensitivity), extractor="demo-seed")
+        claim.evidence.append(Evidence(chunk_id=chunk.id, snippet=item["quote"],
+                                       stance=Stance(item["stance"])))
+        session.add(claim)
+        created.append(claim)
+    session.flush()
+    verify_claims(created)
+    return len(created)
+
+
 def bootstrap_demo(session: Session, password: str) -> None:
     """For a hosted demo: load the project, draft claims and an empty handover once.
 
@@ -80,6 +118,7 @@ def bootstrap_demo(session: Session, password: str) -> None:
     project = load_demo_project(session, password=password)
     if session.scalar(select(Claim.id).where(Claim.project_id == project.id)) is None:
         run_extraction(session, project, RuleExtractor())
+    seed_review_examples(session, project)
     detect_conflicts(session, project)
     generate_questions(session, project)
     get_or_create_handover(session, project)
@@ -114,6 +153,8 @@ def main() -> None:
                         report = run_extraction(session, project, extractor)
             except ExtractionError as exc:
                 raise SystemExit(f"Extraction failed: {exc}") from None
+            if args.extract == "rules":
+                seed_review_examples(session, project)
             session.commit()
             print(f"\nExtraction with {report.extractor}: {report.claims_created} claims created, "
                   f"{report.duplicates_skipped} duplicates skipped, "
