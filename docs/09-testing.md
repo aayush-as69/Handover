@@ -1,4 +1,14 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+
 # 09 — Testing Guide
+
+<sub>Handover · Product and engineering documentation</sub>
+
+</div>
+
+---
 
 <div align="right">
 <img src="assets/handover-logo.svg" alt="Handover" width="38" />
