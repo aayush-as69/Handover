@@ -10,7 +10,7 @@
 
 ---
 
-Capture these screens from a running local demo using the synthetic dataset. The repository does not currently contain verified application screenshots; this guide defines the captures to add.
+These captures were taken from a running local demo using the synthetic dataset, as the reviewer `meera`. Retake them if the interface changes.
 
 ## Recommended captures
 
@@ -21,7 +21,8 @@ Capture these screens from a running local demo using the synthetic dataset. The
 | `conflicts.png` | Conflicts | How disagreements across sources are surfaced |
 | `questions.png` | Questions Before I Leave | Gaps in ownership, decisions and project context |
 | `handover-release.png` | Handover | A published release with role-based visibility |
-| `sources.png` | Sources | Ingested material and extraction controls |
+| `sources.png` | Sources | Ingested material and extraction controls (not captured yet) |
+| `mobile-queue.png` | Review queue on a phone | Responsive layout |
 
 ## Capture checklist
 
@@ -33,4 +34,4 @@ Capture these screens from a running local demo using the synthetic dataset. The
 6. Save PNG files with the exact lowercase filenames listed above.
 7. Link each capture from the relevant section of the root README or guide.
 
-> Screenshots are intentionally not mocked. Add them after capturing the current application so the documentation remains accurate.
+> Screenshots are real captures, not mockups.

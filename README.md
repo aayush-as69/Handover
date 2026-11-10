@@ -11,7 +11,7 @@
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Ready-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Tests](https://img.shields.io/badge/Tests-481%20SQLite%20%7C%20482%20PostgreSQL-brightgreen)](docs/09-testing.md)
+[![Tests](https://img.shields.io/badge/Tests-484%20passing-brightgreen)](docs/09-testing.md)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 [Overview](#why-handover) · [Features](#what-it-does) · [Architecture](#how-it-works) · [Quick start](#quick-start) · [Documentation](#documentation)
@@ -130,7 +130,18 @@ The application uses server-rendered pages with a responsive bento-style layout,
 | Handover | Approved, role-filtered release content |
 | Sources | Imported evidence and extraction actions |
 
-> **Screenshots:** The repository currently contains architecture diagrams but no verified application screenshots. Add real captures to `docs/assets/screenshots/` after running the demo; do not treat mockups as product evidence.
+Captured from the synthetic demo as the reviewer `meera`, with the review-queue examples loaded.
+
+![Review queue](docs/assets/screenshots/review-queue.png)
+
+| | |
+|---|---|
+| ![Claim detail](docs/assets/screenshots/claim-evidence.png) | ![Conflicts](docs/assets/screenshots/conflicts.png) |
+| ![Questions Before I Leave](docs/assets/screenshots/questions.png) | ![Handover](docs/assets/screenshots/handover-release.png) |
+
+On a phone the grid folds to one column and the claim table becomes stacked cards:
+
+<img src="docs/assets/screenshots/mobile-queue.png" alt="Review queue on a phone" width="320" />
 
 ## Tech stack
 
@@ -243,7 +254,7 @@ python -m pytest -q tests/test_ingest.py
 
 For PostgreSQL testing, set `TEST_DATABASE_URL` to a test database before running pytest. See the [testing guide](docs/09-testing.md).
 
-**Historical CI evidence:** the run recorded on 9 November 2026 reported 481 passing tests on SQLite and 482 on PostgreSQL 16, with no known vulnerabilities reported by `pip-audit`. This is a historical result, not a claim that the current checkout has just been tested.
+**Latest local run:** 484 passed, 2 skipped (SQLite, 11 Nov 2026). **Historical CI evidence:** the run recorded on 9 November 2026 reported 481 passing tests on SQLite and 482 on PostgreSQL 16, with no known vulnerabilities reported by `pip-audit`. This is a historical result, not a claim that the current checkout has just been tested.
 
 ## Documentation
 
