@@ -104,8 +104,8 @@ Handover deliberately separates **extraction, verification and approval**:
 
 ## The interface
 Server-rendered pages with one stylesheet and no external fonts or scripts, so the strict
-`default-src 'self'` policy holds. The look is a bento grid of frosted-glass tiles over a soft
-gradient (blur, thin light borders), in light and dark to match the device setting.
+`default-src 'self'` policy holds. The look is a clean bento grid of rounded tiles with hairline borders, in light and dark to
+match the device setting.
 - **Review queue:** count tiles for needs review, approved and rejected (each opens that list),
   a filter tile, and the claim list with a coloured bar per confidence level. Riskiest first.
 - **Claim page:** the statement, the reason for its label, one tile per piece of evidence
