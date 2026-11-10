@@ -1,27 +1,99 @@
 {% extends "base.html" %}
 {% block title %}Sign in{% endblock %}
+{% block head %}
+<script src="{{ asset_url('login.js') }}" defer></script>
+{% endblock %}
 {% block body %}
-<section class="card narrow">
-  <h1>Sign in</h1>
-  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
-  <form method="post" action="/login">
-    <input type="hidden" name="csrf" value="{{ csrf }}">
-    <label>Username <input name="username" autocomplete="username" required autofocus></label>
-    <label>Password <input name="password" type="password" autocomplete="current-password" required></label>
-    <button class="primary">Sign in</button>
-  </form>
-  <p class="muted">Demo accounts use synthetic data only. The demo password is set by whoever runs the deployment; ask the project team if you do not have it.</p>
-</section>
-<section class="card narrow">
-  <h2>Demo accounts</h2>
-  <table class="lp-roles">
-    <thead><tr><th>Username</th><th>Role</th><th>What to explore</th></tr></thead>
-    <tbody>
-      <tr><td><code>meera</code></td><td>Approver</td><td>Claim verification and approvals</td></tr>
-      <tr><td><code>riya</code></td><td>Admin</td><td>Source management</td></tr>
-      <tr><td><code>kabir</code></td><td>Viewer</td><td>The published handover</td></tr>
-      <tr><td><code>rao</code></td><td>Restricted</td><td>Permissions and redaction</td></tr>
-    </tbody>
-  </table>
-</section>
+<div class="login-page">
+  <aside class="login-story" aria-label="About Handover">
+    <a class="login-brand" href="/" aria-label="Handover home">
+      <img src="{{ asset_url('logo.svg') }}" alt="">
+      <span>Handover</span>
+    </a>
+
+    <div class="login-story-copy">
+      <p class="login-kicker">PROJECT CONTEXT, PRESERVED</p>
+      <h1>Pick up where<br>the story left off.</h1>
+      <p class="login-story-lead">The decisions, details and unfinished work behind a project—connected, reviewed and ready for the next person.</p>
+
+      <div class="login-benefits">
+        <div>
+          <span class="login-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 4h10v16H7zM10 8h4M10 12h4M10 16h2"/></svg></span>
+          <span><strong>Evidence stays attached</strong><small>Trace a claim back to its original source.</small></span>
+        </div>
+        <div>
+          <span class="login-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 4.5-2.8 7.8-7 10-4.2-2.2-7-5.5-7-10V6zM9 12l2 2 4-4"/></svg></span>
+          <span><strong>People stay in control</strong><small>Nothing is published without human approval.</small></span>
+        </div>
+        <div>
+          <span class="login-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16M7 4v6M17 4v6M5 12h14v8H5zM8 15h3"/></svg></span>
+          <span><strong>Every release has a history</strong><small>Pass on context, not just a document.</small></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="login-story-bottom">
+      <span class="login-status"><i></i> YOUR TEAM'S KNOWLEDGE, IN ONE PLACE</span>
+      <span>Preserve the context behind the code.</span>
+    </div>
+  </aside>
+
+  <section class="login-panel" aria-labelledby="login-title">
+    <div class="login-panel-inner">
+      <a class="login-back" href="/"><span aria-hidden="true">←</span> Back to home</a>
+
+      <div class="login-heading">
+        <p class="login-kicker">WORKSPACE ACCESS</p>
+        <h2 id="login-title">Welcome back.</h2>
+        <p>Sign in to continue to your Handover workspace.</p>
+      </div>
+
+      {% if error %}
+      <div class="login-error" role="alert">
+        <span aria-hidden="true">!</span>
+        <p>{{ error }}</p>
+      </div>
+      {% endif %}
+
+      <form method="post" action="/login" class="login-form">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+
+        <label for="login-username">Username</label>
+        <input id="login-username" name="username" type="text" autocomplete="username"
+               placeholder="Enter your username" required autofocus>
+
+        <div class="login-password-label">
+          <label for="login-password">Password</label>
+        </div>
+        <div class="login-password-wrap">
+          <input id="login-password" name="password" type="password"
+                 autocomplete="current-password" placeholder="Enter your password" required>
+          <button class="login-password-toggle" type="button" data-password-toggle
+                  aria-label="Show password" aria-pressed="false">Show</button>
+        </div>
+
+        <button class="login-submit" type="submit">
+          <span>Sign in to Handover</span><span aria-hidden="true">→</span>
+        </button>
+      </form>
+
+      <div class="login-demo">
+        <div class="login-demo-heading">
+          <span>DEMO ACCESS</span>
+          <span class="login-demo-tag">SYNTHETIC DATA</span>
+        </div>
+        <p>Explore the workspace with one of the demo accounts.</p>
+        <div class="login-roles">
+          <div><code>meera</code><span>Approver</span></div>
+          <div><code>riya</code><span>Admin</span></div>
+          <div><code>kabir</code><span>Viewer</span></div>
+          <div><code>rao</code><span>Restricted</span></div>
+        </div>
+        <small>The password is configured by the deployment operator. Ask the project team if you need access.</small>
+      </div>
+
+      <p class="login-security-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.5-2.8 7.8-7 10-4.2-2.2-7-5.5-7-10V6zM9 12l2 2 4-4"/></svg> Protected workspace · Role-based access</p>
+    </div>
+  </section>
+</div>
 {% endblock %}
