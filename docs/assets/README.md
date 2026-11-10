@@ -1,8 +1,24 @@
+<div align="center">
+
+<img src="handover-logo.svg" alt="Handover" width="56" />
+
 # Documentation assets
 
-This directory contains assets used by the root README and documentation pages.
+**Visual identity and supporting media**
 
-- `handover-logo.svg` — project mark used in documentation.
-- `screenshots/` — reserved for real application screenshots captured from a running build.
+</div>
 
-Do not add fabricated UI captures or screenshots containing credentials, real personal data, or confidential project material. Prefer synthetic demo data and crop browser chrome where appropriate.
+---
+
+This directory contains the visual assets used by the root README and engineering guides.
+
+| Asset | Purpose |
+|---|---|
+| `handover-logo.svg` | Project mark used across Markdown documentation |
+| `screenshots/` | Real application captures from a running synthetic demo |
+
+## Screenshot policy
+
+Use screenshots from the actual application. Do not add fabricated UI captures or images containing credentials, personal information or confidential project material. Prefer the synthetic demo dataset and keep the viewport consistent.
+
+See the [screenshot capture guide](screenshots/README.md) for the recommended set and capture checklist.
