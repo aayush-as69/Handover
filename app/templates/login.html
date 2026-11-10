@@ -77,12 +77,16 @@
         </button>
       </form>
 
-      <div class="login-demo" id="demo-accounts">
+      <div class="login-demo" id="demo-accounts" data-demo-password="{{ demo_password }}">
         <div class="login-demo-heading">
           <span>DEMO ACCESS</span>
           <span class="login-demo-tag">SYNTHETIC DATA</span>
         </div>
-        <p>Choose a member to fill the username.</p>
+        {% if demo_password %}
+        <p>Choose a member to fill both sign-in fields.</p>
+        {% else %}
+        <p>Choose a member to fill the username. Demo password autofill is not configured.</p>
+        {% endif %}
         <div class="login-roles" role="group" aria-label="Choose a demo account">
           <button type="button" class="login-role" data-demo-user="meera" aria-pressed="false"><strong>Meera</strong><span>Approver</span></button>
           <button type="button" class="login-role" data-demo-user="riya" aria-pressed="false"><strong>Riya</strong><span>Admin</span></button>
