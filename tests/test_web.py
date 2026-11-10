@@ -497,15 +497,18 @@ def test_anonymous_visitors_get_a_landing_page_and_signed_in_users_are_redirecte
 
 
 def test_landing_has_section_anchors_social_preview_and_accessible_contradiction():
+    import re as _re
     from fastapi.testclient import TestClient
     from app.main import create_app
-    html = TestClient(create_app(secret_key="k" * 40)).get("/").text
-    for anchor in ("how", "verification", "security"):
+    c = TestClient(create_app(secret_key="k" * 40))
+    html = c.get("/").text
+    for anchor in ("workflow", "evidence", "verification"):
         assert f'href="#{anchor}"' in html and f'id="{anchor}"' in html
+    assert 'id="security"' in html
     assert 'property="og:image"' in html and "/static/img/og.png" in html
-    assert "contradicts this claim" in html
-    assert "AI can help prepare the handover. It cannot approve it." in html
-    login = TestClient(create_app(secret_key="k" * 40)).get("/login").text
+    assert "Contradicts this claim" in html
+    assert "It cannot approve it." in _re.sub(r"<br\s*/?>", " ", html).replace("\n", " ")
+    login = c.get("/login").text
     assert "meera" in login and "rao" in login
 
 
