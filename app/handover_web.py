@@ -67,7 +67,7 @@ def handover_page(request: Request, user: User = Depends(require_user),
         try:
             role = Role(view_as)
         except ValueError:
-            raise HTTPException(status_code=404, detail="Unknown role.")
+            raise HTTPException(status_code=404, detail="Unknown role.") from None
         if role != user.role and user.role not in REVIEWER_ROLES:
             raise HTTPException(status_code=403, detail="Only reviewers can preview another role.")
     sections = build_sections(session, project, user, role)

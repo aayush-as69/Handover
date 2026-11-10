@@ -35,7 +35,7 @@ class Redacted:
     hidden: set[str]
 
 
-def _looks_like_date(m: re.Match, text: str) -> bool:
+def _looks_like_date(m: re.Match) -> bool:
     return bool(re.fullmatch(r"\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4}", m.group().strip()))
 
 
@@ -44,7 +44,7 @@ def redact(role: Role, text: str) -> Redacted:
     out = text
     for kind in POLICY[role]:
         def sub(m: re.Match, kind=kind) -> str:
-            if kind == "phone" and (_looks_like_date(m, out) or len(re.sub(r"\D", "", m.group())) < 8):
+            if kind == "phone" and (_looks_like_date(m) or len(re.sub(r"\D", "", m.group())) < 8):
                 return m.group()
             hidden.add(kind)
             return LABELS[kind]

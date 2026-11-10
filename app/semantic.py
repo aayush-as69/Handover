@@ -58,7 +58,7 @@ def parse_judgement(content: str) -> Judgement:
     try:
         data = json.loads(_strip_fences(content))
     except json.JSONDecodeError:
-        raise ValueError("reply was not valid JSON")
+        raise ValueError("reply was not valid JSON") from None
     if not isinstance(data, dict):
         raise ValueError("reply was not a JSON object")
     verdict, reason = data.get("verdict"), data.get("reason", "")

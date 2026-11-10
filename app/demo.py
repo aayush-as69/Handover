@@ -113,7 +113,7 @@ def main() -> None:
                     with llm_from_env() as extractor:
                         report = run_extraction(session, project, extractor)
             except ExtractionError as exc:
-                raise SystemExit(f"Extraction failed: {exc}")
+                raise SystemExit(f"Extraction failed: {exc}") from None
             session.commit()
             print(f"\nExtraction with {report.extractor}: {report.claims_created} claims created, "
                   f"{report.duplicates_skipped} duplicates skipped, "

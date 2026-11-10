@@ -43,7 +43,7 @@ def decode_upload(data: bytes) -> str:
     try:
         return data.decode("utf-8-sig")
     except UnicodeDecodeError:
-        raise IngestError("the file is not valid UTF-8 text")
+        raise IngestError("the file is not valid UTF-8 text") from None
 
 
 def _higher(a: Sensitivity, b: Sensitivity) -> Sensitivity:

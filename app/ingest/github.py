@@ -34,7 +34,7 @@ def _get(client: httpx.Client, path: str, what: str, params: dict | None = None)
     try:
         resp = client.get(f"{API}{path}", params=params)
     except httpx.HTTPError:
-        raise IngestError("could not reach GitHub")
+        raise IngestError("could not reach GitHub") from None
     _check(resp, what)
     return resp.json()
 

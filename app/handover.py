@@ -96,7 +96,7 @@ def approve_handover(session: Session, handover: Handover, user: User) -> Handov
         with session.begin_nested():
             session.add(release)
     except IntegrityError:
-        raise HandoverError("Someone signed off at the same moment. Refresh and check the result.")
+        raise HandoverError("Someone signed off at the same moment. Refresh and check the result.") from None
     handover.status = HandoverStatus.approved
     handover.approved_by_id, handover.approved_at = user.id, release.approved_at or utcnow()
     session.flush()

@@ -45,7 +45,7 @@ def _reply_text(resp: httpx.Response) -> str:
         choice = body["choices"][0]
         content = choice["message"]["content"]
     except (KeyError, IndexError, TypeError, ValueError):
-        raise bad
+        raise bad from None
     if choice.get("finish_reason") == "length":
         raise ExtractionError("the model's reply was cut off (too long); try a smaller batch")
     if isinstance(content, list):          # some providers return a list of text parts
@@ -72,7 +72,7 @@ def parse_model_output(content: str) -> tuple[list[ExtractedClaim], int]:
     try:
         data = json.loads(_strip_fences(content))
     except json.JSONDecodeError as exc:
-        raise ValueError(f"reply was not valid JSON ({exc.msg})")
+        raise ValueError(f"reply was not valid JSON ({exc.msg})") from None
     if isinstance(data, list):
         data = {"claims": data}
     if not isinstance(data, dict) or not isinstance(data.get("claims"), list):
@@ -133,7 +133,7 @@ class OpenAICompatibleExtractor:
                 self._url, json=payload, headers={"Authorization": f"Bearer {self._key}"}
             )
         except httpx.HTTPError:
-            raise ExtractionError("could not reach the LLM provider")
+            raise ExtractionError("could not reach the LLM provider") from None
         if resp.status_code in (401, 403):
             raise ExtractionError("the LLM provider rejected the API key")
         if resp.status_code == 429:
@@ -147,7 +147,7 @@ class OpenAICompatibleExtractor:
     def _extract_batch(self, batch: Sequence[ChunkView], n: int) -> tuple[list[ExtractedClaim], list[str]]:
         messages = build_messages(batch)
         last_error = ""
-        for attempt in range(2):
+        for _attempt in range(2):
             content = self._chat(messages)
             try:
                 claims, invalid = parse_model_output(content)

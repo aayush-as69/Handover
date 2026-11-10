@@ -7,6 +7,7 @@ here decides visibility on its own.
 from __future__ import annotations
 
 import difflib
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
@@ -28,6 +29,18 @@ from .verify import verify_claim
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+
+
+@lru_cache(maxsize=None)
+def asset_url(name: str) -> str:
+    """Static file URL stamped with a hash of its contents, so browsers can cache it for a long
+    time yet fetch the new file the moment it changes."""
+    import hashlib
+    data = (Path(__file__).parent / "static" / name).read_bytes()
+    return f"/static/{name}?v={hashlib.sha256(data).hexdigest()[:10]}"
+
+
+templates.env.globals["asset_url"] = asset_url
 CONFIDENCE_LABELS = {"verified": "quote-verified", "inferred": "inferred",
                      "conflicting": "conflicting", "unsupported": "unsupported"}
 templates.env.globals["conf_label"] = lambda c: CONFIDENCE_LABELS[getattr(c, "value", c)]
@@ -212,14 +225,18 @@ def claim_detail(claim_id: int, request: Request, user: User = Depends(require_r
     from .conflicts import visible_members
     from .enums import ConflictStatus
     from .models import Conflict
-    all_claims = {c.id: c for c in session.scalars(select(Claim).where(Claim.project_id == claim.project_id))}
+    # Conflicts are few; read them, keep those naming this claim, and load only their members.
+    mine = [cf for cf in session.scalars(select(Conflict).where(
+        Conflict.project_id == claim.project_id, Conflict.status != ConflictStatus.stale))
+        if claim.id in cf.claim_ids]
+    wanted = {i for cf in mine for i in cf.claim_ids}
+    members = {c.id: c for c in session.scalars(select(Claim).where(
+        Claim.project_id == claim.project_id, Claim.id.in_(wanted)))} if wanted else {}
     disputes = []
-    for cf in session.scalars(select(Conflict).where(Conflict.project_id == claim.project_id,
-                                                     Conflict.status != ConflictStatus.stale)):
-        if claim.id in cf.claim_ids:
-            others = [m for m in visible_members(user.role, cf, all_claims) if m.id != claim.id]
-            if others:
-                disputes.append((cf, others))
+    for cf in mine:
+        others = [m for m in visible_members(user.role, cf, members) if m.id != claim.id]
+        if others:
+            disputes.append((cf, others))
     return render(request, "claim.html", user, claim=claim, evidence=evidence, disputes=disputes,
                   history=list(reversed(history)), sensitivity=effective_sensitivity(claim),
                   max_statement=MAX_STATEMENT)

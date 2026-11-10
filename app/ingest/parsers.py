@@ -258,7 +258,7 @@ def parse_github(text: str, name: str) -> ParseResult:
     try:
         data = json.loads(text)
     except json.JSONDecodeError:
-        raise IngestError("the GitHub file is not valid JSON")
+        raise IngestError("the GitHub file is not valid JSON") from None
     if not isinstance(data, dict) or not any(
         isinstance(data.get(k), list) for k in ("commits", "issues", "pulls")
     ):

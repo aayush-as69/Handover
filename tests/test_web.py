@@ -473,3 +473,13 @@ def test_review_queue_is_paginated_and_clamps_the_page(env, monkeypatch):
 def test_unknown_user_check_costs_as_much_as_a_real_one():
     from app.security import DUMMY_HASH
     assert DUMMY_HASH.split("$")[1] == hash_password("x").split("$")[1]
+
+
+def test_stylesheet_url_is_versioned_and_cached_long():
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    c = TestClient(create_app(secret_key="k" * 40))
+    html = c.get("/login").text
+    import re
+    url = re.search(r'href="(/static/style\.css\?v=[0-9a-f]{10})"', html).group(1)
+    assert "immutable" in c.get(url).headers["cache-control"]

@@ -117,7 +117,7 @@ def main(argv: list[str] | None = None) -> None:
             migrate()
             print("database is up to date")
     except MigrationError as exc:
-        raise SystemExit(f"error: {exc}")
+        raise SystemExit(f"error: {exc}") from None
 
 
 def migration_state(eng=None) -> str:

@@ -92,7 +92,7 @@ def create_app(secret_key: str | None = None, config: Settings | None = None) ->
         for k, v in _HEADERS.items():
             response.headers.setdefault(k, v)
         if request.url.path.startswith("/static/"):
-            response.headers["Cache-Control"] = "public, max-age=3600"
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable" if request.url.query.startswith("v=") else "public, max-age=300"
         if cfg.cookie_secure:
             response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
         return response
