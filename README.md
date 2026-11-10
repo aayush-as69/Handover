@@ -220,7 +220,7 @@ Open **http://127.0.0.1:8000/login**.
 | `kabir` | Viewer | Read and acknowledge a release |
 | `rao` | Restricted | Inspect reduced-clearance content |
 
-The demo is synthetic. On the login page, clicking a demo member pre-fills only the username and focuses the password field. It never fills a password or signs in automatically. Configure `DEMO_PASSWORD` yourself; never reuse a production credential.
+The demo is synthetic. Clicking Meera, Riya, Kabir or Mr. Rao fills that member's username and the shared demo password `handover123`; the visitor still presses Sign in. This public credential is only for the synthetic demo accounts and must never be reused for production.
 
 ## Optional LLM extraction
 
