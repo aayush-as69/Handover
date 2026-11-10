@@ -1,34 +1,54 @@
 {% extends "base.html" %}
 {% block title %}Sources{% endblock %}
 {% block body %}
-<h1>Sources <span class="muted">· {{ project.name }}</span></h1>
-<p class="muted">Secrets in uploaded text are masked before anything is stored. Use synthetic or non-sensitive data only.</p>
-<section class="card">
-  <h2>Add a source</h2>
-  <form method="post" action="/admin/sources/upload" enctype="multipart/form-data">
-    <input type="hidden" name="csrf" value="{{ csrf }}">
-    <label>File (text, up to {{ max_mb }} MB) <input type="file" name="file" required></label>
-    <label>Type <select name="kind">{% for k in kinds %}<option>{{ k }}</option>{% endfor %}</select></label>
-    <label>Sensitivity <select name="sensitivity">{% for l in levels %}<option {% if l == "team" %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
-    <button class="primary">Upload</button>
-  </form>
-</section>
-<section class="card">
-  <h2>Extract draft claims</h2>
-  <form method="post" action="/admin/sources/extract" class="buttons">
-    <input type="hidden" name="csrf" value="{{ csrf }}">
-    <button name="engine" value="rules">Run rule-based extraction</button>
-    {% if llm_ready %}<button name="engine" value="llm">Run LLM extraction</button>{% endif %}
-  </form>
-  {% if llm_ready %}<form method="post" action="/admin/sources/semantic"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Run model second opinion (advisory)</button></form>{% endif %}
-  {% if not llm_ready %}<p class="muted">LLM extraction is off: no LLM_BASE_URL, LLM_API_KEY and LLM_MODEL are set on the server.</p>{% endif %}
-  <p class="muted">Draft claims are never approved automatically.</p>
-</section>
-<table>
-  <thead><tr><th>Source</th><th>Type</th><th>Sensitivity</th><th>Passages</th><th>Masked</th></tr></thead>
-  <tbody>{% for s in sources %}
-  <tr><td>{{ s.name }}</td><td>{{ s.kind.value }}</td><td><span class="pill s-{{ s.sensitivity.value }}">{{ s.sensitivity.value }}</span></td>
-  <td>{{ s.chunks|length }}</td><td>{{ s.chunks|selectattr("redacted")|list|length }}</td></tr>
-  {% else %}<tr><td colspan="5" class="muted">No sources yet.</td></tr>{% endfor %}</tbody>
-</table>
+<div class="page-shell">
+  <header class="page-header">
+    <div><p class="page-eyebrow">ADMINISTRATION / INGESTION</p><h1>Sources <span class="muted">· {{ project.name }}</span></h1>
+      <p class="page-intro">Import the material Handover uses to build its evidence trail. Secrets are masked before uploaded text is stored; use synthetic or non-sensitive data only.</p>
+    </div>
+    <div class="page-header-aside"><span class="page-aside-label">SOURCE LIBRARY</span><strong>{{ sources|length }}<br>source(s) loaded</strong></div>
+  </header>
+
+  <div class="bento source-tools">
+    <section class="tile s6 source-tool-card">
+      <p class="page-eyebrow">STEP 01 / IMPORT</p><h2>Add a source</h2>
+      <p class="muted tool-description">Upload a supported text file and classify its origin and sensitivity.</p>
+      <form method="post" action="/admin/sources/upload" enctype="multipart/form-data" class="stack source-upload-form">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label>File (text, up to {{ max_mb }} MB) <input type="file" name="file" required></label>
+        <div class="form-row">
+          <label>Type <select name="kind">{% for k in kinds %}<option>{{ k }}</option>{% endfor %}</select></label>
+          <label>Sensitivity <select name="sensitivity">{% for l in levels %}<option {% if l == "team" %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
+        </div>
+        <button class="primary">Upload source</button>
+      </form>
+    </section>
+    <section class="tile s6 source-tool-card">
+      <p class="page-eyebrow">STEP 02 / EXTRACT</p><h2>Prepare draft claims</h2>
+      <p class="muted tool-description">Choose how candidate claims are extracted. Every result remains a draft for human review.</p>
+      <form method="post" action="/admin/sources/extract" class="source-engine-form">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <div class="engine-choice"><div><strong>Rule-based extraction</strong><span>Deterministic and works without an API key.</span></div><button name="engine" value="rules">Run rules</button></div>
+        {% if llm_ready %}<div class="engine-choice"><div><strong>LLM extraction</strong><span>Optional model-assisted extraction.</span></div><button name="engine" value="llm">Run LLM</button></div>{% endif %}
+      </form>
+      {% if llm_ready %}
+      <form method="post" action="/admin/sources/semantic" class="semantic-form"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Run model second opinion (advisory)</button></form>
+      {% else %}<p class="muted tool-description">LLM extraction is off: configure LLM_BASE_URL, LLM_API_KEY and LLM_MODEL on the server to enable it.</p>{% endif %}
+      <p class="tool-footnote">Draft claims are never approved automatically.</p>
+    </section>
+  </div>
+
+  <section class="page-panel table-panel">
+    <div class="panel-heading"><div><p class="page-eyebrow">INGESTED MATERIAL</p><h2>Source library</h2></div><span class="panel-hint">{{ sources|length }} source(s)</span></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Source</th><th>Type</th><th>Sensitivity</th><th>Passages</th><th>Masked</th></tr></thead>
+        <tbody>{% for s in sources %}
+        <tr><td data-label="Source"><strong>{{ s.name }}</strong></td><td data-label="Type">{{ s.kind.value }}</td><td data-label="Sensitivity"><span class="pill s-{{ s.sensitivity.value }}">{{ s.sensitivity.value }}</span></td>
+        <td data-label="Passages">{{ s.chunks|length }}</td><td data-label="Masked">{{ s.chunks|selectattr("redacted")|list|length }}</td></tr>
+        {% else %}<tr><td colspan="5" class="muted table-empty">No sources yet. Upload the first project source above.</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </section>
+</div>
 {% endblock %}
