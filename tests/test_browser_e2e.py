@@ -117,9 +117,9 @@ def test_review_queue_search_filters_and_restores_claims(live_server, browser):
         pytest.skip("synthetic dataset has no visible claims")
     search = page.locator('[data-live-search][data-search-target="#claims-table-body"]')
     search.fill("no-claim-should-match-this-phrase")
-    assert rows.locator(":visible").count() == 0
+    assert page.locator("#claims-table-body [data-search-item]:visible").count() == 0
     assert page.locator("#claims-table-body [data-search-empty]").is_visible()
     search.fill("")
-    assert rows.locator(":visible").count() == original_count
+    assert page.locator("#claims-table-body [data-search-item]:visible").count() == original_count
     assert not page.locator("#claims-table-body [data-search-empty]").is_visible()
     page.close()
