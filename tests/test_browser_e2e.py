@@ -105,3 +105,21 @@ def test_demo_role_selection_prefills_username_without_filling_password(live_ser
     assert page.locator("#login-username").input_value() == "kabir"
     assert page.locator("#login-password").input_value() == ""
     page.close()
+
+
+def test_review_queue_search_filters_and_restores_claims(live_server, browser):
+    page = browser.new_page()
+    sign_in(page, live_server, "meera")
+    page.goto(live_server + "/review?status=all")
+    rows = page.locator("#claims-table-body [data-search-item]")
+    original_count = rows.count()
+    if original_count == 0:
+        pytest.skip("synthetic dataset has no visible claims")
+    search = page.locator('[data-live-search][data-search-target="#claims-table-body"]')
+    search.fill("no-claim-should-match-this-phrase")
+    assert rows.locator(":visible").count() == 0
+    assert page.locator("#claims-table-body [data-search-empty]").is_visible()
+    search.fill("")
+    assert rows.locator(":visible").count() == original_count
+    assert not page.locator("#claims-table-body [data-search-empty]").is_visible()
+    page.close()
