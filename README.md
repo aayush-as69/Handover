@@ -2,6 +2,8 @@
 
 > **Keep critical project knowledge from leaving with people.**
 
+Built for the CodeFrontier hackathon (We Code Coders) by team STARTEND.
+
 Handover turns scattered project activity—notes, chat, task exports and public GitHub activity—into an evidence-linked knowledge handover that is reviewed by a human before it is published.
 
 Every extracted claim keeps its supporting evidence, verification result, sensitivity level and review history. Access is enforced server-side, sensitive material is redacted, and published handovers are represented by immutable numbered releases.
@@ -74,6 +76,16 @@ Project sources
 - Render deployment configuration.
 - Browser E2E, security/adversarial, concurrency, migration, backup/restore and database tests.
 
+## Confidence labels
+| Label | Meaning |
+|---|---|
+| verified (shown as "quote-verified") | A supporting quote was found word for word in its source, and the claim's key terms (at least two, at least 60%), numbers and negation agree with it. It does **not** mean the claim is true, current or complete. A person decides that. |
+| inferred | Quotes were found, but the claim says more than they do (extra terms, numbers or dates, or a flipped negation). A human must judge it. |
+| conflicting | A quote found in the sources contradicts the claim. |
+| unsupported | No quote could be found in any source, or there is no evidence. |
+
+Every label carries a note explaining why, so a reviewer can see what the check found.
+
 ## Trust model
 
 Handover deliberately separates **extraction, verification and approval**:
@@ -87,6 +99,19 @@ Handover deliberately separates **extraction, verification and approval**:
 7. A human reviewer must approve a claim before it becomes handover content.
 8. Server-side authorization determines whether a user can see a claim or source.
 9. Published releases contain approved claim/version pairs and are append-only.
+
+## The interface
+Server-rendered pages with one stylesheet and no external fonts or scripts, so the strict
+`default-src 'self'` policy holds. The look is a bento grid of frosted-glass tiles over a soft
+gradient (blur, thin light borders), in light and dark to match the device setting.
+- **Review queue:** count tiles for needs review, approved and rejected (each opens that list),
+  a filter tile, and the claim list with a coloured bar per confidence level. Riskiest first.
+- **Claim page:** the statement, the reason for its label, one tile per piece of evidence
+  (quote, verified or not, source, link to the source text), the decision form, version history.
+- **Conflicts, questions, handover, sources:** the same tile layout.
+- **Small screens:** the grid folds to one column and the claim table becomes stacked cards.
+- **Accessibility:** visible focus rings, keyboard-reachable controls, reduced-motion respected.
+  A formal accessibility audit has not been done.
 
 ## Quick start
 
@@ -118,7 +143,9 @@ python -m app.demo --extract rules
 uvicorn app.main:app --reload
 ```
 
-Open `http://127.0.0.1:8000/login` after starting the server.
+Open `http://127.0.0.1:8000/login` after starting the server. Demo users only get a password
+if one is supplied: set `DEMO_PASSWORD` before `python -m app.demo`. The users are
+`meera` (approver), `riya` (admin) and `kabir` (viewer) and `rao` (restricted).
 
 For a stable development session key, set `SECRET_KEY`. Production requires a 32+ character secret, PostgreSQL, secure cookies and other validated production settings.
 
@@ -191,9 +218,13 @@ docs/                      # Project documentation
 
 ## Status and verification
 
-The repository's README records a latest GitHub Actions run from **9 Nov 2026** with 481 SQLite tests and 482 PostgreSQL tests, plus `pip-audit` reporting no known vulnerabilities. Those are historical CI results; run the current suite before relying on them.
+Latest GitHub Actions run recorded here (9 Nov 2026, commit `03a770b`): 481 tests passed on SQLite and
+482 on PostgreSQL 16, and `pip-audit` found no known vulnerabilities. That is a point-in-time result;
+run `pytest` for the current state.
 
-The repository also explicitly records two important unverified areas: the Render deployment has configuration but has not been verified as a live Render deployment, and the LLM paths have not been run against a live model.
+Not yet verified: the Render deployment has configuration but has not been confirmed as a live
+deployment, and the LLM extraction paths have not been run against a live model (an opt-in test,
+`LIVE_LLM_TEST=1 pytest tests/test_live_llm.py`, exists for that).
 
 ## Known limitations
 
