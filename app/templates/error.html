@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 {% block title %}{{ code }}{% endblock %}
 {% block body %}
-<section class="card narrow"><h1>{{ code }}</h1><p>{{ message }}</p><p><a href="/">Back</a></p></section>
+<div class="page-shell state-page">
+  <section class="empty-state error-state">
+    <span class="state-code">{{ code }}</span>
+    <p class="page-eyebrow">REQUEST COULD NOT BE COMPLETED</p>
+    <h1>Something needs your attention.</h1>
+    <p class="muted">{{ message }}</p>
+    <a class="button primary" href="/">Back to Handover</a>
+  </section>
+</div>
 {% endblock %}
