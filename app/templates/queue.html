@@ -49,14 +49,14 @@
   <section class="page-panel table-panel">
     <div class="panel-heading">
       <div><p class="page-eyebrow">PROJECT KNOWLEDGE</p><h2>Claims</h2></div>
-      <span class="panel-hint">{{ matching }} matching claim(s)</span>
+      <div class="table-tools"><label class="table-search"><span class="sr-only">Search claims</span><input type="search" placeholder="Search claims..." data-live-search data-search-target="#claims-table-body" data-search-count="#claim-search-count"></label><span class="panel-hint" id="claim-search-count">{{ matching }} matching claim(s)</span></div>
     </div>
     <div class="table-scroll">
       <table>
         <thead><tr><th>Claim</th><th>Type</th><th>Confidence</th><th>Sensitivity</th><th>Status</th></tr></thead>
         <tbody>
         {% for c in claims %}
-        <tr class="{{ c.confidence.value }}">
+        <tr class="{{ c.confidence.value }}" data-search-item>
           <td data-label="Claim"><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a></td>
           <td data-label="Type" class="muted">{{ c.type.value.replace("_", " ") }}</td>
           <td data-label="Confidence"><span class="pill {{ c.confidence.value }}">{{ conf_label(c.confidence) }}</span></td>
@@ -64,7 +64,7 @@
           <td data-label="Status" class="muted">{{ c.review_status.value }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="muted table-empty">No claims here.</td></tr>
+        <tr><td colspan="5" class="muted table-empty">No claims match these filters.</td></tr>\n        <tr data-search-empty hidden><td colspan="5" class="muted table-empty">No claims match your search. Try a different term.</td></tr>
         {% endfor %}
         </tbody>
       </table>
