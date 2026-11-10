@@ -79,17 +79,18 @@
 
       <div class="login-demo" id="demo-accounts">
         <div class="login-demo-heading">
-          <div><span>EXPLORE THE DEMO</span><p>Choose a workspace role to prefill its username.</p></div>
+          <span>DEMO ACCESS</span>
           <span class="login-demo-tag">SYNTHETIC DATA</span>
         </div>
+        <p>Choose a member to fill the username.</p>
         <div class="login-roles" role="group" aria-label="Choose a demo account">
-          <button type="button" class="login-role" data-demo-user="meera" aria-pressed="false"><span class="login-role-avatar">M</span><span class="login-role-copy"><strong>Meera</strong><small>Approver</small></span><span class="login-role-arrow">↗</span></button>
-          <button type="button" class="login-role" data-demo-user="riya" aria-pressed="false"><span class="login-role-avatar">R</span><span class="login-role-copy"><strong>Riya</strong><small>Admin</small></span><span class="login-role-arrow">↗</span></button>
-          <button type="button" class="login-role" data-demo-user="kabir" aria-pressed="false"><span class="login-role-avatar">K</span><span class="login-role-copy"><strong>Kabir</strong><small>Viewer</small></span><span class="login-role-arrow">↗</span></button>
-          <button type="button" class="login-role" data-demo-user="rao" aria-pressed="false"><span class="login-role-avatar">R</span><span class="login-role-copy"><strong>Mr. Rao</strong><small>Restricted</small></span><span class="login-role-arrow">↗</span></button>
+          <button type="button" class="login-role" data-demo-user="meera" aria-pressed="false"><strong>Meera</strong><span>Approver</span></button>
+          <button type="button" class="login-role" data-demo-user="riya" aria-pressed="false"><strong>Riya</strong><span>Admin</span></button>
+          <button type="button" class="login-role" data-demo-user="kabir" aria-pressed="false"><strong>Kabir</strong><span>Viewer</span></button>
+          <button type="button" class="login-role" data-demo-user="rao" aria-pressed="false"><strong>Mr. Rao</strong><span>Restricted</span></button>
         </div>
-        <p class="login-selection-status" id="demo-selection-status" role="status" aria-live="polite">Select a role to fill the username. The password is never filled automatically.</p>
-        <small>The demo password is configured by the deployment operator. Ask the project team if you need access.</small>
+        <p class="login-selection-status" id="demo-selection-status" role="status" aria-live="polite" hidden></p>
+        <small>The password is configured by the deployment operator. Ask the project team if you need access.</small>
       </div>
 
       <p class="login-security-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.5-2.8 7.8-7 10-4.2-2.2-7-5.5-7-10V6zM9 12l2 2 4-4"/></svg> Protected workspace · Role-based access</p>
