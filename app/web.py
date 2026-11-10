@@ -14,16 +14,16 @@ from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import case, func, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import StaleDataError
 
 from .access import (chunk_visible, clearance_rank, effective_rank_sql, effective_sensitivity,
                      sensitivity_from_rank, visible_in_review)
 from .db import get_session
-from .enums import REVIEWER_ROLES, ChangeType, Confidence, ReviewStatus, Role
-from .models import Chunk, Claim, Evidence, Project, User
+from .enums import REVIEWER_ROLES, Confidence, ReviewStatus
+from .models import Chunk, Claim, Project, User
 from .security import (clear_login_failures_for, client_ip, csrf_ok, login_allowed, new_csrf_token,
-                       record_login_failure_for, verify_password)
+                       record_login_failure_for, verify_password, DUMMY_HASH)
 from .verify import verify_claim
 
 router = APIRouter()
@@ -133,7 +133,7 @@ def login(request: Request, username: str = Form(""), password: str = Form(""),
                       error="Too many failed attempts. Try again in a few minutes.")
     user = session.scalar(select(User).where(User.username == key))
     # Verify even when the user is unknown, so timing does not reveal which names exist.
-    ok = verify_password(password, user.password_hash if user else "pbkdf2$1$00$00")
+    ok = verify_password(password, user.password_hash if user else DUMMY_HASH)
     if not (user and ok):
         record_login_failure_for(session, key, ip)
         return render(request, "login.html", None, 401, error="Wrong username or password.")

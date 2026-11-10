@@ -23,7 +23,7 @@ from .handover import (HandoverError, acknowledge, is_stale, answered_questions,
 from .questions import generate_questions
 from .ingest.errors import IngestError
 from .ingest.service import MAX_BYTES, decode_upload, ingest_source
-from .models import Acknowledgement, Source, User
+from .models import Acknowledgement, User
 from .redaction import redact_text
 from .web import check_csrf, current_user, project_for, render
 

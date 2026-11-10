@@ -468,3 +468,8 @@ def test_review_queue_is_paginated_and_clamps_the_page(env, monkeypatch):
     last = c.get("/review?status=all&page=9999").text      # clamped to the last page
     assert "Previous" in last and "Next &rarr;" not in last
     assert c.get("/review?status=all&page=-3").text.count('href="/review/claims/') == 5
+
+
+def test_unknown_user_check_costs_as_much_as_a_real_one():
+    from app.security import DUMMY_HASH
+    assert DUMMY_HASH.split("$")[1] == hash_password("x").split("$")[1]

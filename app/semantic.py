@@ -25,7 +25,7 @@ from .access import effective_sensitivity
 from .enums import Confidence, Sensitivity, Stance
 from .extract import ExtractionError
 from .extract.llm import OpenAICompatibleExtractor, _strip_fences
-from .models import AuditEvent, Claim, Project, utcnow
+from .models import AuditEvent, Claim, Project
 from .verify import _is_mechanical
 
 VERDICTS = ("supports", "partly", "unrelated", "contradicts")

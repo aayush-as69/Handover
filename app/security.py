@@ -17,6 +17,11 @@ def hash_password(password: str) -> str:
     return f"pbkdf2${_ITER}${salt.hex()}${dk.hex()}"
 
 
+# Checked when the username does not exist, at the real cost, so response time does not reveal
+# which names are registered.
+DUMMY_HASH = "pbkdf2$%d$%s$%s" % (_ITER, "00" * 16, "00" * 32)
+
+
 def verify_password(password: str, stored: str | None) -> bool:
     if not stored:
         return False
