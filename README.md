@@ -24,6 +24,31 @@ Built for the CodeFrontier hackathon (We Code Coders), by team STARTEND.
 
 Roles: `admin`, `approver`, `viewer`, `restricted`. The server decides access; the UI never does.
 
+## How it works
+```
+sources ──► ingest ──► chunks (secrets masked, sensitivity set)
+                          │
+                    extract (rules, optional LLM)
+                          ▼
+                   draft claims + quotes
+                          │
+                   verify: is each quote in its source?
+                          ▼
+        confidence label (verified / inferred / conflicting / unsupported)
+                          │
+        human review: approve · edit · reject   ◄── nothing skips this step
+                          ▼
+             immutable numbered release
+                          │
+       role filter + redaction ──► what each person sees
+```
+- **Claims are the unit.** A claim keeps its quotes, confidence, sensitivity, review status and
+  full version history. Verification never approves anything; only a person does.
+- **Access is decided on the server.** A claim's sensitivity is the highest of the claim, its
+  evidence and its sources, and the review queue filters on that in SQL.
+- **The interface** is server-rendered pages (FastAPI and Jinja, one stylesheet, no external
+  scripts or fonts): a bento grid of frosted-glass tiles, light or dark to match the device.
+
 ## Status
 Feature-complete for the planned scope. Latest GitHub Actions run (9 Nov 2026, commit
 `03a770b`): 481 tests passed on SQLite and 482 on PostgreSQL 16 (the skipped ones are the opt-in live-LLM test, and on SQLite the PostgreSQL-only restore test), including a real-browser
