@@ -11,7 +11,7 @@
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Ready-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Tests](https://img.shields.io/badge/Tests-488%20passing-brightgreen)](docs/09-testing.md)
+[![CI](https://github.com/aayush-as69/Handover/actions/workflows/ci.yml/badge.svg)](https://github.com/aayush-as69/Handover/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 [Overview](#why-handover) · [Features](#what-it-does) · [Architecture](#how-it-works) · [Quick start](#quick-start) · [Documentation](#documentation)
@@ -127,13 +127,25 @@ Verification and approval are separate. A person—not the model—decides wheth
 
 ## Product preview
 
-The review queue lists claims riskiest first, each with its confidence label. Opening a claim shows the exact quote beside it.
+Handover keeps the important work in focused, role-aware screens.
 
-![Review queue](docs/assets/screenshots/review-queue.png)
+![Handover review queue](docs/assets/screenshots/review-queue.png)
 
-![A claim with its evidence](docs/assets/screenshots/claim-evidence.png)
+![A claim with its supporting evidence](docs/assets/screenshots/claim-evidence.png)
 
-More screens, including conflicts, questions, the handover and the phone layout, are in the [screenshot gallery](docs/assets/screenshots/README.md).
+The [screenshot gallery](docs/assets/screenshots/README.md) documents the remaining real application captures. The README stays selective; detailed walkthroughs belong in the guides.
+
+## Workspace experience
+
+- **Review queue:** risk-first ordering, status/confidence filters, pagination and keyword search.
+- **Claim detail:** supporting quotes, verification notes, disputes, review actions and version history.
+- **Conflicts:** inspect the claims behind a disagreement, record a resolution or reopen it.
+- **Questions Before I Leave:** find unanswered context, inspect related claims, add an answer or dismiss a question.
+- **Sources:** upload by file picker or drag and drop, classify sensitivity, run extraction and search ingested material.
+- **Handover:** preview another role, jump between sections, search approved knowledge, publish a numbered release and acknowledge it.
+- **Release history:** review sign-offs and acknowledgement counts.
+
+The workspace uses responsive layouts, light/dark themes, readable typography and keyboard-visible focus states. Search and section navigation are client-side conveniences; authorization and data visibility remain enforced by the server.
 
 ## Tech stack
 
@@ -208,7 +220,7 @@ Open **http://127.0.0.1:8000/login**.
 | `kabir` | Viewer | Read and acknowledge a release |
 | `rao` | Restricted | Inspect reduced-clearance content |
 
-The demo is synthetic. Configure `DEMO_PASSWORD` yourself; never reuse a production credential.
+The demo is synthetic. On the login page, clicking a demo member pre-fills only the username and focuses the password field. It never fills a password or signs in automatically. Configure `DEMO_PASSWORD` yourself; never reuse a production credential.
 
 ## Optional LLM extraction
 
@@ -236,17 +248,16 @@ Run the local suite:
 python -m pytest -q
 ```
 
-Run a focused test module:
+Run the browser walkthrough tests after installing Playwright and Chromium:
 
 ```bash
-python -m pytest -q tests/test_access.py
-python -m pytest -q tests/test_verify.py
-python -m pytest -q tests/test_ingest.py
+python -m playwright install chromium
+python -m pytest -q tests/test_browser_e2e.py
 ```
 
-For PostgreSQL testing, set `TEST_DATABASE_URL` to a test database before running pytest. See the [testing guide](docs/09-testing.md).
+For PostgreSQL testing, set `TEST_DATABASE_URL` to a disposable test database before running pytest.
 
-**Latest local run:** 488 passed, 2 skipped (SQLite, 11 Nov 2026). **Historical CI evidence:** the run recorded on 9 November 2026 reported 481 passing tests on SQLite and 482 on PostgreSQL 16, with no known vulnerabilities reported by `pip-audit`. This is a historical result, not a claim that the current checkout has just been tested.
+GitHub Actions runs tests on SQLite and PostgreSQL 16, then audits locked runtime dependencies with `pip-audit`. See the [testing guide](docs/09-testing.md) and [CI workflow](.github/workflows/ci.yml) for the exact checks and current results.
 
 ## Documentation
 
