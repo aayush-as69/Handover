@@ -1,5 +1,11 @@
 <div align="center">
 
+<div align="right">
+<img src="assets/handover-logo.svg" alt="Handover" width="38" />
+</div>
+
+> [Documentation index](README.md) · [Project home](../README.md)
+
 <img src="assets/handover-logo.svg" alt="Handover" width="48" />
 
 # 05 — Database Design
@@ -160,3 +166,8 @@ python -m app.db downgrade <revision> --yes
 ```
 
 Back up first because downgraded schema objects/data may be lost.
+
+
+---
+
+[← Documentation index](README.md) · [Project home](../README.md)
