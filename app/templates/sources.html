@@ -46,7 +46,8 @@
         <tbody id="source-list">{% for s in sources %}
         <tr data-search-item><td data-label="Source"><strong>{{ s.name }}</strong></td><td data-label="Type">{{ s.kind.value }}</td><td data-label="Sensitivity"><span class="pill s-{{ s.sensitivity.value }}">{{ s.sensitivity.value }}</span></td>
         <td data-label="Passages">{{ s.chunks|length }}</td><td data-label="Masked">{{ s.chunks|selectattr("redacted")|list|length }}</td></tr>
-        {% else %}<tr><td colspan="5" class="muted table-empty">No sources yet. Upload the first project source above.</td></tr>{% endfor %}\n        <tr data-search-empty hidden><td colspan="5" class="muted table-empty">No sources match your search.</td></tr></tbody>
+        {% else %}<tr><td colspan="5" class="muted table-empty">No sources yet. Upload the first project source above.</td></tr>{% endfor %}
+        <tr data-search-empty hidden><td colspan="5" class="muted table-empty">No sources match your search.</td></tr></tbody>
       </table>
     </div>
   </section>
