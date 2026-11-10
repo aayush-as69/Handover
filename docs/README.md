@@ -1,55 +1,76 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="64" />
+
 # Handover Documentation
 
-This documentation set reorganizes the existing Handover knowledge into a maintainable engineering reference. It follows the **documentation principles** observed in the JBSnap reference repository—clear separation of overview, requirements, architecture, implementation, testing, deployment and project context—without copying JBSnap's product architecture or implementation.
+**Product context · Engineering decisions · Operations**
 
-## Reading order
+A structured guide to understanding, building, testing and operating Handover.
 
-### 1. Understand the product
-- [01 — Project Overview](01-project-overview.md)
-- [02 — Product Requirements (PRD)](02-prd.md)
-- [03 — Software Requirements (SRS)](03-srs.md)
-- [12 — User & Demo Guide](12-user-demo-guide.md)
+</div>
 
-### 2. Understand the system
-- [04 — System Architecture](04-architecture.md)
-- [05 — Database Design](05-database-design.md)
-- [06 — Technical Implementation](06-technical-implementation.md)
-- [07 — Security Architecture](07-security.md)
-- [08 — API Reference](08-api-reference.md)
+---
 
-### 3. Build, test and operate it
-- [09 — Testing Guide](09-testing.md)
-- [10 — Development Setup](10-development.md)
-- [11 — Deployment & Operations](11-deployment-operations.md)
+## Start here
 
-### 4. Understand boundaries and documentation quality
-- [13 — Limitations & Roadmap](13-limitations-roadmap.md)
-- [14 — Documentation Coverage](14-documentation-coverage.md)
-- [Architecture Mermaid source](architecture.mmd)
-
-## Source of truth
-
-The implementation remains authoritative. Documentation describes behavior found in the current repository and intentionally avoids claiming features that could not be supported by code or tests.
-
-When documentation and implementation disagree, update the documentation only after checking the relevant source and tests.
-
-## Current repository snapshot audited
-
-- FastAPI application under `app/`
-- SQLAlchemy models and Alembic migrations
-- SQLite and PostgreSQL support
-- Server-rendered Jinja pages
-- Ingestion and extraction pipelines
-- Security/access/redaction controls
-- CI workflow under `.github/workflows/ci.yml`
-- Render blueprint under `render.yaml`
-- Existing tests under `tests/`
-
-## Documentation status vocabulary
-
-| Status | Meaning |
+| Goal | Recommended reading |
 |---|---|
-| Complete | Documented and supported by implementation/tests reviewed |
-| Partial | Some behavior or evidence remains incomplete |
-| Not implemented | Explicitly absent from the current codebase |
-| Not verified | Configuration/code exists but current live behavior was not verified |
+| Understand the product | [Project overview](01-project-overview.md) → [PRD](02-prd.md) |
+| Understand requirements | [SRS](03-srs.md) |
+| Follow the data flow | [Architecture](04-architecture.md) → [Technical implementation](06-technical-implementation.md) |
+| Understand persistence | [Database design](05-database-design.md) |
+| Review trust boundaries | [Security architecture](07-security.md) |
+| Explore routes | [API and route reference](08-api-reference.md) |
+| Run and verify locally | [Development setup](10-development.md) → [Testing guide](09-testing.md) |
+| Deploy and operate | [Deployment and operations](11-deployment-operations.md) |
+| Walk through the demo | [User and demo guide](12-user-demo-guide.md) |
+| Check limitations | [Limitations and roadmap](13-limitations-roadmap.md) |
+
+## Documentation map
+
+### Product and requirements
+
+- [01 — Project overview](01-project-overview.md)
+- [02 — Product requirements (PRD)](02-prd.md)
+- [03 — Software requirements (SRS)](03-srs.md)
+- [12 — User and demo guide](12-user-demo-guide.md)
+
+### Architecture and implementation
+
+- [04 — System architecture](04-architecture.md)
+- [05 — Database design](05-database-design.md)
+- [06 — Technical implementation](06-technical-implementation.md)
+- [07 — Security architecture](07-security.md)
+- [08 — API and route reference](08-api-reference.md)
+
+### Development and operations
+
+- [09 — Testing guide](09-testing.md)
+- [10 — Development setup](10-development.md)
+- [11 — Deployment and operations](11-deployment-operations.md)
+- [OPERATIONS — Operational runbook](OPERATIONS.md)
+
+### Project context and audit material
+
+- [13 — Limitations and roadmap](13-limitations-roadmap.md)
+- [14 — Documentation coverage](14-documentation-coverage.md)
+- [FEATURES — Conflicts, questions and redaction](FEATURES.md)
+- [PRODUCTION READINESS — Engineering review](PRODUCTION_READINESS.md)
+- [DISCLOSURES — Tools, services and AI assistance](DISCLOSURES.md)
+- [ROUND2 — Round 2 project notes](ROUND2.md)
+
+## Architecture assets
+
+- [Rendered architecture diagram](architecture.svg)
+- [Architecture source (Mermaid)](architecture.mmd)
+- [Architecture PNG](architecture.png)
+
+## Documentation conventions
+
+- **Implemented** means supported by repository code and/or tests reviewed.
+- **Partial** means some behavior or operational evidence remains incomplete.
+- **Not verified** means configuration or code exists, but a live execution was not established.
+- **Proposed** means future work, not a delivered capability.
+
+The implementation and tests are authoritative. Historical test totals and deployment observations are point-in-time evidence, not guarantees about a future checkout.
