@@ -592,3 +592,44 @@ def test_workspace_pages_render_after_ui_refresh(env):
     if source:
         source_page = reviewer.get(source.group(1).replace("&amp;", "&"))
         assert source_page.status_code == 200 and "source-document" in source_page.text
+
+
+def test_landing_separates_sign_in_from_demo_exploration():
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    c = TestClient(create_app(secret_key="k" * 40))
+    landing = c.get("/").text
+    assert 'href="/login#sign-in-form"' in landing
+    assert 'href="/login#demo-accounts"' in landing
+    login = c.get("/login").text
+    assert 'id="sign-in-form"' in login and 'id="demo-accounts"' in login
+    for username in ("meera", "riya", "kabir", "rao"):
+        assert f'data-demo-user="{username}"' in login
+    assert 'type="password"' in login
+    assert 'name="password"' in login
+
+
+def test_workspace_search_assets_and_controls_render_for_authenticated_roles(env):
+    from fastapi.testclient import TestClient
+    app, _ = env
+    reviewer = login(app, "meera")
+    admin = login(app, "riya")
+    for browser, path, marker in [
+        (reviewer, "/review?status=all", 'data-search-target="#claims-table-body"'),
+        (reviewer, "/conflicts", 'data-search-target="#conflict-list"'),
+        (reviewer, "/questions", 'data-search-target="#question-list"'),
+        (reviewer, "/handover", 'data-search-target="#handover-content"'),
+        (reviewer, "/handover/releases", 'data-search-target="#release-list"'),
+        (admin, "/admin/sources", 'data-search-target="#source-list"'),
+    ]:
+        page = browser.get(path)
+        assert page.status_code == 200 and marker in page.text, path
+        assert "workspace-nav" in page.text
+        assert "/static/workspace.js?v=" in page.text
+    js_url = reviewer.get("/review").text
+    import re
+    script = re.search(r'src="(/static/workspace\.js\?v=[0-9a-f]{10})"', js_url)
+    assert script
+    source = reviewer.get(script.group(1))
+    assert source.status_code == 200
+    assert "data-live-search" in source.text and "data-file-drop" in source.text
