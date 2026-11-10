@@ -1,4 +1,14 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+
 # Operations
+
+<sub>Handover · Product and engineering documentation</sub>
+
+</div>
+
+---
 
 ## Configuration
 Set `APP_ENV=production`. The server then refuses to start unless `SECRET_KEY` is 32+ characters,
