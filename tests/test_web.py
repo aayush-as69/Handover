@@ -583,12 +583,12 @@ def test_workspace_pages_render_after_ui_refresh(env):
         assert marker in response.text, path
 
     queue = reviewer.get("/review?status=all").text
-    claim = re.search(r'href="(/review/claims/\\d+)"', queue)
+    claim = re.search(r'href="(/review/claims/\d+)"', queue)
     assert claim
     detail = reviewer.get(claim.group(1))
     assert detail.status_code == 200 and "claim-page" in detail.text
 
-    source = re.search(r'href="(/review/chunks/\\d+[^"]*)"', detail.text)
+    source = re.search(r'href="(/review/chunks/\d+[^"]*)"', detail.text)
     if source:
         source_page = reviewer.get(source.group(1).replace("&amp;", "&"))
         assert source_page.status_code == 200 and "source-document" in source_page.text
