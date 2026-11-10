@@ -2,7 +2,8 @@
 {% block title %}Claim {{ claim.id }}{% endblock %}
 {% block body %}
 <p><a href="/review">← Review queue</a></p>
-<section class="card">
+<div class="bento">
+<section class="tile s8">
   <div class="meta">
     <span class="pill {{ claim.confidence.value }}">{{ conf_label(claim.confidence) }}</span>
     <span class="pill s-{{ sensitivity.value }}">{{ sensitivity.value }}</span>
@@ -10,15 +11,19 @@
     <span class="muted">{{ claim.type.value.replace("_", " ") }} · version {{ claim.version }}</span>
   </div>
   <h1 class="statement">{{ claim.statement }}</h1>
-  <p class="why"><strong>Why this label:</strong> {{ claim.verification_note or "Not checked yet." }}</p>
+</section>
+<section class="tile s4">
+  <p class="eyebrow">Why this label</p>
+  <p class="why">{{ claim.verification_note or "Not checked yet." }}</p>
   <p class="muted">“Quote-verified” means the quotes exist in the sources and fit the claim. It does not mean the claim is true, current or complete. That is your decision.</p>
   {% if claim.semantic_verdict %}<p class="{{ 'warnbox' if claim.semantic_verdict != 'supports' else 'muted' }}">Model second opinion (advisory): <strong>{{ claim.semantic_verdict }}</strong>{% if claim.semantic_note %}. {{ claim.semantic_note }}{% endif %}</p>{% endif %}
   {% for cf, others in disputes %}<p class="warnbox">Disputed ({{ cf.status.value }}): {{ cf.reason }} <a href="/conflicts">See conflicts</a></p>{% endfor %}
 </section>
-
+</div>
 <h2>Evidence</h2>
+<div class="bento">
 {% for ev, can_open in evidence %}
-<blockquote class="evidence {{ 'bad' if not ev.snippet_verified }}">
+<blockquote class="evidence s6 {{ 'bad' if not ev.snippet_verified }}">
   <p>“{{ ev.snippet }}”</p>
   <footer>
     {{ ev.stance.value }} ·
@@ -31,9 +36,11 @@
 {% else %}
 <p class="muted">No evidence is attached to this claim.</p>
 {% endfor %}
+</div>
 
 <h2>Decide</h2>
-<section class="card">
+<div class="bento">
+<section class="tile s7">
   <form method="post" action="/review/claims/{{ claim.id }}/edit" class="stack">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <input type="hidden" name="version" value="{{ claim.version }}">
@@ -57,7 +64,7 @@
     </div>
   </form>
 </section>
-
+<section class="tile s5">
 <h2>Version history</h2>
 <ol class="history">
 {% for v, diff in history %}
@@ -70,4 +77,6 @@
   </li>
 {% endfor %}
 </ol>
+</section>
+</div>
 {% endblock %}

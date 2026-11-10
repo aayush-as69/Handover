@@ -1,27 +1,36 @@
 {% extends "base.html" %}
 {% block title %}Review queue{% endblock %}
 {% block body %}
-<h1>Review queue <span class="muted">· {{ project.name }}</span></h1>
-<p class="muted">Nothing reaches a handover until a person approves it. Riskiest claims come first.</p>
-<form method="get" class="filters">
-  <label>Show
-    <select name="status">
-      {% for v, l in [("open","Needs review"),("approved","Approved"),("rejected","Rejected"),("all","All")] %}
-      <option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}{% if v in totals %} ({{ totals[v] }}){% endif %}</option>
-      {% endfor %}
-    </select>
-  </label>
-  <label>Confidence
-    <select name="confidence">
-      <option value="">Any</option>
-      {% for c in ["conflicting","unsupported","inferred","verified"] %}
-      <option value="{{ c }}" {% if confidence == c %}selected{% endif %}>{{ conf_label(c) }}</option>
-      {% endfor %}
-    </select>
-  </label>
-  <button>Filter</button>
-</form>
-{% if hidden %}<p class="muted">{{ hidden }} claim(s) are above your clearance and not listed.</p>{% endif %}
+<div class="bento">
+  <div class="tile s6 quiet">
+    <h1>Review queue</h1>
+    <p class="muted">{{ project.name }}. Nothing reaches a handover until a person approves it. Riskiest claims come first.</p>
+  </div>
+  <a class="tile s2 stat warn {{ 'on' if status == 'open' }}" href="/review?status=open"><span class="l">Needs review</span><span class="n">{{ totals["generated"] + totals["edited"] }}</span></a>
+  <a class="tile s2 stat ok {{ 'on' if status == 'approved' }}" href="/review?status=approved"><span class="l">Approved</span><span class="n">{{ totals["approved"] }}</span></a>
+  <a class="tile s2 stat bad {{ 'on' if status == 'rejected' }}" href="/review?status=rejected"><span class="l">Rejected</span><span class="n">{{ totals["rejected"] }}</span></a>
+  <div class="tile s12">
+    <form method="get" class="filters">
+      <label>Show
+        <select name="status">
+          {% for v, l in [("open","Needs review"),("approved","Approved"),("rejected","Rejected"),("all","All")] %}
+          <option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}{% if v in totals %} ({{ totals[v] }}){% endif %}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Confidence
+        <select name="confidence">
+          <option value="">Any</option>
+          {% for c in ["conflicting","unsupported","inferred","verified"] %}
+          <option value="{{ c }}" {% if confidence == c %}selected{% endif %}>{{ conf_label(c) }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button>Filter</button>
+      {% if hidden %}<span class="muted">{{ hidden }} claim(s) are above your clearance and not listed.</span>{% endif %}
+    </form>
+  </div>
+  <div class="tile s12 flush">
 <table>
   <thead><tr><th>Claim</th><th>Type</th><th>Confidence</th><th>Sensitivity</th><th>Status</th></tr></thead>
   <tbody>
@@ -38,6 +47,8 @@
   {% endfor %}
   </tbody>
 </table>
+  </div>
+</div>
 {% if pages > 1 %}
 <nav class="pager" aria-label="Pages">
   {% if page > 1 %}<a href="/review?status={{ status }}&confidence={{ confidence }}&page={{ page - 1 }}">&larr; Previous</a>{% endif %}

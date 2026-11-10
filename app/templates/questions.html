@@ -4,8 +4,9 @@
 <h1>Questions Before I Leave</h1>
 <p class="muted">Gaps found by rule: missing reasons, missing owners, unanswered questions, undocumented promises and unresolved conflicts. Answers are shown in the handover as the leaver's own words, not as verified facts. {{ open_n }} of {{ total }} still open.</p>
 <form method="post" action="/questions/refresh"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Refresh questions</button></form>
+<div class="bento">
 {% for q, linked in items %}
-<section class="card">
+<section class="tile s6">
   <div class="meta"><span class="pill {{ 'verified' if q.status.value == 'answered' else ('inferred' if q.status.value == 'open' else '') }}">{{ q.status.value }}</span><span class="muted">{{ q.kind.replace("_", " ") }}</span></div>
   <p>{{ q.text }}</p>
   <p class="muted">{% for c in linked %}<a href="/review/claims/{{ c.id }}">claim {{ c.id }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>
@@ -23,5 +24,6 @@
   </form>
   {% endif %}
 </section>
-{% else %}<p class="muted">No questions.</p>{% endfor %}
+{% else %}<p class="muted s12">No questions.</p>{% endfor %}
+</div>
 {% endblock %}
