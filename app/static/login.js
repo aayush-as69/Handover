@@ -15,16 +15,16 @@
     }
 
     var usernameInput = document.getElementById("login-username");
+    var demoAccounts = document.getElementById("demo-accounts");
     var selectionStatus = document.getElementById("demo-selection-status");
-    var password = document.getElementById("login-password");
-    var demoPassword = "handover123";
+    var demoPassword = demoAccounts ? demoAccounts.getAttribute("data-demo-password") || "" : "";
 
     document.querySelectorAll("[data-demo-user]").forEach(function (button) {
       button.addEventListener("click", function () {
-        if (!usernameInput || !password) return;
+        if (!usernameInput || !passwordInput) return;
         var username = button.getAttribute("data-demo-user") || "";
         usernameInput.value = username;
-        password.value = demoPassword;
+        passwordInput.value = demoPassword;
 
         document.querySelectorAll("[data-demo-user]").forEach(function (item) {
           var selected = item === button;
@@ -33,12 +33,18 @@
         });
 
         if (selectionStatus) {
-          selectionStatus.textContent = "Demo credentials filled for " + username + ". Press Sign in to continue.";
+          selectionStatus.textContent = demoPassword
+            ? "Demo credentials filled for " + username + ". Press Sign in to continue."
+            : "Username set to " + username + ". Enter your password to continue.";
           selectionStatus.hidden = false;
         }
 
-        var submit = document.querySelector("#sign-in-form button[type='submit']");
-        if (submit) submit.focus();
+        if (demoPassword) {
+          var submit = document.querySelector("#sign-in-form button[type='submit']");
+          if (submit) submit.focus();
+        } else {
+          passwordInput.focus();
+        }
       });
     });
   });
