@@ -132,9 +132,17 @@ def home(request: Request, user: Optional[User] = Depends(current_user)):
     return RedirectResponse(landing(user), status_code=303)
 
 
+def render_login(request: Request, user: Optional[User] = None,
+                status_code: int = 200, **ctx):
+    cfg = request.app.state.cfg
+    demo_password = cfg.demo_password if cfg.demo_mode and cfg.demo_password else ""
+    return render(request, "login.html", user, status_code,
+                  demo_password=demo_password, **ctx)
+
+
 @router.get("/login")
 def login_form(request: Request, user: Optional[User] = Depends(current_user)):
-    return render(request, "login.html", user)
+    return render_login(request, user)
 
 
 @router.post("/login")
@@ -144,14 +152,14 @@ def login(request: Request, username: str = Form(""), password: str = Form(""),
     key = username.strip().lower()[:64]
     ip = client_ip(request, request.app.state.cfg.trust_proxy)
     if not login_allowed(session, key, ip):
-        return render(request, "login.html", None, 429,
-                      error="Too many failed attempts. Try again in a few minutes.")
+        return render_login(request, None, 429,
+                            error="Too many failed attempts. Try again in a few minutes.")
     user = session.scalar(select(User).where(User.username == key))
     # Verify even when the user is unknown, so timing does not reveal which names exist.
     ok = verify_password(password, user.password_hash if user else DUMMY_HASH)
     if not (user and ok):
         record_login_failure_for(session, key, ip)
-        return render(request, "login.html", None, 401, error="Wrong username or password.")
+        return render_login(request, None, 401, error="Wrong username or password.")
     clear_login_failures_for(session, key, ip)    # the address keeps its volume count; it decays
     request.session.clear()                      # new session on login
     request.session["uid"] = user.id
