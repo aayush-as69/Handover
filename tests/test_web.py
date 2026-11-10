@@ -507,3 +507,14 @@ def test_landing_has_section_anchors_social_preview_and_accessible_contradiction
     assert "AI can help prepare the handover. It cannot approve it." in html
     login = TestClient(create_app(secret_key="k" * 40)).get("/login").text
     assert "meera" in login and "rao" in login
+
+
+def test_theme_toggle_is_on_every_page_and_script_is_served_from_self():
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    c = TestClient(create_app(secret_key="k" * 40))
+    for path in ("/", "/login"):
+        html = c.get(path).text
+        assert 'id="theme-toggle"' in html and "/static/theme.js?v=" in html
+    assert "handover-theme" in c.get("/static/theme.js").text
+    assert "script-src" not in c.get("/").headers["content-security-policy"]  # falls back to 'self'

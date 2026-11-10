@@ -9,12 +9,18 @@
   --serif:"New York","Iowan Old Style","Charter","Source Serif 4",Georgia,serif;
   --r:26px;--gap:14px;
 }
-@media (prefers-color-scheme:dark){:root{
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   color-scheme:dark;
   --bg:#000;--tile:#1c1c1e;--tile-2:#242427;--fg:#f5f5f7;--mut:#98989f;--line:#2e2e33;--line-soft:#26262a;
   --acc:#2f8bff;--acc-bg:#10284a;--on-acc:#fff;
   --ok:#4cd98a;--ok-bg:#12341f;--warn:#ffc15e;--warn-bg:#3b2a0c;--bad:#ff7a87;--bad-bg:#40161c;
 }}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#000;--tile:#1c1c1e;--tile-2:#242427;--fg:#f5f5f7;--mut:#98989f;--line:#2e2e33;--line-soft:#26262a;
+  --acc:#2f8bff;--acc-bg:#10284a;--on-acc:#fff;
+  --ok:#4cd98a;--ok-bg:#12341f;--warn:#ffc15e;--warn-bg:#3b2a0c;--bad:#ff7a87;--bad-bg:#40161c;
+}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 var(--sans);letter-spacing:-.011em;-webkit-font-smoothing:antialiased}
@@ -239,3 +245,12 @@ table.lp-roles tbody{display:table-row-group}
 table.lp-roles tr{display:table-row;padding:0;border:0}
 table.lp-roles td,table.lp-roles th{display:table-cell;width:auto;padding:.5rem .8rem .5rem 0;border:0;border-bottom:1px solid var(--line-soft);background:none}
 table.lp-roles td:first-child{padding-left:0}
+
+/* ---- light/dark toggle */
+.theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:2.2rem;height:2.2rem;padding:0;border-radius:999px;color:var(--mut);background:transparent;border:1px solid var(--line);flex:0 0 auto}
+.theme-toggle:hover{color:var(--fg);background:var(--tile-2)}
+.theme-toggle svg{width:1.15rem;height:1.15rem;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.theme-toggle .sun{display:none}
+:root[data-theme="dark"] .theme-toggle .sun{display:block}
+:root[data-theme="dark"] .theme-toggle .moon{display:none}
+.top .who+.theme-toggle,.top>.theme-toggle:last-child{margin-left:.2rem}
