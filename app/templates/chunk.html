@@ -1,8 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Source{% endblock %}
 {% block body %}
-<p><a href="/review">← Review queue</a></p>
-<h1>{{ chunk.source.name }} <span class="muted">{% if chunk.locator.startswith(chunk.source.name) %}› {{ chunk.locator[chunk.source.name|length:].lstrip(' ›') }}{% else %}› {{ chunk.locator }}{% endif %}</span></h1>
-{% if chunk.redacted %}<p class="flash">A secret in this text was masked when it was imported.</p>{% endif %}
-<pre class="source">{{ parts[0] }}<mark>{{ parts[1] }}</mark>{{ parts[2] }}</pre>
+<div class="page-shell source-page">
+  <p class="page-breadcrumb"><a href="/review">← Back to review queue</a><span>Original source</span></p>
+  <header class="page-header source-page-header">
+    <div><p class="page-eyebrow">EVIDENCE / ORIGINAL TEXT</p>
+      <h1>{{ chunk.source.name }}</h1>
+      <p class="page-intro source-locator">{% if chunk.locator.startswith(chunk.source.name) %}{{ chunk.locator[chunk.source.name|length:].lstrip(' ›') }}{% else %}{{ chunk.locator }}{% endif %}</p>
+    </div>
+    <div class="page-header-aside"><span class="page-aside-label">SOURCE TYPE</span><strong>{{ chunk.source.kind.value }}</strong></div>
+  </header>
+  {% if chunk.redacted %}<p class="flash source-redaction">A secret in this text was masked when it was imported.</p>{% endif %}
+  <section class="page-panel source-document">
+    <div class="source-document-head"><span>ORIGINAL SOURCE EXCERPT</span><span>{% if chunk.redacted %}Sensitive value masked{% else %}Read-only evidence{% endif %}</span></div>
+    <pre class="source">{{ parts[0] }}<mark>{{ parts[1] }}</mark>{{ parts[2] }}</pre>
+  </section>
+</div>
 {% endblock %}
