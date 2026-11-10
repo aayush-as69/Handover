@@ -977,3 +977,6 @@ small{font-size:.86rem;line-height:1.55}
   border-color:rgba(128,160,208,.2);
 }
 :root[data-theme="dark"] .source-document-head{border-color:#2a3b55}
+
+.pending-hint{font-size:.9rem;color:var(--mut);margin:.5rem 0 0}
+:root[data-theme="dark"] .pending-hint{color:#aabbd2}
