@@ -1061,3 +1061,31 @@ small{font-size:.86rem;line-height:1.55}
 :root[data-theme="dark"] .file-drop.is-dragover{background:#1a3457;border-color:#8ab8ff}
 :root[data-theme="dark"] .file-drop.has-file{border-color:#70dfaa}
 :root[data-theme="dark"] .handover-toc{background:rgba(16,28,46,.94);border-color:rgba(128,160,208,.22)}
+
+
+/* Login demo roles: restore the earlier quiet, compact list treatment. */
+.login-demo-heading{align-items:center}
+.login-roles{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.1rem}
+.login-role{
+  display:flex;align-items:center;justify-content:space-between;gap:.55rem;
+  width:100%;min-width:0;min-height:44px;padding:.55rem .7rem;
+  border:1px solid var(--line-soft);border-radius:10px;
+  background:var(--tile-2);text-align:left;box-shadow:none;
+}
+.login-role:hover{border-color:var(--acc);background:var(--acc-bg)}
+.login-role[aria-pressed="true"],.login-role.selected{
+  border-color:var(--acc);background:var(--acc-bg);box-shadow:inset 0 0 0 1px var(--acc);
+}
+.login-role strong{color:var(--fg);font-size:.9rem;font-weight:650}
+.login-role span{color:var(--mut);font-size:.84rem}
+.login-selection-status{margin:.55rem 0 0;padding:0;background:transparent;color:var(--mut);font-size:.82rem;line-height:1.45}
+.login-demo>small{margin-top:.55rem}
+:root[data-theme="dark"] .login-role{background:#17263d;border-color:#30435f}
+:root[data-theme="dark"] .login-role:hover,
+:root[data-theme="dark"] .login-role[aria-pressed="true"]{
+  background:#1a3457;border-color:#8ab8ff;box-shadow:inset 0 0 0 1px #8ab8ff;
+}
+@media (max-width:380px){
+  .login-roles{grid-template-columns:1fr 1fr}
+  .login-role{padding:.5rem .55rem}
+}
