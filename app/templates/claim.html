@@ -1,82 +1,95 @@
 {% extends "base.html" %}
 {% block title %}Claim {{ claim.id }}{% endblock %}
 {% block body %}
-<p><a href="/review">← Review queue</a></p>
-<div class="bento">
-<section class="tile s8">
-  <div class="meta">
-    <span class="pill {{ claim.confidence.value }}">{{ conf_label(claim.confidence) }}</span>
-    <span class="pill s-{{ sensitivity.value }}">{{ sensitivity.value }}</span>
-    <span class="pill status-{{ claim.review_status.value }}">{{ claim.review_status.value }}</span>
-    <span class="muted">{{ claim.type.value.replace("_", " ") }} · version {{ claim.version }}</span>
+<div class="page-shell claim-page">
+  <p class="page-breadcrumb"><a href="/review">← Back to review queue</a><span>Claim #{{ claim.id }}</span></p>
+  <div class="bento claim-summary">
+    <section class="tile s8 claim-statement-panel">
+      <p class="page-eyebrow">CLAIM UNDER REVIEW</p>
+      <div class="meta">
+        <span class="pill {{ claim.confidence.value }}">{{ conf_label(claim.confidence) }}</span>
+        <span class="pill s-{{ sensitivity.value }}">{{ sensitivity.value }}</span>
+        <span class="pill status-{{ claim.review_status.value }}">{{ claim.review_status.value }}</span>
+        <span class="muted">{{ claim.type.value.replace("_", " ") }} · version {{ claim.version }}</span>
+      </div>
+      <h1 class="statement">{{ claim.statement }}</h1>
+    </section>
+    <section class="tile s4 verification-panel">
+      <p class="page-eyebrow">VERIFICATION NOTES</p>
+      <h2>Why this label?</h2>
+      <p class="why">{{ claim.verification_note or "Not checked yet." }}</p>
+      <p class="muted">“Quote-verified” means the quotes exist in the sources and fit the claim. It does not mean the claim is true, current or complete. That is your decision.</p>
+      {% if claim.semantic_verdict %}<p class="{{ 'warnbox' if claim.semantic_verdict != 'supports' else 'muted' }}">Model second opinion (advisory): <strong>{{ claim.semantic_verdict }}</strong>{% if claim.semantic_note %}. {{ claim.semantic_note }}{% endif %}</p>{% endif %}
+      {% for cf, others in disputes %}<p class="warnbox">Disputed ({{ cf.status.value }}): {{ cf.reason }} <a href="/conflicts">See conflicts</a></p>{% endfor %}
+    </section>
   </div>
-  <h1 class="statement">{{ claim.statement }}</h1>
-</section>
-<section class="tile s4">
-  <p class="eyebrow">Why this label</p>
-  <p class="why">{{ claim.verification_note or "Not checked yet." }}</p>
-  <p class="muted">“Quote-verified” means the quotes exist in the sources and fit the claim. It does not mean the claim is true, current or complete. That is your decision.</p>
-  {% if claim.semantic_verdict %}<p class="{{ 'warnbox' if claim.semantic_verdict != 'supports' else 'muted' }}">Model second opinion (advisory): <strong>{{ claim.semantic_verdict }}</strong>{% if claim.semantic_note %}. {{ claim.semantic_note }}{% endif %}</p>{% endif %}
-  {% for cf, others in disputes %}<p class="warnbox">Disputed ({{ cf.status.value }}): {{ cf.reason }} <a href="/conflicts">See conflicts</a></p>{% endfor %}
-</section>
-</div>
-<h2>Evidence</h2>
-<div class="bento">
-{% for ev, can_open in evidence %}
-<blockquote class="evidence s6 {{ 'bad' if not ev.snippet_verified }}">
-  <p>“{{ ev.snippet }}”</p>
-  <footer>
-    {{ ev.stance.value }} ·
-    {% if ev.snippet_verified %}<span class="ok">found word for word</span>{% else %}<span class="bad">NOT found in the source</span>{% endif %}
-    · {{ ev.chunk.locator if ev.chunk.locator.startswith(ev.chunk.source.name) else ev.chunk.source.name ~ ' › ' ~ ev.chunk.locator }}
-    {% if ev.chunk.redacted %}· <span class="pill confidential">secret masked</span>{% endif %}
-    {% if can_open %}· <a href="/review/chunks/{{ ev.chunk.id }}?snippet={{ ev.snippet|urlencode }}">open source text</a>{% endif %}
-  </footer>
-</blockquote>
-{% else %}
-<p class="muted">No evidence is attached to this claim.</p>
-{% endfor %}
-</div>
 
-<h2>Decide</h2>
-<div class="bento">
-<section class="tile s7">
-  <form method="post" action="/review/claims/{{ claim.id }}/edit" class="stack">
-    <input type="hidden" name="csrf" value="{{ csrf }}">
-    <input type="hidden" name="version" value="{{ claim.version }}">
-    <label>Edit statement
-      <textarea name="statement" rows="3" maxlength="{{ max_statement }}">{{ claim.statement }}</textarea>
-    </label>
-    <label>Note (optional) <input name="note" maxlength="1000"></label>
-    <button>Save edit</button>
-    <p class="muted">An edited claim returns to review and its evidence is re-checked.</p>
-  </form>
-  <hr>
-  <form method="post" class="stack" id="decide">
-    <input type="hidden" name="csrf" value="{{ csrf }}">
-    <input type="hidden" name="version" value="{{ claim.version }}">
-    <label>Note {% if claim.confidence.value != "verified" or claim.semantic_verdict in ("partly", "unrelated", "contradicts") %}(required to approve: this claim is not fully verified or a model doubted it){% else %}(optional){% endif %}
-      <input name="note" maxlength="1000"></label>
-    <div class="buttons">
-      {% if claim.review_status.value != "approved" %}<button class="primary" formaction="/review/claims/{{ claim.id }}/approve">Approve</button>{% endif %}
-      {% if claim.review_status.value != "rejected" %}<button class="danger" formaction="/review/claims/{{ claim.id }}/reject">Reject</button>{% endif %}
-      {% if claim.review_status.value in ("approved", "rejected") %}<button formaction="/review/claims/{{ claim.id }}/reopen">Reopen</button>{% endif %}
-    </div>
-  </form>
-</section>
-<section class="tile s5">
-<h2>Version history</h2>
-<ol class="history">
-{% for v, diff in history %}
-  <li>
-    <strong>v{{ v.version }} · {{ v.change_type.value }}</strong> by {{ v.changed_by }}
-    <span class="muted">{{ v.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</span>
-    {% if v.note %}<div class="note">“{{ v.note }}”</div>{% endif %}
-    {% if diff %}<div class="diff">{% for op, t in diff %}{% if op == "same" %}{{ t }} {% elif op == "del" %}<del>{{ t }}</del> {% else %}<ins>{{ t }}</ins> {% endif %}{% endfor %}</div>
-    {% elif v.change_type.value in ("generated", "edit") %}<div class="diff">{{ v.statement }}</div>{% endif %}
-  </li>
-{% endfor %}
-</ol>
-</section>
+  <div class="section-heading">
+    <div><p class="page-eyebrow">SOURCE TRACEABILITY</p><h2>Evidence</h2></div>
+    <span class="panel-hint">{{ evidence|length }} linked quote(s)</span>
+  </div>
+  <div class="bento evidence-grid">
+    {% for ev, can_open in evidence %}
+    <blockquote class="evidence s6 {{ 'bad' if not ev.snippet_verified }}">
+      <p>“{{ ev.snippet }}”</p>
+      <footer>
+        {{ ev.stance.value }} ·
+        {% if ev.snippet_verified %}<span class="ok">found word for word</span>{% else %}<span class="bad">NOT found in the source</span>{% endif %}
+        · {{ ev.chunk.locator if ev.chunk.locator.startswith(ev.chunk.source.name) else ev.chunk.source.name ~ ' › ' ~ ev.chunk.locator }}
+        {% if ev.chunk.redacted %}· <span class="pill confidential">secret masked</span>{% endif %}
+        {% if can_open %}· <a href="/review/chunks/{{ ev.chunk.id }}?snippet={{ ev.snippet|urlencode }}">Open source text</a>{% endif %}
+      </footer>
+    </blockquote>
+    {% else %}
+    <p class="empty-inline muted">No evidence is attached to this claim.</p>
+    {% endfor %}
+  </div>
+
+  <div class="section-heading">
+    <div><p class="page-eyebrow">REVIEW DECISION</p><h2>Decide what happens next</h2></div>
+    <span class="panel-hint">Edits are checked again before approval</span>
+  </div>
+  <div class="bento decision-grid">
+    <section class="tile s7 decision-panel">
+      <div class="panel-subheading"><h3>Edit this claim</h3><span class="panel-hint">Create a new version</span></div>
+      <form method="post" action="/review/claims/{{ claim.id }}/edit" class="stack">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="version" value="{{ claim.version }}">
+        <label>Edit statement
+          <textarea name="statement" rows="3" maxlength="{{ max_statement }}">{{ claim.statement }}</textarea>
+        </label>
+        <label>Note (optional) <input name="note" maxlength="1000"></label>
+        <button>Save edit</button>
+        <p class="muted form-hint">An edited claim returns to review and its evidence is re-checked.</p>
+      </form>
+      <hr>
+      <div class="panel-subheading"><h3>Review decision</h3><span class="panel-hint">Approval is always human</span></div>
+      <form method="post" class="stack" id="decide">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <input type="hidden" name="version" value="{{ claim.version }}">
+        <label>Note {% if claim.confidence.value != "verified" or claim.semantic_verdict in ("partly", "unrelated", "contradicts") %}(required to approve: this claim is not fully verified or a model doubted it){% else %}(optional){% endif %}
+          <input name="note" maxlength="1000"></label>
+        <div class="buttons decision-actions">
+          {% if claim.review_status.value != "approved" %}<button class="primary" formaction="/review/claims/{{ claim.id }}/approve">Approve</button>{% endif %}
+          {% if claim.review_status.value != "rejected" %}<button class="danger" formaction="/review/claims/{{ claim.id }}/reject">Reject</button>{% endif %}
+          {% if claim.review_status.value in ("approved", "rejected") %}<button formaction="/review/claims/{{ claim.id }}/reopen">Reopen</button>{% endif %}
+        </div>
+      </form>
+    </section>
+    <section class="tile s5 history-panel">
+      <div class="panel-subheading"><div><p class="page-eyebrow">AUDIT TRAIL</p><h2>Version history</h2></div><span class="panel-hint">{{ history|length }} version(s)</span></div>
+      <ol class="history">
+      {% for v, diff in history %}
+        <li>
+          <strong>v{{ v.version }} · {{ v.change_type.value }}</strong> by {{ v.changed_by }}
+          <span class="muted history-time">{{ v.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</span>
+          {% if v.note %}<div class="note">“{{ v.note }}”</div>{% endif %}
+          {% if diff %}<div class="diff">{% for op, t in diff %}{% if op == "same" %}{{ t }} {% elif op == "del" %}<del>{{ t }}</del> {% else %}<ins>{{ t }}</ins> {% endif %}{% endfor %}</div>
+          {% elif v.change_type.value in ("generated", "edit") %}<div class="diff">{{ v.statement }}</div>{% endif %}
+        </li>
+      {% endfor %}
+      </ol>
+    </section>
+  </div>
 </div>
 {% endblock %}
