@@ -1,4 +1,14 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+
 # 14 — Documentation Coverage & Audit
+
+<sub>Handover · Product and engineering documentation</sub>
+
+</div>
+
+---
 
 Audit date: **10 Nov 2026**
 
