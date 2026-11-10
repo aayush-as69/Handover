@@ -1,20 +1,16 @@
 <div align="center">
 
-<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+<img src="assets/handover-logo.svg" alt="Handover" width="56" />
 
 # 08 — API & Route Reference
 
-<sub>Handover · Product and engineering documentation</sub>
+<sub>Handover · Product and engineering reference</sub>
 
-</div>
-
----
-
-<div align="right">
-<img src="assets/handover-logo.svg" alt="Handover" width="38" />
 </div>
 
 > [Documentation index](README.md) · [Project home](../README.md)
+
+---
 
 Handover is primarily a server-rendered web application. The repository deliberately disables interactive FastAPI API docs in production. This reference therefore documents the implemented browser/health routes rather than exposing an automatically generated production API schema.
 
