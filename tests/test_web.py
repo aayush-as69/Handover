@@ -502,7 +502,7 @@ def test_landing_has_section_anchors_social_preview_and_accessible_contradiction
     from app.main import create_app
     c = TestClient(create_app(secret_key="k" * 40))
     html = c.get("/").text
-    for anchor in ("workflow", "evidence", "verification"):
+    for anchor in ("workflow", "evidence", "verification", "security"):
         assert f'href="#{anchor}"' in html and f'id="{anchor}"' in html
     assert 'id="security"' in html
     assert 'property="og:image"' in html and "/static/img/og.png" in html

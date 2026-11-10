@@ -321,3 +321,6 @@ html{scroll-behavior:smooth}
 :root[data-theme="dark"] .theme-toggle .sun{display:block}
 :root[data-theme="dark"] .theme-toggle .moon{display:none}
 .top .who+.theme-toggle,.top>.theme-toggle:last-child{margin-left:.2rem}
+@media (max-width:760px){
+  .top nav.lp-nav{justify-content:flex-start;margin:0;padding:.1rem 0 .2rem;gap:1.1rem}
+}
