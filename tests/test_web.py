@@ -490,7 +490,7 @@ def test_anonymous_visitors_get_a_landing_page_and_signed_in_users_are_redirecte
     from app.main import create_app
     c = TestClient(create_app(secret_key="k" * 40), follow_redirects=False)
     r = c.get("/")
-    assert r.status_code == 200 and "Sign in to the demo" in r.text
+    assert r.status_code == 200 and "Open the demo" in r.text
     assert 'href="/login"' in r.text
     assert "/static/img/queue.jpg?v=" in r.text
     assert c.get(re.search(r'src="(/static/img/queue\.jpg\?v=[0-9a-f]+)"', r.text).group(1)).status_code == 200

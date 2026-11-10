@@ -1,48 +1,64 @@
 {% extends "base.html" %}
 {% block title %}Keep project knowledge{% endblock %}
 {% block body %}
-<div class="bento">
-  <div class="tile s8 hero">
-    <p class="eyebrow">Evidence-linked knowledge handover</p>
-    <h1>Keep critical project knowledge from leaving with people.</h1>
-    <p class="lead">Handover turns notes, chat, task exports and public GitHub activity into a handover where every claim points to the exact words it came from. A person reviews and approves it before anyone relies on it.</p>
-    <p class="buttons"><a class="button primary" href="/login">Sign in to the demo</a>
-      <a class="button" href="https://github.com/aayush-as69/Handover">View the code</a></p>
-  </div>
-  <div class="tile s4 stack">
-    <p class="eyebrow">What the label means</p>
-    <p><span class="pill verified">quote-verified</span> The quotes exist in the sources and fit the claim.</p>
-    <p><span class="pill inferred">inferred</span> The claim goes beyond its quote.</p>
-    <p><span class="pill conflicting">conflicting</span> A source contradicts it.</p>
-    <p><span class="pill unsupported">unsupported</span> No usable quote was found.</p>
-    <p class="muted">Quote-verified is not the same as true. That judgement stays with the reviewer.</p>
-  </div>
+<div class="lp">
 
-  <div class="tile s4"><p class="eyebrow">1. Collect</p><h2>Bring in what exists</h2>
-    <p>Meeting notes, team chat, task exports and public GitHub issues, commits and pull requests. Secrets are masked on the way in.</p></div>
-  <div class="tile s4"><p class="eyebrow">2. Review</p><h2>Check every claim</h2>
-    <p>Each draft claim shows its quotes, a computed label and its history. Riskiest claims come first. Nothing is approved automatically.</p></div>
-  <div class="tile s4"><p class="eyebrow">3. Hand over</p><h2>Publish a release</h2>
-    <p>Approved claims form a numbered, unchangeable release. Each person sees only what their role may see.</p></div>
+<section class="lp-hero">
+  <h1>When someone leaves, the reasons shouldn’t.</h1>
+  <p class="lp-lead">Handover collects a team’s notes, chat, tasks and public GitHub activity into a handover document in which every claim links to the exact words it came from. A person reviews each claim before it is published.</p>
+  <p class="buttons"><a class="button primary" href="/login">Open the demo</a>
+    <a class="button" href="https://github.com/aayush-as69/Handover">Read the code</a></p>
+</section>
 
-  <div class="tile s12 flush shot">
-    <img src="{{ asset_url('img/queue.jpg') }}" width="1400" alt="The review queue: counts of claims to review, approved and rejected, and a list of claims with confidence labels." loading="lazy">
+<section class="lp-exhibit" aria-label="Example of a claim checked against its source">
+  <figure class="lp-source">
+    <figcaption>team_chat.txt</figcaption>
+    <p>[04/10/2026, 09:30] Riya Sharma: put seat locks in redis btw, compose file updated</p>
+    <p class="hit">[24/10/2026, 21:50] Arjun Nair: <mark>double booking happened again after the redis lock change</mark>, filed an issue</p>
+    <p>[25/10/2026, 10:12] Meera Iyer: is the mongo feed still used for anything?</p>
+  </figure>
+  <div class="lp-link" aria-hidden="true"><span>contradicts</span></div>
+  <div class="lp-claim">
+    <span class="pill conflicting">conflicting</span>
+    <p class="lp-claim-text">Double booking is fixed and the Redis seat locks stopped it.</p>
+    <p class="muted">One quote in the sources contradicts this claim. It stays in the queue until a person decides what to do with it.</p>
+    <p class="lp-actions" aria-hidden="true"><span>Approve</span><span>Edit</span><span>Reject</span></p>
   </div>
+</section>
+<p class="lp-caption">A draft claim from the demo project, checked against the words it cites.</p>
 
-  <div class="tile s6"><p class="eyebrow">Built to be checked</p><h2>Conflicts and open questions</h2>
-    <p>Handover flags where sources disagree, for example one note saying PostgreSQL is the only datastore while a commit adds Mongo. It also lists what the outgoing person should still answer: owners, reasons and open decisions.</p></div>
-  <div class="tile s6"><p class="eyebrow">Safe by design</p><h2>Permissions enforced on the server</h2>
-    <p>Sensitivity levels run from public to confidential, and a claim is as sensitive as its most sensitive source. Restricted material is hidden from roles without clearance, not just greyed out.</p></div>
+<section class="lp-verdicts">
+  <h2>Every claim gets one of four verdicts</h2>
+  <p class="muted lp-note">Computed by the checker, never typed in by hand.</p>
+  <dl>
+    <div><dt><span class="pill verified">quote-verified</span></dt><dd>The quotes exist in the sources and fit the claim. That is not the same as true; the reviewer still decides.</dd></div>
+    <div><dt><span class="pill inferred">inferred</span></dt><dd>The quote exists, but the claim adds a number, a date or a conclusion it does not contain.</dd></div>
+    <div><dt><span class="pill conflicting">conflicting</span></dt><dd>A quote in the sources contradicts the claim.</dd></div>
+    <div><dt><span class="pill unsupported">unsupported</span></dt><dd>None of the cited quotes can be found in the sources.</dd></div>
+  </dl>
+</section>
 
-  <div class="tile s12 flush shot">
-    <img src="{{ asset_url('img/claim.jpg') }}" width="1400" alt="A claim with its supporting quote, the reason for its label and the decision form." loading="lazy">
-  </div>
+<section class="lp-rules">
+  <h2>Three things Handover will not do</h2>
+  <ol>
+    <li><strong>Publish without a person.</strong> Nothing is approved automatically, not even a quote-verified claim.</li>
+    <li><strong>Show what your role may not see.</strong> A claim is as sensitive as its most sensitive source, and secrets are masked on the way in.</li>
+    <li><strong>Change a published release.</strong> Releases are numbered and fixed. Corrections go into the next one.</li>
+  </ol>
+</section>
 
-  <div class="tile s12 stack">
-    <h2>Try it</h2>
-    <p>The demo uses an invented project, CampusEvents, so nothing real is exposed. Sign in as a reviewer, open the queue, and approve or reject a claim.</p>
-    <p class="buttons"><a class="button primary" href="/login">Sign in to the demo</a></p>
-    <p class="muted">Built for the CodeFrontier hackathon by team STARTEND.</p>
-  </div>
+<section class="lp-shot">
+  <h2>The review queue</h2>
+  <p class="muted lp-note">Riskiest claims first.</p>
+  <img src="{{ asset_url('img/queue.jpg') }}" width="1400" alt="The review queue: counts of claims to review, approved and rejected, and a list of claims with confidence labels." loading="lazy">
+</section>
+
+<section class="lp-end">
+  <h2>Try the demo</h2>
+  <p>It uses an invented project called CampusEvents, so nothing real is exposed. Sign in as a reviewer, open the queue and approve or reject a claim.</p>
+  <p class="buttons"><a class="button primary" href="/login">Open the demo</a></p>
+  <p class="muted">Built for the CodeFrontier hackathon by team STARTEND.</p>
+</section>
+
 </div>
 {% endblock %}
