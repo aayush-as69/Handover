@@ -1,15 +1,30 @@
 {% extends "base.html" %}
 {% block title %}Review queue{% endblock %}
 {% block body %}
-<div class="bento">
-  <div class="tile s6 quiet">
-    <h1>Review queue</h1>
-    <p class="muted">{{ project.name }}. Nothing reaches a handover until a person approves it. Riskiest claims come first.</p>
+<div class="page-shell">
+  <header class="page-header queue-header">
+    <div>
+      <p class="page-eyebrow">WORKSPACE / REVIEW</p>
+      <h1>Review queue</h1>
+      <p class="page-intro">{{ project.name }} · Review the riskiest claims first. Nothing reaches a handover until a person approves it.</p>
+    </div>
+    <div class="page-header-aside">
+      <span class="page-aside-label">REVIEW PRINCIPLE</span>
+      <strong>Evidence first.<br>Approval by people.</strong>
+    </div>
+  </header>
+
+  <div class="bento queue-stats">
+    <a class="tile s4 stat warn {{ 'on' if status == 'open' }}" href="/review?status=open"><span class="l">Needs review</span><span class="n">{{ totals["generated"] + totals["edited"] }}</span><span class="stat-foot">Draft and edited claims</span></a>
+    <a class="tile s4 stat ok {{ 'on' if status == 'approved' }}" href="/review?status=approved"><span class="l">Approved</span><span class="n">{{ totals["approved"] }}</span><span class="stat-foot">Ready for sign-off</span></a>
+    <a class="tile s4 stat bad {{ 'on' if status == 'rejected' }}" href="/review?status=rejected"><span class="l">Rejected</span><span class="n">{{ totals["rejected"] }}</span><span class="stat-foot">Excluded from handover</span></a>
   </div>
-  <a class="tile s2 stat warn {{ 'on' if status == 'open' }}" href="/review?status=open"><span class="l">Needs review</span><span class="n">{{ totals["generated"] + totals["edited"] }}</span></a>
-  <a class="tile s2 stat ok {{ 'on' if status == 'approved' }}" href="/review?status=approved"><span class="l">Approved</span><span class="n">{{ totals["approved"] }}</span></a>
-  <a class="tile s2 stat bad {{ 'on' if status == 'rejected' }}" href="/review?status=rejected"><span class="l">Rejected</span><span class="n">{{ totals["rejected"] }}</span></a>
-  <div class="tile s12">
+
+  <section class="page-panel filter-panel">
+    <div class="panel-heading">
+      <div><p class="page-eyebrow">CLAIM EXPLORER</p><h2>Find claims</h2></div>
+      <span class="panel-hint">Filter by review status and evidence label</span>
+    </div>
     <form method="get" class="filters">
       <label>Show
         <select name="status">
@@ -26,34 +41,41 @@
           {% endfor %}
         </select>
       </label>
-      <button>Filter</button>
-      {% if hidden %}<span class="muted">{{ hidden }} claim(s) are above your clearance and not listed.</span>{% endif %}
+      <button class="primary">Apply filters</button>
+      {% if hidden %}<span class="muted filter-note">{{ hidden }} claim(s) are above your clearance and not listed.</span>{% endif %}
     </form>
-  </div>
-  <div class="tile s12 flush">
-<table>
-  <thead><tr><th>Claim</th><th>Type</th><th>Confidence</th><th>Sensitivity</th><th>Status</th></tr></thead>
-  <tbody>
-  {% for c in claims %}
-  <tr class="{{ c.confidence.value }}">
-    <td data-label="Claim"><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a></td>
-    <td data-label="Type" class="muted">{{ c.type.value.replace("_", " ") }}</td>
-    <td data-label="Confidence"><span class="pill {{ c.confidence.value }}">{{ conf_label(c.confidence) }}</span></td>
-    <td data-label="Sensitivity"><span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span></td>
-    <td data-label="Status" class="muted">{{ c.review_status.value }}</td>
-  </tr>
-  {% else %}
-  <tr><td colspan="5" class="muted">No claims here.</td></tr>
-  {% endfor %}
-  </tbody>
-</table>
-  </div>
+  </section>
+
+  <section class="page-panel table-panel">
+    <div class="panel-heading">
+      <div><p class="page-eyebrow">PROJECT KNOWLEDGE</p><h2>Claims</h2></div>
+      <span class="panel-hint">{{ matching }} matching claim(s)</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Claim</th><th>Type</th><th>Confidence</th><th>Sensitivity</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for c in claims %}
+        <tr class="{{ c.confidence.value }}">
+          <td data-label="Claim"><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a></td>
+          <td data-label="Type" class="muted">{{ c.type.value.replace("_", " ") }}</td>
+          <td data-label="Confidence"><span class="pill {{ c.confidence.value }}">{{ conf_label(c.confidence) }}</span></td>
+          <td data-label="Sensitivity"><span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span></td>
+          <td data-label="Status" class="muted">{{ c.review_status.value }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="muted table-empty">No claims here.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>
 {% if pages > 1 %}
 <nav class="pager" aria-label="Pages">
-  {% if page > 1 %}<a href="/review?status={{ status }}&confidence={{ confidence }}&page={{ page - 1 }}">&larr; Previous</a>{% endif %}
+  {% if page > 1 %}<a href="/review?status={{ status }}&confidence={{ confidence }}&page={{ page - 1 }}">← Previous</a>{% endif %}
   <span class="muted">Page {{ page }} of {{ pages }} ({{ matching }} claims)</span>
-  {% if page < pages %}<a href="/review?status={{ status }}&confidence={{ confidence }}&page={{ page + 1 }}">Next &rarr;</a>{% endif %}
+  {% if page < pages %}<a href="/review?status={{ status }}&confidence={{ confidence }}&page={{ page + 1 }}">Next →</a>{% endif %}
 </nav>
 {% endif %}
 {% endblock %}
