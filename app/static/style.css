@@ -637,3 +637,77 @@ html{scroll-behavior:smooth}
 @media (prefers-reduced-motion:reduce){
   .login-form>input,.login-password-wrap input,.login-submit{transition:none}
 }
+
+
+/* ---- readable type scale: consistent across every application page */
+html{font-size:17px}
+body{font-size:1rem;line-height:1.6}
+p,li,dd{line-height:1.62}
+label{font-size:.96rem}
+input,textarea,select{font-size:1rem;line-height:1.45}
+button{font-size:.96rem;line-height:1.35}
+th{font-size:.92rem;line-height:1.45}
+td{font-size:.98rem;line-height:1.55}
+.pill{font-size:.86rem;line-height:1.55;padding:.14rem .7rem}
+.meta{font-size:.92rem}
+.note{font-size:.92rem;line-height:1.6}
+small{font-size:.86rem;line-height:1.55}
+.eyebrow{font-size:.94rem;line-height:1.4}
+.top nav a{font-size:.98rem}
+.who{font-size:.95rem}
+.brand-word{font-size:1.08rem}
+
+/* Landing page supporting text */
+.lp-eyebrow{font-size:.82rem}
+.lp-nav a{font-size:.95rem}
+.lp-strip-label,.lp-source-strip{font-size:.92rem}
+.lp-hero-points{font-size:.9rem}
+.lp-visual-top{font-size:.76rem}
+.lp-demo-tag{font-size:.68rem}
+.lp-card-label{font-size:.88rem}
+.lp-source-meta{font-size:.84rem}
+.lp-relationship span{font-size:.78rem}
+.lp-draft-top>span:last-child{font-size:.84rem}
+.lp-draft-bottom{font-size:.8rem}
+.lp-visual-foot{font-size:.88rem}
+.lp-step-number{font-size:.84rem}
+.lp-step p,.lp-trust-grid p{font-size:.97rem;line-height:1.65}
+.lp-product-image figcaption{font-size:.9rem}
+.lp-product-image figcaption strong{font-size:.94rem}
+.lp-product-points li{font-size:.97rem}
+.lp-outcomes p{font-size:.94rem;line-height:1.6}
+.lp-trust-icon{font-size:.84rem}
+.lp-password-note{font-size:.85rem;line-height:1.6}
+.lp-foot{font-size:.92rem}
+
+/* Sign-in and helper text */
+.login-kicker{font-size:.78rem}
+.login-story-lead{font-size:1.06rem}
+.login-benefits strong{font-size:.94rem}
+.login-benefits small{font-size:.86rem;line-height:1.55}
+.login-status{font-size:.7rem}
+.login-heading>p:last-child{font-size:.98rem}
+.login-error p{font-size:.92rem}
+.login-form>label,.login-password-label label{font-size:.94rem}
+.login-form>input,.login-password-wrap input{font-size:.98rem}
+.login-password-toggle{font-size:.86rem}
+.login-submit{font-size:.98rem}
+.login-demo-heading>span:first-child{font-size:.72rem}
+.login-demo-tag{font-size:.66rem}
+.login-demo>p{font-size:.92rem}
+.login-roles code{font-size:.84rem}
+.login-roles span{font-size:.84rem}
+.login-demo>small{font-size:.84rem;line-height:1.6}
+.login-security-note{font-size:.84rem}
+
+/* Narrow screens: preserve readable controls without horizontal overflow */
+@media (max-width:760px){
+  html{font-size:16.5px}
+  body{line-height:1.62}
+  th{font-size:.9rem}
+  .top nav a{font-size:.95rem}
+}
+@media (max-width:380px){
+  html{font-size:16px}
+  .login-roles span{font-size:.8rem}
+}
