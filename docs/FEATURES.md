@@ -1,4 +1,14 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+
 # Conflict detection, questions and redaction
+
+<sub>Handover · Product and engineering documentation</sub>
+
+</div>
+
+---
 
 Later hardening is listed in `PRODUCTION_READINESS.md`.
 
