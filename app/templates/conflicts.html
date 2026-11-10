@@ -1,26 +1,46 @@
 {% extends "base.html" %}
 {% block title %}Conflicts{% endblock %}
 {% block body %}
-<h1>Conflicts between sources</h1>
-<p class="muted">Found by rule, not by opinion: claims that say different things about the same topic. A conflict never changes a claim by itself. Decide which is right, then edit or reject the others.</p>
-<form method="post" action="/conflicts/detect"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Check again</button></form>
-<div class="bento">
-{% for cf, members in rows %}
-<section class="tile s6">
-  <div class="meta"><span class="pill {{ 'conflicting' if cf.status.value == 'open' else 'verified' }}">{{ cf.status.value }}</span><strong>{{ cf.topic }}</strong></div>
-  <p>{{ cf.reason }}</p>
-  <ul>{% for c in members %}<li><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a> <span class="muted">({{ c.review_status.value }})</span></li>{% endfor %}</ul>
-  {% if cf.status.value == "resolved" %}
-    <p class="note">Resolved by {{ cf.resolved_by }}: “{{ cf.resolution }}”</p>
-    <form method="post" action="/conflicts/{{ cf.id }}/reopen"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Reopen</button></form>
+<div class="page-shell">
+  <header class="page-header">
+    <div><p class="page-eyebrow">QUALITY / CROSS-SOURCE CHECKS</p><h1>Conflicts between sources</h1>
+      <p class="page-intro">Find claims that say different things about the same topic. A conflict never changes a claim by itself; a reviewer decides what is right.</p>
+    </div>
+    <form method="post" action="/conflicts/detect" class="header-action">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="primary">Check again</button>
+    </form>
+  </header>
+  <div class="section-heading"><div><p class="page-eyebrow">REVIEW REQUIRED</p><h2>Detected conflicts</h2></div><span class="panel-hint">{{ rows|length }} item(s)</span></div>
+  <div class="bento work-card-grid">
+  {% for cf, members in rows %}
+    <section class="tile s6 work-card conflict-card">
+      <div class="work-card-head">
+        <div class="meta"><span class="pill {{ 'conflicting' if cf.status.value == 'open' else 'verified' }}">{{ cf.status.value }}</span><strong>{{ cf.topic }}</strong></div>
+      </div>
+      <p class="work-card-summary">{{ cf.reason }}</p>
+      <div class="conflict-members">
+        {% for c in members %}
+        <div class="conflict-member">
+          <span class="conflict-member-mark" aria-hidden="true">“</span>
+          <div><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a><span class="muted">{{ c.review_status.value }}</span></div>
+        </div>
+        {% endfor %}
+      </div>
+      {% if cf.status.value == "resolved" %}
+        <p class="note">Resolved by {{ cf.resolved_by }}: “{{ cf.resolution }}”</p>
+        <form method="post" action="/conflicts/{{ cf.id }}/reopen"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Reopen conflict</button></form>
+      {% else %}
+      <form method="post" action="/conflicts/{{ cf.id }}/resolve" class="stack conflict-resolve">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label>How was it resolved? <input name="note" maxlength="1000" required></label>
+        <button class="primary">Mark resolved</button>
+      </form>
+      {% endif %}
+    </section>
   {% else %}
-  <form method="post" action="/conflicts/{{ cf.id }}/resolve" class="stack">
-    <input type="hidden" name="csrf" value="{{ csrf }}">
-    <label>How was it resolved? <input name="note" maxlength="1000" required></label>
-    <button class="primary">Mark resolved</button>
-  </form>
-  {% endif %}
-</section>
-{% else %}<p class="muted s12">No conflicts found.</p>{% endfor %}
+    <section class="empty-state s12"><span class="empty-state-icon">✓</span><h2>No conflicts found</h2><p class="muted">The conflict checker has not identified any disagreements in the current project evidence.</p></section>
+  {% endfor %}
+  </div>
 </div>
 {% endblock %}
