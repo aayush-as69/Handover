@@ -546,3 +546,18 @@ def test_login_page_has_accessible_split_layout_and_password_toggle():
     assert script
     js = c.get(script.group(1)).text
     assert 'input.type = reveal ? "text" : "password"' in js
+
+
+def test_sitewide_typography_uses_readable_defaults():
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    c = TestClient(create_app(secret_key="k" * 40))
+    html = c.get("/login").text
+    import re
+    css_url = re.search(r'href="(/static/style\\.css\\?v=[0-9a-f]{10})"', html)
+    assert css_url
+    css = c.get(css_url.group(1)).text
+    assert "html{font-size:17px}" in css
+    assert "body{font-size:1rem;line-height:1.6}" in css
+    assert "th{font-size:.92rem" in css
+    assert ".pill{font-size:.86rem" in css
