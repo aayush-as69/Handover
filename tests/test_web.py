@@ -491,7 +491,7 @@ def test_anonymous_visitors_get_a_landing_page_and_signed_in_users_are_redirecte
     c = TestClient(create_app(secret_key="k" * 40), follow_redirects=False)
     r = c.get("/")
     assert r.status_code == 200 and "Explore the demo" in r.text
-    assert 'href="/login"' in r.text
+    assert 'href="/login#sign-in-form"' in r.text and 'href="/login#demo-accounts"' in r.text
     assert "/static/img/queue.jpg?v=" in r.text
     assert c.get(re.search(r'src="(/static/img/queue\.jpg\?v=[0-9a-f]+)"', r.text).group(1)).status_code == 200
 
@@ -545,7 +545,7 @@ def test_login_page_has_accessible_split_layout_and_password_toggle():
     script = re.search(r'<script src="(/static/login\.js\?v=[0-9a-f]{10})" defer></script>', html)
     assert script
     js = c.get(script.group(1)).text
-    assert 'input.type = reveal ? "text" : "password"' in js
+    assert 'passwordInput.type = reveal ? "text" : "password"' in js
 
 
 def test_sitewide_typography_uses_readable_defaults():
