@@ -1,74 +1,105 @@
 {% extends "base.html" %}
 {% block title %}Handover{% endblock %}
 {% block body %}
-<h1>{{ handover.title }}</h1>
-<p class="muted">From {{ handover.outgoing_name }}.
-{% if handover.status.value == "approved" and release %}Release {{ release.number }}, signed off by {{ release.approved_by_name }} on {{ release.approved_at.strftime("%Y-%m-%d") }}.
-{% else %}<strong>Draft preview. Not shared yet.</strong>{% endif %}
-Only approved claims appear, and only what your role may see. Each claim shows its evidence.</p>
+<div class="page-shell handover-page">
+  <header class="page-header">
+    <div>
+      <p class="page-eyebrow">PROJECT KNOWLEDGE / RELEASE</p>
+      <h1>{{ handover.title }}</h1>
+      <p class="page-intro">From {{ handover.outgoing_name }}.
+      {% if handover.status.value == "approved" and release %}Release {{ release.number }}, signed off by {{ release.approved_by_name }} on {{ release.approved_at.strftime("%Y-%m-%d") }}.
+      {% else %}<strong>Draft preview. Not shared yet.</strong>{% endif %}
+      Only approved claims appear, and only what your role may see. Each claim shows its evidence.</p>
+    </div>
+    <div class="page-header-aside">
+      {% if handover.status.value == "approved" and release %}
+      <span class="pill verified">Release {{ release.number }} · signed off</span>
+      <strong>Versioned<br>team knowledge</strong>
+      {% else %}
+      <span class="pill inferred">Draft preview</span>
+      <strong>Review before<br>publication</strong>
+      {% endif %}
+    </div>
+  </header>
 
-{% if is_reviewer and stale %}<p class="warnbox" role="alert"><strong>The sign-off is out of date.</strong> {{ state.withdrawn }} signed-off claim(s) were edited, rejected or reopened. Readers cannot see this handover until you sign off again.</p>{% endif %}
-{% if is_reviewer %}
-<form method="get" class="filters"><label>Preview as
-  <select name="view_as">{% for r in roles %}<option value="{{ r }}" {% if r == view_role.value %}selected{% endif %}>{{ r }}</option>{% endfor %}</select></label>
-  <button>Preview</button></form>
-{% if previewing %}<p class="flash">Previewing what a <strong>{{ view_role.value }}</strong> sees: filtered claims and hidden details. Nothing here is saved.</p>{% endif %}
-<section class="card">
-  <form method="post" class="buttons">
-    <input type="hidden" name="csrf" value="{{ csrf }}">
-    {% if handover.status.value != "approved" %}
-      <button class="primary" formaction="/handover/approve">{{ "Publish a new release" if release else "Sign off handover" }}</button>
-    {% else %}
-      {% if state.not_yet_released or state.withdrawn %}<button class="primary" formaction="/handover/approve">Sign off again (new release)</button>{% endif %}
-      <button class="danger" formaction="/handover/withdraw">Withdraw</button>
-    {% endif %}
-    <a href="/handover/releases">Release history</a>
-  </form>
-  {% if release %}<p class="muted">Release {{ release.number }}: {{ state.still_valid }} claim(s) still valid{% if state.withdrawn %}, {{ state.withdrawn }} removed since sign-off because they were edited, rejected or reopened{% endif %}{% if state.not_yet_released %}, {{ state.not_yet_released }} newly approved and not yet released{% endif %}.</p>{% endif %}
-  {% if pending %}<p class="muted">{{ pending }} claim(s) are still waiting for review and are not included.</p>{% endif %}
-  {% if acks %}<p class="muted">Acknowledged by: {% for n, t in acks %}{{ n }} ({{ t.strftime("%Y-%m-%d") }}){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
-</section>
-{% endif %}
-
-{% for sec in sections %}
-<h2 id="{{ sec.key }}">{{ sec.title }}</h2>
-{% for c in sec.claims %}
-<section class="card">
-  <div class="meta">
-    <span class="pill {{ c.confidence.value }}">{{ conf_label(c.confidence) }}</span>
-    <span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span>
-    <span class="muted">{{ c.type.value.replace("_", " ") }}</span>
-  </div>
-  <p class="statement-sm">{{ hide(c.statement) }}</p>
-  {% for other, res in conflicts.get(c.id, []) %}<p class="warnbox">Sources disagree: “{{ hide(other) }}” {% if res %}<br>{{ hide(res) }}{% else %}This is not resolved yet.{% endif %}</p>{% endfor %}
-  {% set a = approvals[c.id] %}
-  {% if a and a.note %}<p class="note">Reviewer note ({{ a.changed_by }}): “{{ hide(a.note) }}”</p>{% endif %}
-  {% for ev in c.evidence %}{% if ev.stance.value == "supports" %}
-  <blockquote class="evidence"><p>“{{ hide(ev.snippet) }}”</p>
-  <footer>{{ ev.chunk.locator if ev.chunk.locator.startswith(ev.chunk.source.name) else ev.chunk.source.name ~ ' › ' ~ ev.chunk.locator }}</footer></blockquote>
-  {% endif %}{% endfor %}
-</section>
-{% endfor %}
-{% else %}
-<p class="muted">No approved claims are available to you yet.</p>
-{% endfor %}
-
-{% if answers %}
-<h2 id="answers">Answers from {{ handover.outgoing_name }}</h2>
-<p class="muted">In the leaver's own words. These are not checked against the sources.</p>
-{% for q in answers %}<section class="card"><p>{{ hide(q.text) }}</p><p class="note">{{ q.answered_by }}: “{{ hide(q.answer) }}”</p></section>{% endfor %}
-{% endif %}
-
-{% if handover.status.value == "approved" and not is_reviewer %}
-<section class="card">
-  {% if acked %}<p class="ok">You have acknowledged this handover.</p>
-  {% else %}
-  <form method="post" action="/handover/acknowledge">
-    <input type="hidden" name="csrf" value="{{ csrf }}">
-    <p>When you have read it, confirm so the team knows nothing is being missed.</p>
-    <button class="primary">I have read this handover</button>
-  </form>
+  {% if is_reviewer and stale %}<p class="warnbox handover-alert" role="alert"><strong>The sign-off is out of date.</strong> {{ state.withdrawn }} signed-off claim(s) were edited, rejected or reopened. Readers cannot see this handover until you sign off again.</p>{% endif %}
+  {% if is_reviewer %}
+  <section class="page-panel handover-controls">
+    <div class="panel-heading">
+      <div><p class="page-eyebrow">REVIEWER CONTROLS</p><h2>Preview and publish</h2></div>
+      <span class="panel-hint">Previewing does not save changes</span>
+    </div>
+    <form method="get" class="filters handover-preview">
+      <label>Preview as
+        <select name="view_as">{% for r in roles %}<option value="{{ r }}" {% if r == view_role.value %}selected{% endif %}>{{ r }}</option>{% endfor %}</select>
+      </label>
+      <button>Preview</button>
+    </form>
+    {% if previewing %}<p class="flash">Previewing what a <strong>{{ view_role.value }}</strong> sees: filtered claims and hidden details. Nothing here is saved.</p>{% endif %}
+    <div class="handover-publish">
+      <form method="post" class="buttons">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        {% if handover.status.value != "approved" %}
+          <button class="primary" formaction="/handover/approve">{{ "Publish a new release" if release else "Sign off handover" }}</button>
+        {% else %}
+          {% if state.not_yet_released or state.withdrawn %}<button class="primary" formaction="/handover/approve">Sign off again (new release)</button>{% endif %}
+          <button class="danger" formaction="/handover/withdraw">Withdraw</button>
+        {% endif %}
+        <a class="button" href="/handover/releases">Release history</a>
+      </form>
+    </div>
+    {% if release %}<p class="muted panel-footnote">Release {{ release.number }}: {{ state.still_valid }} claim(s) still valid{% if state.withdrawn %}, {{ state.withdrawn }} removed since sign-off because they were edited, rejected or reopened{% endif %}{% if state.not_yet_released %}, {{ state.not_yet_released }} newly approved and not yet released{% endif %}.</p>{% endif %}
+    {% if pending %}<p class="muted panel-footnote">{{ pending }} claim(s) are still waiting for review and are not included.</p>{% endif %}
+    {% if acks %}<p class="muted panel-footnote">Acknowledged by: {% for n, t in acks %}{{ n }} ({{ t.strftime("%Y-%m-%d") }}){% if not loop.last %}, {% endif %}{% endfor %}</p>{% endif %}
+  </section>
   {% endif %}
-</section>
-{% endif %}
+
+  {% for sec in sections %}
+  <section class="handover-section">
+    <div class="section-heading"><div><p class="page-eyebrow">APPROVED KNOWLEDGE</p><h2 id="{{ sec.key }}">{{ sec.title }}</h2></div><span class="panel-hint">{{ sec.claims|length }} item(s)</span></div>
+    {% for c in sec.claims %}
+    <article class="card handover-claim">
+      <div class="meta">
+        <span class="pill {{ c.confidence.value }}">{{ conf_label(c.confidence) }}</span>
+        <span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span>
+        <span class="muted">{{ c.type.value.replace("_", " ") }}</span>
+      </div>
+      <p class="statement-sm">{{ hide(c.statement) }}</p>
+      {% for other, res in conflicts.get(c.id, []) %}<p class="warnbox">Sources disagree: “{{ hide(other) }}” {% if res %}<br>{{ hide(res) }}{% else %}This is not resolved yet.{% endif %}</p>{% endfor %}
+      {% set a = approvals[c.id] %}
+      {% if a and a.note %}<p class="note">Reviewer note ({{ a.changed_by }}): “{{ hide(a.note) }}”</p>{% endif %}
+      {% for ev in c.evidence %}{% if ev.stance.value == "supports" %}
+      <blockquote class="evidence"><p>“{{ hide(ev.snippet) }}”</p>
+        <footer>{{ ev.chunk.locator if ev.chunk.locator.startswith(ev.chunk.source.name) else ev.chunk.source.name ~ ' › ' ~ ev.chunk.locator }}</footer>
+      </blockquote>
+      {% endif %}{% endfor %}
+    </article>
+    {% endfor %}
+  </section>
+  {% else %}
+  <section class="empty-state"><span class="empty-state-icon">—</span><h2>No approved claims yet</h2><p class="muted">There are no approved claims available to you in this handover.</p></section>
+  {% endfor %}
+
+  {% if answers %}
+  <section class="handover-section">
+    <div class="section-heading"><div><p class="page-eyebrow">OUTGOING TEAMMATE</p><h2 id="answers">Answers from {{ handover.outgoing_name }}</h2></div></div>
+    <p class="muted section-description">In the leaver's own words. These are not checked against the sources.</p>
+    {% for q in answers %}<article class="card handover-answer"><p>{{ hide(q.text) }}</p><p class="note">{{ q.answered_by }}: “{{ hide(q.answer) }}”</p></article>{% endfor %}
+  </section>
+  {% endif %}
+
+  {% if handover.status.value == "approved" and not is_reviewer %}
+  <section class="acknowledgement-panel">
+    {% if acked %}
+    <p class="ok"><strong>You have acknowledged this handover.</strong></p>
+    {% else %}
+    <form method="post" action="/handover/acknowledge">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div><p class="page-eyebrow">READER CONFIRMATION</p><h2>Have you read the handover?</h2><p>Confirm when you have finished so the team knows nothing is being missed.</p></div>
+      <button class="primary">I have read this handover</button>
+    </form>
+    {% endif %}
+  </section>
+  {% endif %}
+</div>
 {% endblock %}
