@@ -1,20 +1,16 @@
 <div align="center">
 
-<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+<img src="assets/handover-logo.svg" alt="Handover" width="56" />
 
 # 09 — Testing Guide
 
-<sub>Handover · Product and engineering documentation</sub>
+<sub>Handover · Product and engineering reference</sub>
 
-</div>
-
----
-
-<div align="right">
-<img src="assets/handover-logo.svg" alt="Handover" width="38" />
 </div>
 
 > [Documentation index](README.md) · [Project home](../README.md)
+
+---
 
 ## 1. Test strategy
 
