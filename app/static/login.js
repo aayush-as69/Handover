@@ -27,7 +27,7 @@
           item.classList.toggle("selected", selected);
         });
         if (selectionStatus) {
-          selectionStatus.textContent = "Username set to " + username + ". Enter your demo password to continue.";
+          selectionStatus.textContent = "Username set to " + username + ". Enter the demo password to continue.";
           selectionStatus.hidden = false;
         }
         var password = document.getElementById("login-password");
