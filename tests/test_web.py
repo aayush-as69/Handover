@@ -490,7 +490,20 @@ def test_anonymous_visitors_get_a_landing_page_and_signed_in_users_are_redirecte
     from app.main import create_app
     c = TestClient(create_app(secret_key="k" * 40), follow_redirects=False)
     r = c.get("/")
-    assert r.status_code == 200 and "Open the demo" in r.text
+    assert r.status_code == 200 and "Explore the demo" in r.text
     assert 'href="/login"' in r.text
     assert "/static/img/queue.jpg?v=" in r.text
     assert c.get(re.search(r'src="(/static/img/queue\.jpg\?v=[0-9a-f]+)"', r.text).group(1)).status_code == 200
+
+
+def test_landing_has_section_anchors_social_preview_and_accessible_contradiction():
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    html = TestClient(create_app(secret_key="k" * 40)).get("/").text
+    for anchor in ("how", "verification", "security"):
+        assert f'href="#{anchor}"' in html and f'id="{anchor}"' in html
+    assert 'property="og:image"' in html and "/static/img/og.png" in html
+    assert "contradicts this claim" in html
+    assert "AI can help prepare the handover. It cannot approve it." in html
+    login = TestClient(create_app(secret_key="k" * 40)).get("/login").text
+    assert "meera" in login and "rao" in login

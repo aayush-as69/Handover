@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#101827">
 <meta name="description" content="Evidence-backed project knowledge transfer. Preserve the context behind the code.">
+{% block head %}{% endblock %}
 <link rel="icon" type="image/svg+xml" href="{{ asset_url('logo.svg') }}">
 <title>{% block title %}Handover{% endblock %} · Handover</title>
 <link rel="stylesheet" href="{{ asset_url('style.css') }}">
@@ -27,6 +28,7 @@
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <button class="link">Sign out</button>
   </form>
+  {% else %}{% block anon_nav %}{% endblock %}
   {% endif %}
 </header>
 <main>
