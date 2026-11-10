@@ -1,13 +1,37 @@
-# Demo data: CampusEvents (synthetic)
+<div align="center">
 
-Everything in this folder is **invented for demonstration**. The project, people, sponsor,
-dates, commits, issues and the "API key" do not refer to any real team, person or credential.
-No confidential workplace material is used.
+<img src="../../docs/assets/handover-logo.svg" alt="Handover" width="52" />
 
-The scenario: a four-person club team built *CampusEvents*, an app for discovering club events,
-booking seats and paying online. Riya Sharma (backend lead) leaves on 2026-11-20. Kabir Mehta
-takes over the backend. Meera Iyer (club lead) approves the handover. Mr. Rao is a mentor with
-restricted access.
+# Synthetic demo dataset
 
-`expected.json` lists the traps deliberately planted in this data. Tests and later evaluation
-check that the system finds them.
+**CampusEvents · Safe sample data for local walkthroughs**
+
+</div>
+
+---
+
+Everything in this directory is invented for demonstration. The project, people, sponsor, dates, commits, issues and the “API key” are fictional. No real credentials or confidential workplace material are included.
+
+## Scenario
+
+A four-person club team built **CampusEvents**, an app for discovering club events, booking seats and paying online.
+
+- **Riya Sharma** — backend lead, leaving on 20 November 2026.
+- **Kabir Mehta** — incoming backend owner.
+- **Meera Iyer** — club lead and handover approver.
+- **Mr. Rao** — mentor with restricted access.
+
+## Dataset files
+
+| File | Purpose |
+|---|---|
+| `manifest.json` | Dataset metadata and source inventory |
+| `github_snapshot.json` | Synthetic public-repository activity |
+| `tasks.csv` | Example project tasks and ownership |
+| `team_chat.txt` | Example team conversation |
+| `notes/` | Project notes, decisions and planning context |
+| `expected.json` | Deliberately planted edge cases used by tests/evaluation |
+
+The expected file describes the traps intentionally planted in the sample. Tests and later evaluation use it to check whether the application handles those cases correctly.
+
+> Use this dataset to explore ingestion, extraction, verification, review, redaction and role-filtered handover behavior. Do not treat sample identities or credentials as real.
