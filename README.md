@@ -194,7 +194,7 @@ python -m pip install --upgrade pip
 pip install -r requirements.lock -r requirements-dev.txt
 ```
 
-### 4. Load the synthetic demo
+### 4. Configure demo access
 
 For a local demo, set both variables in the same terminal session before starting the app. The app will create the synthetic project and demo users on startup.
 
@@ -202,14 +202,12 @@ For a local demo, set both variables in the same terminal session before startin
 ```bash
 export DEMO_MODE=1
 export DEMO_PASSWORD=handover123
-uvicorn app.main:app --reload
 ```
 
 **Windows PowerShell**
 ```powershell
 $env:DEMO_MODE = "1"
 $env:DEMO_PASSWORD = "handover123"
-uvicorn app.main:app --reload
 ```
 
 When `DEMO_MODE` and `DEMO_PASSWORD` are configured, the login page passes the configured demo password to the demo-account selector so a click fills both fields. The value is visible to anyone using that public demo, so use it only with synthetic demo accounts. Never reuse a production credential.
