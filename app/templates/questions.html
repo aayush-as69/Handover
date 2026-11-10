@@ -41,6 +41,7 @@
   {% else %}
     <section class="empty-state s12"><span class="empty-state-icon">✓</span><h2>No open questions</h2><p class="muted">There are no outstanding context gaps in the current handover checklist.</p></section>
   {% endfor %}
+    <section class="empty-state s12 search-empty" data-search-empty hidden><h2>No matching questions</h2><p class="muted">Try another phrase or status.</p></section>
   </div>
 </div>
 {% endblock %}
