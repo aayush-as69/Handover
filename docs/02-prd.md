@@ -1,18 +1,14 @@
 <div align="center">
 
-<div align="right">
-<img src="assets/handover-logo.svg" alt="Handover" width="38" />
-</div>
-
-> [Documentation index](README.md) · [Project home](../README.md)
-
-<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+<img src="assets/handover-logo.svg" alt="Handover" width="56" />
 
 # 02 — Product Requirements Document
 
-<sub>Handover · Product and engineering documentation</sub>
+<sub>Handover · Product requirements and engineering reference</sub>
 
 </div>
+
+> [Documentation index](README.md) · [Project home](../README.md)
 
 ---
 
