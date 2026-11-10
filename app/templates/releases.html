@@ -1,10 +1,21 @@
 {% extends "base.html" %}
 {% block title %}Releases{% endblock %}
 {% block body %}
-<p><a href="/handover">← Handover</a></p>
-<h1>Release history</h1>
-<p class="muted">Each sign-off is kept as it was. Claims are listed by id and version, so a release can never be quietly rewritten.</p>
-<table><thead><tr><th>Release</th><th>Signed off by</th><th>When (UTC)</th><th>Claims</th><th>Acknowledged by</th></tr></thead>
-<tbody>{% for r, n, acks in rows %}<tr><td>{{ r.number }}</td><td>{{ r.approved_by_name }}</td><td>{{ r.approved_at.strftime("%Y-%m-%d %H:%M") }}</td><td>{{ n }}</td><td>{{ acks }}</td></tr>
-{% else %}<tr><td colspan="5" class="muted">No releases yet.</td></tr>{% endfor %}</tbody></table>
+<div class="page-shell">
+  <p class="page-breadcrumb"><a href="/handover">← Back to handover</a><span>Release history</span></p>
+  <header class="page-header">
+    <div><p class="page-eyebrow">PUBLICATION / AUDIT TRAIL</p><h1>Release history</h1>
+      <p class="page-intro">Each sign-off is kept as it was. Claims are listed by id and version, so a release can never be quietly rewritten.</p>
+    </div>
+    <div class="page-header-aside"><span class="page-aside-label">IMMUTABLE RECORD</span><strong>Every release<br>keeps its history</strong></div>
+  </header>
+  <section class="page-panel table-panel">
+    <div class="panel-heading"><div><p class="page-eyebrow">SIGNED-OFF HANDOVERS</p><h2>Published releases</h2></div><span class="panel-hint">{{ rows|length }} release(s)</span></div>
+    <div class="table-scroll">
+      <table><thead><tr><th>Release</th><th>Signed off by</th><th>When (UTC)</th><th>Claims</th><th>Acknowledged by</th></tr></thead>
+      <tbody>{% for r, n, acks in rows %}<tr><td data-label="Release"><span class="release-number">#{{ r.number }}</span></td><td data-label="Signed off by">{{ r.approved_by_name }}</td><td data-label="When (UTC)">{{ r.approved_at.strftime("%Y-%m-%d %H:%M") }}</td><td data-label="Claims">{{ n }}</td><td data-label="Acknowledged by">{{ acks }}</td></tr>
+      {% else %}<tr><td colspan="5" class="muted table-empty">No releases yet. A signed-off handover will appear here.</td></tr>{% endfor %}</tbody></table>
+    </div>
+  </section>
+</div>
 {% endblock %}
