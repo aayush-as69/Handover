@@ -1,93 +1,122 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="60" />
+
 # 01 — Project Overview
+
+*The context behind a project should survive the people who built it.*
+
+</div>
+
+## At a glance
+
+| Attribute | Description |
+|---|---|
+| Product | Handover |
+| Category | Evidence-backed project knowledge transfer |
+| Primary users | Admins, approvers, incoming teammates and restricted readers |
+| Application | FastAPI with server-rendered Jinja pages |
+| Persistence | SQLite for local use; PostgreSQL supported |
+| Core principle | Evidence first, human approval before publication |
 
 ## 1. Purpose
 
 Handover is a knowledge-transfer application for projects where important context can be lost when a team member leaves.
 
-It ingests structured project evidence, extracts candidate claims, mechanically checks those claims against their evidence, sends them through human review, and publishes only approved information to role-appropriate readers.
+It ingests project evidence, extracts candidate claims, checks those claims against their sources, routes them through human review, and publishes approved information to role-appropriate readers.
 
-## 2. Problem
+The **claim plus its evidence** is the central unit of knowledge—not an opaque AI-generated summary.
 
-Project knowledge is distributed across sources such as meeting notes, team chat, task exports and repository activity. A replacement team member often needs the **reason behind a decision**, current ownership, unfinished work, risks and sensitive context—not simply the source files themselves.
+## 2. The problem
 
-The central design decision is therefore to make a **claim with evidence** the unit of handover knowledge.
+Project knowledge is distributed across meeting notes, team chat, task exports and repository activity. A replacement teammate needs more than files: they need to know why a decision was made, who owns unfinished work, which risks remain, and what information is sensitive.
+
+Without a structured handover, that context must be reconstructed manually.
 
 ## 3. Target users
 
-| Role | Purpose |
+| Role | Responsibility |
 |---|---|
 | `admin` | Manage sources and project-level operations; full clearance |
-| `approver` | Review, approve and sign off handover content |
-| `viewer` | Incoming person who reads an approved handover |
-| `restricted` | Limited-context reader |
+| `approver` | Inspect evidence, review claims and sign off releases |
+| `viewer` | Read and acknowledge an approved handover |
+| `restricted` | Read a reduced-clearance version of the handover |
 
-The role model and clearance mapping are defined in `app/enums.py` and enforced through `app/access.py`.
+Roles and clearance mappings are defined in `app/enums.py` and enforced through `app/access.py`.
 
-## 4. Core workflow
+## 4. End-to-end workflow
 
-1. An admin loads project sources.
-2. Parsers convert sources into addressable chunks.
+```mermaid
+flowchart TD
+    A["Admin imports project sources"] --> B["Parse and normalize"]
+    B --> C["Mask secrets and assign sensitivity"]
+    C --> D["Extract candidate claims"]
+    D --> E["Validate evidence references"]
+    E --> F["Mechanically verify evidence"]
+    F --> G["Human review"]
+    G -->|Approve| H["Sign off numbered release"]
+    G -->|Edit| D
+    G -->|Reject / Reopen| I["Exclude or review again"]
+    H --> J["Filter by role and sensitivity"]
+    J --> K["Redact fields"]
+    K --> L["Incoming teammate reads and acknowledges"]
+```
+
+1. An admin imports project sources.
+2. Parsers convert source content into addressable chunks.
 3. Secret masking runs before chunks are persisted.
-4. The extractor produces candidate claims with evidence references.
-5. The verification pass assigns a mechanical confidence label.
-6. Reviewers inspect claims beside their evidence.
-7. Reviewers approve, edit, reject or reopen claims.
-8. Approved claims can be signed off into a numbered release.
-9. Readers receive only claims allowed by their role and effective sensitivity.
-10. Readers may acknowledge a specific release.
+4. An extractor creates candidate claims and evidence references.
+5. Verification assigns a mechanical confidence label.
+6. Reviewers inspect, approve, edit, reject or reopen claims.
+7. Approved claim versions can be signed off into a numbered release.
+8. Readers see only information permitted by their role and effective sensitivity.
+9. Readers can acknowledge a specific release.
 
-## 5. What makes the product different
+## 5. Product differentiators
 
-Handover is not simply a document-sharing system. Its central controls are:
+- **Evidence-linked claims:** reviewers can inspect the source behind a statement.
+- **Separate verification and approval:** model output cannot approve its own claims.
+- **Sensitivity propagation:** claim visibility accounts for its supporting evidence.
+- **Server-side authorization:** the browser never decides what a user is allowed to see.
+- **Field-level redaction:** selected personal/contact and monetary fields are hidden by role.
+- **Immutable history:** claim versions and published releases preserve what was reviewed.
+- **Stale-release protection:** changes to released claims prevent non-reviewers from relying on an outdated handover.
 
-- evidence-linked claims;
-- mechanical evidence verification;
-- human approval as a separate trust boundary;
-- sensitivity propagation from evidence to claims;
-- server-side role/clearance enforcement;
-- field-level redaction;
-- immutable claim history and releases;
-- stale-release behavior after later edits/rejections/reopenings.
+## 6. Functional scope
 
-## 6. Functional boundaries
+### Included in the repository
 
-### Included
+- Notes, chat, task CSV and public GitHub source ingestion.
+- Rule-based extraction and optional OpenAI-compatible LLM extraction.
+- Evidence verification, human review and claim history.
+- Conflict detection and Questions Before I Leave.
+- Role-filtered handover releases and acknowledgements.
+- SQLite/PostgreSQL persistence and Alembic migrations.
+- Security controls, operational helpers and CI.
 
-- Four source families: notes, chat, tasks and public GitHub.
-- Rule-based extraction.
-- Optional OpenAI-compatible extraction.
-- Evidence verification.
-- Human review.
-- Conflict detection.
-- Questions Before I Leave.
-- Role-filtered handover generation.
-- Acknowledgements.
-- SQLite/PostgreSQL persistence.
-- Render configuration.
+### Not currently built
 
-### Explicitly not built
+- Multiple projects per deployment.
+- Dedicated audit-log UI.
+- Named acknowledgement history UI.
+- Richer conflict visualization.
+- Extraction-quality reporting.
+- Stronger semantic evaluation.
 
-The repository documents these as future work rather than delivered features:
+These are roadmap items, not delivered features.
 
-- multiple projects per deployment;
-- a dedicated audit-log UI;
-- named acknowledgement history UI;
-- richer conflict visualization;
-- extraction quality reporting;
-- stronger semantic evaluation.
+## 7. Non-functional design goals
 
-## 7. Non-functional characteristics
+The implementation addresses:
 
-The implementation explicitly addresses:
-
-- fail-closed access control;
-- CSRF protection;
-- persistent login-failure tracking;
-- request throttling;
-- secret masking;
-- secure production configuration validation;
+- fail-closed authorization and CSRF protection;
+- persistent login-failure tracking and request throttling;
+- secret masking before source persistence;
+- production configuration validation and secure cookies;
 - append-only history for critical records;
 - optimistic locking for claim edits;
-- duplicate/race-safe creation of selected records;
-- health and readiness endpoints;
-- CI on SQLite and PostgreSQL.
+- duplicate/race-safe creation for selected records;
+- liveness and readiness checks;
+- CI against SQLite and PostgreSQL.
+
+See [System Architecture](04-architecture.md), [Security](07-security.md), and [Limitations](13-limitations-roadmap.md).
