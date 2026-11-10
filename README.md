@@ -196,12 +196,23 @@ pip install -r requirements.lock -r requirements-dev.txt
 
 ### 4. Load the synthetic demo
 
+For a local demo, set both variables in the same terminal session before starting the app. The app will create the synthetic project and demo users on startup.
+
+**macOS / Linux**
 ```bash
-python -m app.demo
-python -m app.demo --extract rules
+export DEMO_MODE=1
+export DEMO_PASSWORD=handover123
+uvicorn app.main:app --reload
 ```
 
-To set a password for demo accounts, define `DEMO_PASSWORD` before running the demo bootstrap.
+**Windows PowerShell**
+```powershell
+$env:DEMO_MODE = "1"
+$env:DEMO_PASSWORD = "handover123"
+uvicorn app.main:app --reload
+```
+
+When `DEMO_MODE` and `DEMO_PASSWORD` are configured, the login page passes the configured demo password to the demo-account selector so a click fills both fields. The value is visible to anyone using that public demo, so use it only with synthetic demo accounts. Never reuse a production credential.
 
 ### 5. Start the application
 
@@ -220,7 +231,7 @@ Open **http://127.0.0.1:8000/login**.
 | `kabir` | Viewer | Read and acknowledge a release |
 | `rao` | Restricted | Inspect reduced-clearance content |
 
-The demo is synthetic. Clicking Meera, Riya, Kabir or Mr. Rao fills that member's username and the shared demo password `handover123`; the visitor still presses Sign in. This public credential is only for the synthetic demo accounts and must never be reused for production.
+The demo is synthetic. When `DEMO_MODE=1` and `DEMO_PASSWORD=handover123` are configured, clicking Meera, Riya, Kabir or Mr. Rao fills that member's username and the shared demo password; the visitor still presses Sign in. The password is supplied by the deployment configuration and is visible to users of the public demo. It must only be used for synthetic demo accounts, never production.
 
 ## Optional LLM extraction
 
