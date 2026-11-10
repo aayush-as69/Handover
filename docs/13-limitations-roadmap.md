@@ -1,4 +1,14 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+
 # 13 — Limitations & Roadmap
+
+<sub>Handover · Product and engineering documentation</sub>
+
+</div>
+
+---
 
 ## Verified limitations
 
