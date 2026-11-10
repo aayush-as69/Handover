@@ -49,6 +49,19 @@ sources ──► ingest ──► chunks (secrets masked, sensitivity set)
 - **The interface** is server-rendered pages (FastAPI and Jinja, one stylesheet, no external
   scripts or fonts): a bento grid of frosted-glass tiles, light or dark to match the device.
 
+## The interface
+Server-rendered pages with one stylesheet and no external fonts or scripts, so the strict
+`default-src 'self'` policy holds. The look is a bento grid of frosted-glass tiles over a soft
+gradient (blur, thin light borders), in light and dark to match the device setting.
+- **Review queue:** count tiles for needs review, approved and rejected (each opens that list),
+  a filter tile, and the claim list with a coloured bar per confidence level. Riskiest first.
+- **Claim page:** the statement, the reason for its label, one tile per piece of evidence
+  (quote, verified or not, source, link to the source text), the decision form, version history.
+- **Conflicts, questions, handover, sources:** the same tile layout.
+- **Small screens:** the grid folds to one column and the claim table becomes stacked cards.
+- **Accessibility:** visible focus rings, keyboard-reachable controls, reduced-motion respected.
+  A formal accessibility audit has not been done.
+
 ## Status
 Feature-complete for the planned scope. Latest GitHub Actions run (9 Nov 2026, commit
 `03a770b`): 481 tests passed on SQLite and 482 on PostgreSQL 16 (the skipped ones are the opt-in live-LLM test, and on SQLite the PostgreSQL-only restore test), including a real-browser
