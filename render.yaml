@@ -3,6 +3,7 @@ services:
   - type: web
     name: handover
     runtime: python
+    autoDeploy: true      # redeploy on every push to main
     plan: free
     buildCommand: pip install -r requirements.lock
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
