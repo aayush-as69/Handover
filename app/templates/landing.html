@@ -3,13 +3,15 @@
 {% block head %}
 <meta property="og:type" content="website">
 <meta property="og:title" content="Handover: when someone leaves, the reasons shouldn’t">
-<meta property="og:description" content="Turn scattered project knowledge into a structured handover. Every claim links to its source, is checked against the evidence, and needs human approval before publication.">
+<meta property="og:description" content="Turn scattered project knowledge into an evidence-backed handover. Every claim is checked against its source and reviewed by a person.">
 <meta property="og:image" content="{{ request.base_url }}static/img/og.png">
 <meta name="twitter:card" content="summary_large_image">
 {% endblock %}
 {% block anon_nav %}
 <nav class="lp-nav" aria-label="Page sections">
-  <a href="#how">How it works</a><a href="#verification">Evidence verification</a><a href="#security">Security</a>
+  <a href="#workflow">How it works</a>
+  <a href="#evidence">Product</a>
+  <a href="#verification">Verification</a>
   <a href="https://github.com/aayush-as69/Handover">GitHub</a>
 </nav>
 <a class="button primary lp-nav-cta" href="/login">Explore demo</a>
@@ -17,109 +19,153 @@
 {% block body %}
 <div class="lp">
 
-<section class="lp-hero">
-  <p class="lp-eyebrow">Evidence-backed project handover</p>
-  <h1>When someone leaves, the reasons shouldn’t.</h1>
-  <p class="lp-lead">Turn scattered project knowledge into a structured handover. Every claim links back to its source, gets checked against the evidence, and requires human approval before publication.</p>
-  <p class="buttons"><a class="button primary" href="/login">Explore the demo →</a>
-    <a class="button" href="#how">See how it works ↓</a></p>
-</section>
+  <section class="lp-hero">
+    <div class="lp-hero-copy">
+      <p class="lp-eyebrow">Evidence-backed project handover</p>
+      <h1>When someone leaves,<br><em>the reasons shouldn’t.</em></h1>
+      <p class="lp-lead">Keep the decisions, context and unfinished work behind a project. Handover connects each claim to its source, checks the evidence and leaves publication to a person.</p>
+      <div class="lp-hero-actions">
+        <a class="button primary" href="/login">Explore the demo <span aria-hidden="true">→</span></a>
+        <a class="lp-text-link" href="#workflow">See how it works</a>
+      </div>
+      <div class="lp-hero-points" aria-label="Product principles">
+        <span>Rules-based to start</span>
+        <span>Human approval required</span>
+        <span>Role-aware releases</span>
+      </div>
+    </div>
 
-<section class="lp-exhibit" aria-label="Example of a claim checked against its source">
-  <figure class="lp-source">
-    <figcaption>Source: team_chat.txt (synthetic demo data)</figcaption>
-    <p>[04/10/2026, 09:30] Riya Sharma: put seat locks in redis btw, compose file updated</p>
-    <p class="hit">[24/10/2026, 21:50] Arjun Nair: <mark>double booking happened again after the redis lock change</mark>, filed an issue</p>
-    <p>[25/10/2026, 10:12] Meera Iyer: is the mongo feed still used for anything?</p>
-  </figure>
-  <div class="lp-link" aria-hidden="true"><span>contradicts</span></div>
-  <div class="lp-claim">
-    <span class="pill conflicting">conflicting</span>
-    <p class="lp-claim-text">Double booking is fixed and the Redis seat locks stopped it.</p>
-    <p class="muted"><span class="sr-only">The highlighted quote on the left contradicts this claim. </span>One quote in the sources contradicts this claim. It stays in the queue until a person decides what to do with it.</p>
-    <p class="lp-actions" aria-hidden="true"><span>Approve</span><span>Edit</span><span>Reject</span></p>
+    <div class="lp-hero-visual" aria-label="Illustration of evidence contradicting a draft claim, using synthetic demo content">
+      <div class="lp-visual-top">
+        <span class="lp-window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>HANDOVER / EVIDENCE CHECK</span>
+        <span class="lp-demo-tag">SYNTHETIC EXAMPLE</span>
+      </div>
+      <div class="lp-evidence-card">
+        <div class="lp-card-label"><span class="lp-source-icon" aria-hidden="true">“</span><span>Source · team_chat.txt</span></div>
+        <p>“Double booking happened again <mark>after the Redis lock change</mark>, filed an issue.”</p>
+        <div class="lp-source-meta"><span class="lp-dot-green"></span> Quote found in the original source</div>
+      </div>
+      <div class="lp-relationship"><span>Contradicts this claim</span></div>
+      <div class="lp-draft-card">
+        <div class="lp-draft-top"><span class="pill conflicting">conflicting</span><span>Draft claim</span></div>
+        <p>Double booking is fixed and the Redis seat locks stopped it.</p>
+        <div class="lp-draft-bottom"><span>Needs a human decision</span><span class="lp-review-mark">Review required</span></div>
+      </div>
+      <div class="lp-visual-foot"><span class="lp-lock" aria-hidden="true">✓</span> Nothing is published automatically.</div>
+    </div>
+  </section>
+
+  <div class="lp-source-strip" aria-label="Supported project sources">
+    <span class="lp-strip-label">Bring context from</span>
+    <span>Meeting notes</span><b>·</b><span>Team conversations</span><b>·</b><span>Task exports</span><b>·</b><span>Public GitHub</span>
   </div>
-</section>
-<p class="lp-caption">A draft claim from the invented demo project, checked against the words it cites.</p>
 
-<section class="lp-showcase" aria-label="The application">
-  <figure class="lp-feature">
-    <img src="{{ asset_url('img/queue.jpg') }}" width="1400" height="940" alt="The review queue: counts of claims to review, approved and rejected, and a list of claims with confidence labels." loading="lazy">
-    <figcaption><strong>Review queue.</strong> Claim status and confidence labels, riskiest first.</figcaption>
-  </figure>
-  <div class="lp-trio">
-    <figure><img src="{{ asset_url('img/claim.jpg') }}" width="1400" height="900" alt="A claim with its supporting quote beside it, the reason for its label and the decision form." loading="lazy">
-      <figcaption><strong>Claim verification.</strong> Evidence beside the claim.</figcaption></figure>
-    <figure><img src="{{ asset_url('img/conflicts.jpg') }}" width="1400" height="760" alt="A conflict: sources that disagree about the datastore." loading="lazy">
-      <figcaption><strong>Conflict detection.</strong> Disagreements across sources.</figcaption></figure>
-    <figure><img src="{{ asset_url('img/handover.jpg') }}" width="1400" height="1100" alt="A handover preview listing approved claims with their evidence." loading="lazy">
-      <figcaption><strong>Handover.</strong> Published knowledge, each claim with its quote.</figcaption></figure>
-  </div>
-</section>
+  <section id="workflow" class="lp-section">
+    <div class="lp-section-heading">
+      <p class="lp-eyebrow">A clear handover process</p>
+      <h2>From scattered information<br>to shared understanding.</h2>
+      <p>One practical workflow keeps the source, the claim and the decision connected.</p>
+    </div>
+    <div class="lp-steps">
+      <article class="lp-step">
+        <span class="lp-step-number">01</span>
+        <h3>Collect the context</h3>
+        <p>Bring in notes, conversations, task exports and public repository activity. Secrets are masked during ingestion.</p>
+      </article>
+      <article class="lp-step">
+        <span class="lp-step-number">02</span>
+        <h3>Check every claim</h3>
+        <p>Extract decisions, owners, risks and dependencies. Link each claim to source evidence and flag gaps or contradictions.</p>
+      </article>
+      <article class="lp-step">
+        <span class="lp-step-number">03</span>
+        <h3>Review and hand over</h3>
+        <p>A person approves the claims. Approved versions become numbered releases with role-based visibility.</p>
+      </article>
+    </div>
+  </section>
 
-<section id="how" class="lp-section">
-  <h2>From scattered information to trusted handover</h2>
-  <ol class="lp-stages">
-    <li><strong>Collect project knowledge</strong><span>Import notes, conversations, task exports and public GitHub activity. Secrets are masked on the way in.</span></li>
-    <li><strong>Extract meaningful information</strong><span>Identify decisions, owners, dependencies, unresolved tasks and risks as draft claims.</span></li>
-    <li><strong>Verify and review</strong><span>Connect each claim to its original quotes, check support and contradictions, and require a person to approve.</span></li>
-    <li><strong>Publish the handover</strong><span>Create numbered releases with role-based visibility and acknowledgement.</span></li>
-  </ol>
-</section>
+  <section id="evidence" class="lp-product">
+    <div class="lp-product-copy">
+      <p class="lp-eyebrow">Inside the product</p>
+      <h2>Not just a summary.<br><em>A trail you can inspect.</em></h2>
+      <p>Reviewers see the claim, the exact quote behind it, why it received its label and what changed over time. They can approve, edit, reject or reopen it.</p>
+      <ul class="lp-product-points">
+        <li>Riskiest claims appear first.</li>
+        <li>Every evidence quote links to its source.</li>
+        <li>Edits are checked again and require approval.</li>
+      </ul>
+      <a class="lp-text-link" href="https://github.com/aayush-as69/Handover/blob/main/docs/12-user-demo-guide.md">Explore the demo walkthrough →</a>
+    </div>
+    <figure class="lp-product-image">
+      <img src="{{ asset_url('img/queue.jpg') }}" width="1400" height="940" alt="Handover review queue showing draft claims, confidence labels, sensitivity and review status." loading="lazy">
+      <figcaption><strong>The review queue</strong><span>Claims are prioritized by risk, not buried in a generated document.</span></figcaption>
+    </figure>
+  </section>
 
-<section id="verification" class="lp-section">
-  <h2>Every claim gets one of four labels</h2>
-  <p class="muted lp-note">Computed by the checker, never typed in by hand.</p>
-  <dl class="lp-labels">
-    <div><dt><span class="pill verified">quote-verified</span></dt><dd>The quotes exist in the sources and fit the claim. That is not the same as true; the reviewer still decides.</dd></div>
-    <div><dt><span class="pill inferred">inferred</span></dt><dd>The quote exists, but the claim adds a number, a date or a conclusion it does not contain.</dd></div>
-    <div><dt><span class="pill conflicting">conflicting</span></dt><dd>A quote in the sources contradicts the claim.</dd></div>
-    <div><dt><span class="pill unsupported">unsupported</span></dt><dd>No usable evidence: the claim has no quote, or none of its quotes can be found in the sources.</dd></div>
-  </dl>
-</section>
+  <section id="verification" class="lp-section lp-verification">
+    <div class="lp-section-heading">
+      <p class="lp-eyebrow">Evidence, made understandable</p>
+      <h2>Four labels. No hidden confidence score.</h2>
+      <p>The checker explains what it found. These labels are evidence checks—not guarantees that a statement is true.</p>
+    </div>
+    <div class="lp-outcomes">
+      <article><span class="pill verified">quote-verified</span><p>The quote exists and passes the mechanical support checks.</p></article>
+      <article><span class="pill inferred">inferred</span><p>The quote exists, but the claim goes beyond what it supports.</p></article>
+      <article><span class="pill conflicting">conflicting</span><p>Source evidence contradicts the claim.</p></article>
+      <article><span class="pill unsupported">unsupported</span><p>No usable supporting quote was found, or no evidence was attached.</p></article>
+    </div>
+  </section>
 
-<section id="security" class="lp-section">
-  <h2>AI can help prepare the handover. It cannot approve it.</h2>
-  <ul class="lp-points">
-    <li><strong>AI extraction is optional.</strong> Rule-based extraction works without an API key.</li>
-    <li><strong>Source evidence is checked.</strong> Every quote is searched for in the original text before a label is given.</li>
-    <li><strong>Only a person approves.</strong> Not even a quote-verified claim is published automatically.</li>
-    <li><strong>Confidential material stays home.</strong> Confidential chunks are withheld from remote AI extraction by default.</li>
-    <li><strong>Access follows role and sensitivity.</strong> A claim is as sensitive as its most sensitive source, and the server enforces it.</li>
-    <li><strong>Releases keep their versions.</strong> Published releases are numbered and fixed; corrections go into the next one.</li>
-  </ul>
-</section>
+  <section id="security" class="lp-trust">
+    <div class="lp-trust-heading">
+      <p class="lp-eyebrow">Designed around human judgment</p>
+      <h2>AI can help prepare the handover.<br>It cannot approve it.</h2>
+      <p>Automation helps organize project knowledge without becoming the authority on what gets shared.</p>
+    </div>
+    <div class="lp-trust-grid">
+      <article>
+        <span class="lp-trust-icon" aria-hidden="true">01</span>
+        <h3>AI is optional</h3>
+        <p>Rule-based extraction works without an API key. Model output is validated and remains a draft.</p>
+      </article>
+      <article>
+        <span class="lp-trust-icon" aria-hidden="true">02</span>
+        <h3>Access is enforced</h3>
+        <p>Role and source sensitivity determine what each reader can see. Confidential chunks are withheld from remote extraction by default.</p>
+      </article>
+      <article>
+        <span class="lp-trust-icon" aria-hidden="true">03</span>
+        <h3>Releases keep history</h3>
+        <p>Published releases are numbered and fixed. Corrections are reviewed and published in a later release.</p>
+      </article>
+    </div>
+  </section>
 
-<section class="lp-section">
-  <h2>What Handover preserves</h2>
-  <p class="lp-keep">Decisions and the reasons behind them. Who owns what. Risks and blockers. Dependencies. Open questions. Recurring problems. Contacts. Each one stays linked to the words it came from.</p>
-</section>
+  <section class="lp-keep">
+    <p class="lp-eyebrow">What stays with the team</p>
+    <p class="lp-keep-line">Decisions. Ownership. Risks. Dependencies. Open questions.</p>
+    <p class="lp-keep-note">Each one stays connected to the project context it came from.</p>
+  </section>
 
-<section id="demo" class="lp-section">
-  <h2>Walk through the demo</h2>
-  <p class="lp-note">The demo project, CampusEvents, is invented, so nothing real is exposed. The demo password is set by whoever runs the deployment; if you do not have it, ask the project team.</p>
-  <table class="lp-roles">
-    <thead><tr><th>Username</th><th>Role</th><th>What to explore</th></tr></thead>
-    <tbody>
-      <tr><td><code>meera</code></td><td>Approver</td><td>Claim verification and approvals</td></tr>
-      <tr><td><code>riya</code></td><td>Admin</td><td>Source management</td></tr>
-      <tr><td><code>kabir</code></td><td>Viewer</td><td>The published handover</td></tr>
-      <tr><td><code>rao</code></td><td>Restricted</td><td>Permissions and redaction</td></tr>
-    </tbody>
-  </table>
-</section>
+  <section id="demo" class="lp-end">
+    <div>
+      <p class="lp-eyebrow">Try it with synthetic data</p>
+      <h2>Make the next handover<br>less of a guessing game.</h2>
+      <p>Explore CampusEvents, an invented project included with the demo. See how evidence moves from source material to a reviewed handover.</p>
+    </div>
+    <div class="lp-end-actions">
+      <a class="button primary" href="/login">Explore the demo <span aria-hidden="true">→</span></a>
+      <a class="lp-text-link" href="https://github.com/aayush-as69/Handover">View the source on GitHub</a>
+      <span class="lp-password-note">Demo password is set by the deployment operator. Ask the project team if you need access.</span>
+    </div>
+  </section>
 
-<section class="lp-section lp-end">
-  <h2>See it for yourself</h2>
-  <p class="buttons"><a class="button primary" href="/login">Explore the demo →</a>
-    <a class="button" href="https://github.com/aayush-as69/Handover/blob/main/docs/07-security.md">Read the security notes</a>
-    <a class="button" href="https://github.com/aayush-as69/Handover/blob/main/docs/12-user-demo-guide.md">Demo guide</a></p>
-</section>
-
-<footer class="lp-foot">
-  <span>Handover, built for the CodeFrontier hackathon by team STARTEND.</span>
-  <span><a href="https://github.com/aayush-as69/Handover">GitHub</a> · <a href="https://github.com/aayush-as69/Handover/tree/main/docs">Documentation</a> · MIT licence</span>
-</footer>
+  <footer class="lp-foot">
+    <span>Handover · Built for the CodeFrontier hackathon by team STARTEND.</span>
+    <span><a href="https://github.com/aayush-as69/Handover">GitHub</a> · <a href="https://github.com/aayush-as69/Handover/tree/main/docs">Documentation</a> · MIT licence</span>
+  </footer>
 
 </div>
 {% endblock %}
