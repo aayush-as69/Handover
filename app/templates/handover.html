@@ -58,7 +58,7 @@
   <section class="handover-section">
     <div class="section-heading"><div><p class="page-eyebrow">APPROVED KNOWLEDGE</p><h2 id="{{ sec.key }}">{{ sec.title }}</h2></div><span class="panel-hint">{{ sec.claims|length }} item(s)</span></div>
     {% for c in sec.claims %}
-    <article class="card handover-claim">
+    <article class="card handover-claim" data-handover-item>
       <div class="meta">
         <span class="pill {{ c.confidence.value }}">{{ conf_label(c.confidence) }}</span>
         <span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span>
