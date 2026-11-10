@@ -15,7 +15,7 @@
       <p class="muted tool-description">Upload a supported text file and classify its origin and sensitivity.</p>
       <form method="post" action="/admin/sources/upload" enctype="multipart/form-data" class="stack source-upload-form">
         <input type="hidden" name="csrf" value="{{ csrf }}">
-        <label>File (text, up to {{ max_mb }} MB) <input type="file" name="file" required></label>
+        <label>File (text, up to {{ max_mb }} MB) <span class="file-drop" data-file-drop><span class="file-drop-icon" aria-hidden="true">＋</span><span class="file-drop-copy"><strong data-file-name>Choose a file or drop it here</strong><small>Supported project text · up to {{ max_mb }} MB</small></span><input type="file" name="file" id="source-file" required></span></label>
         <div class="form-row">
           <label>Type <select name="kind">{% for k in kinds %}<option>{{ k }}</option>{% endfor %}</select></label>
           <label>Sensitivity <select name="sensitivity">{% for l in levels %}<option {% if l == "team" %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
@@ -39,14 +39,14 @@
   </div>
 
   <section class="page-panel table-panel">
-    <div class="panel-heading"><div><p class="page-eyebrow">INGESTED MATERIAL</p><h2>Source library</h2></div><span class="panel-hint">{{ sources|length }} source(s)</span></div>
+    <div class="panel-heading"><div><p class="page-eyebrow">INGESTED MATERIAL</p><h2>Source library</h2></div><div class="table-tools"><label class="table-search"><span class="sr-only">Search sources</span><input type="search" placeholder="Search sources..." data-live-search data-search-target="#source-list" data-search-count="#source-search-count"></label><span class="panel-hint" id="source-search-count">{{ sources|length }} source(s)</span></div></div>
     <div class="table-scroll">
       <table>
         <thead><tr><th>Source</th><th>Type</th><th>Sensitivity</th><th>Passages</th><th>Masked</th></tr></thead>
-        <tbody>{% for s in sources %}
-        <tr><td data-label="Source"><strong>{{ s.name }}</strong></td><td data-label="Type">{{ s.kind.value }}</td><td data-label="Sensitivity"><span class="pill s-{{ s.sensitivity.value }}">{{ s.sensitivity.value }}</span></td>
+        <tbody id="source-list">{% for s in sources %}
+        <tr data-search-item><td data-label="Source"><strong>{{ s.name }}</strong></td><td data-label="Type">{{ s.kind.value }}</td><td data-label="Sensitivity"><span class="pill s-{{ s.sensitivity.value }}">{{ s.sensitivity.value }}</span></td>
         <td data-label="Passages">{{ s.chunks|length }}</td><td data-label="Masked">{{ s.chunks|selectattr("redacted")|list|length }}</td></tr>
-        {% else %}<tr><td colspan="5" class="muted table-empty">No sources yet. Upload the first project source above.</td></tr>{% endfor %}</tbody>
+        {% else %}<tr><td colspan="5" class="muted table-empty">No sources yet. Upload the first project source above.</td></tr>{% endfor %}\n        <tr data-search-empty hidden><td colspan="5" class="muted table-empty">No sources match your search.</td></tr></tbody>
       </table>
     </div>
   </section>
