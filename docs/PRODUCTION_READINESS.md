@@ -1,4 +1,14 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+
 # Production readiness review
+
+<sub>Handover · Product and engineering documentation</sub>
+
+</div>
+
+---
 
 An external review listed what to fix before production. Status of each item:
 
