@@ -1,4 +1,14 @@
+<div align="center">
+
+<img src="assets/handover-logo.svg" alt="Handover" width="48" />
+
 # 03 — Software Requirements Specification
+
+<sub>Handover · Product and engineering documentation</sub>
+
+</div>
+
+---
 
 ## 1. System purpose
 
