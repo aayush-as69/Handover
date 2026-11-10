@@ -12,7 +12,7 @@ import pytest
 
 sync_api = pytest.importorskip("playwright.sync_api")
 
-PW = "browser-walk-1"
+PW = "handover123"
 ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -93,17 +93,25 @@ def test_reviewer_signs_off_and_viewer_reads_and_acknowledges(live_server, brows
     assert "I have read this handover" not in kabir.content()
 
 
-def test_demo_role_selection_prefills_username_without_filling_password(live_server, browser):
+def test_demo_role_selection_prefills_username_and_password(live_server, browser):
     page = browser.new_page()
     page.goto(live_server + "/login")
     page.locator('[data-demo-user="meera"]').click()
     assert page.locator("#login-username").input_value() == "meera"
-    assert page.locator("#login-password").input_value() == ""
+    assert page.locator("#login-password").input_value() == PW
     assert page.locator('[data-demo-user="meera"]').get_attribute("aria-pressed") == "true"
-    assert "Enter the demo password" in page.locator("#demo-selection-status").inner_text()
+    assert "Press Sign in to continue" in page.locator("#demo-selection-status").inner_text()
+
+    # Selecting another member replaces both fields but never submits the form.
     page.locator('[data-demo-user="kabir"]').click()
     assert page.locator("#login-username").input_value() == "kabir"
-    assert page.locator("#login-password").input_value() == ""
+    assert page.locator("#login-password").input_value() == PW
+    assert page.url.endswith("/login")
+
+    # The visitor still explicitly submits the existing CSRF-protected form.
+    page.locator("#sign-in-form button[type='submit']").click()
+    page.wait_for_url(lambda url: not url.path.endswith("/login"))
+    assert page.url.endswith("/review") or page.url.endswith("/handover")
     page.close()
 
 
