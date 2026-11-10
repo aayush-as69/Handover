@@ -62,7 +62,6 @@ A structured guide to understanding, building, testing and operating Handover.
 
 ## Architecture assets
 
-- [Rendered architecture diagram](architecture.svg)
 - [Architecture source (Mermaid)](architecture.mmd)
 - [Architecture PNG](architecture.png)
 

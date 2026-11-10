@@ -11,7 +11,7 @@
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Ready-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Tests](https://img.shields.io/badge/Tests-487%20passing-brightgreen)](docs/09-testing.md)
+[![Tests](https://img.shields.io/badge/Tests-488%20passing-brightgreen)](docs/09-testing.md)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 [Overview](#why-handover) · [Features](#what-it-does) · [Architecture](#how-it-works) · [Quick start](#quick-start) · [Documentation](#documentation)
@@ -83,7 +83,36 @@ Decisions live in meeting notes. Ownership is buried in task boards. Risks are s
 
 ## How it works
 
-<img src="docs/architecture.svg" alt="Handover system architecture" width="100%" />
+```mermaid
+flowchart LR
+    U[Browser] --> W[FastAPI + Jinja]
+    W --> A[Auth + Access Control]
+    W --> H[Handover / Review Logic]
+    W --> I[Ingestion]
+    W --> E[Extraction]
+    W --> C[Conflicts + Questions]
+    W --> R[Release + Acknowledgement]
+
+    I --> P[Parsers]
+    P --> S[Secret Redaction]
+    S --> DB[(SQLAlchemy DB)]
+
+    E --> RE[Rule Extractor]
+    E --> LE[Optional LLM Extractor]
+    LE --> LP[OpenAI-compatible Provider]
+    E --> V[Mechanical Verification]
+    V --> DB
+
+    A --> DB
+    H --> DB
+    C --> DB
+    R --> DB
+
+    GH[Public GitHub REST API] --> I
+    DB --> PG[PostgreSQL / SQLite]
+```
+
+Source: [`docs/architecture.mmd`](docs/architecture.mmd).
 
 ### Confidence labels
 
@@ -217,7 +246,7 @@ python -m pytest -q tests/test_ingest.py
 
 For PostgreSQL testing, set `TEST_DATABASE_URL` to a test database before running pytest. See the [testing guide](docs/09-testing.md).
 
-**Latest local run:** 487 passed, 2 skipped (SQLite, 11 Nov 2026). **Historical CI evidence:** the run recorded on 9 November 2026 reported 481 passing tests on SQLite and 482 on PostgreSQL 16, with no known vulnerabilities reported by `pip-audit`. This is a historical result, not a claim that the current checkout has just been tested.
+**Latest local run:** 488 passed, 2 skipped (SQLite, 11 Nov 2026). **Historical CI evidence:** the run recorded on 9 November 2026 reported 481 passing tests on SQLite and 482 on PostgreSQL 16, with no known vulnerabilities reported by `pip-audit`. This is a historical result, not a claim that the current checkout has just been tested.
 
 ## Documentation
 
@@ -240,8 +269,7 @@ Handover/
 ├── data/demo/            # Synthetic demonstration project
 ├── docs/                 # Product and engineering documentation
 │   ├── assets/           # Logo and documentation visuals
-│   ├── architecture.mmd  # Editable Mermaid source
-│   └── architecture.svg  # Rendered architecture diagram
+│   └── architecture.mmd  # Mermaid architecture diagram
 ├── migrations/           # Alembic migration history
 ├── scripts/              # Operational helpers
 ├── tests/                # Unit, integration, security and browser tests

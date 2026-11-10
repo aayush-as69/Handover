@@ -521,3 +521,10 @@ def test_theme_toggle_is_on_every_page_and_script_is_served_from_self():
         assert 'id="theme-toggle"' in html and "/static/theme.js?v=" in html
     assert "handover-theme" in c.get("/static/theme.js").text
     assert "script-src" not in c.get("/").headers["content-security-policy"]  # falls back to 'self'
+
+
+def test_dark_is_the_default_theme():
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    js = TestClient(create_app(secret_key="k" * 40)).get("/static/theme.js").text
+    assert 'stored === "light" ? "light" : "dark"' in js

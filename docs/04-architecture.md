@@ -12,9 +12,36 @@
 
 Handover is a FastAPI application with server-rendered Jinja pages, SQLAlchemy persistence, Alembic migrations and an optional remote LLM integration.
 
-<img src="architecture.svg" alt="Handover architecture diagram" width="100%" />
+```mermaid
+flowchart LR
+    U[Browser] --> W[FastAPI + Jinja]
+    W --> A[Auth + Access Control]
+    W --> H[Handover / Review Logic]
+    W --> I[Ingestion]
+    W --> E[Extraction]
+    W --> C[Conflicts + Questions]
+    W --> R[Release + Acknowledgement]
 
-[View the editable Mermaid source](architecture.mmd) · [Open PNG diagram](architecture.png)
+    I --> P[Parsers]
+    P --> S[Secret Redaction]
+    S --> DB[(SQLAlchemy DB)]
+
+    E --> RE[Rule Extractor]
+    E --> LE[Optional LLM Extractor]
+    LE --> LP[OpenAI-compatible Provider]
+    E --> V[Mechanical Verification]
+    V --> DB
+
+    A --> DB
+    H --> DB
+    C --> DB
+    R --> DB
+
+    GH[Public GitHub REST API] --> I
+    DB --> PG[PostgreSQL / SQLite]
+```
+
+[Mermaid source](architecture.mmd) · [PNG export](architecture.png)
 
 ## 2. Component responsibilities
 

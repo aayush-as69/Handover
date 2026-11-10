@@ -1,9 +1,8 @@
-// Light/dark theme: follows the device until the person picks one; the choice is remembered.
+// Light/dark theme: dark by default; the person's choice is remembered in this browser.
 (function () {
   var root = document.documentElement, KEY = "handover-theme", stored = null;
   try { stored = localStorage.getItem(KEY); } catch (e) {}
-  var dark = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
-  function current() { return stored || (dark && dark.matches ? "dark" : "light"); }
+  function current() { return stored === "light" ? "light" : "dark"; }
   function apply() {
     root.setAttribute("data-theme", current());
     var b = document.getElementById("theme-toggle");
@@ -14,7 +13,6 @@
     }
   }
   apply();
-  if (dark && dark.addEventListener) dark.addEventListener("change", function () { if (!stored) apply(); });
   document.addEventListener("DOMContentLoaded", function () {
     apply();
     var b = document.getElementById("theme-toggle");
