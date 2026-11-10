@@ -1,5 +1,11 @@
 <div align="center">
 
+<div align="right">
+<img src="assets/handover-logo.svg" alt="Handover" width="38" />
+</div>
+
+> [Documentation index](README.md) · [Project home](../README.md)
+
 <img src="assets/handover-logo.svg" alt="Handover" width="48" />
 
 # 03 — Software Requirements Specification
@@ -115,3 +121,8 @@ The optional extractor expects an OpenAI-compatible `/chat/completions` endpoint
 - `/ready` is a database/schema readiness check.
 - Production disables interactive FastAPI API docs.
 - Render configuration runs the application with Uvicorn.
+
+
+---
+
+[← Documentation index](README.md) · [Project home](../README.md)
