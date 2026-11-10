@@ -1,5 +1,11 @@
 # 09 — Testing Guide
 
+<div align="right">
+<img src="assets/handover-logo.svg" alt="Handover" width="38" />
+</div>
+
+> [Documentation index](README.md) · [Project home](../README.md)
+
 ## 1. Test strategy
 
 The repository has tests spanning unit logic, database behavior, web/API behavior, security, ingestion, extraction, verification, concurrency, deployment configuration, migrations, backup/restore and browser E2E.
@@ -113,3 +119,8 @@ The repository README records a historical CI result of 481 SQLite tests and 482
 | Backup/restore | operational scripts | `test_backup_restore.py` |
 | Deployment/readiness | `render.yaml`, `app/main.py` | `test_deploy.py`, `test_readiness_and_deploy_ops.py` |
 | Browser flow | server-rendered UI | `test_browser_e2e.py` |
+
+
+---
+
+[← Documentation index](README.md) · [Project home](../README.md)
