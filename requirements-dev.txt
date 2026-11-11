@@ -1,5 +1,5 @@
 -r requirements.txt
-pytest>=8
-httpx2>=2.0         # test client (Starlette deprecates driving TestClient with httpx)
-playwright>=1.45      # browser end-to-end test (skipped if Chromium is missing)
-pip-audit
+pytest==9.2.0
+httpx2==2.13.0         # Starlette TestClient-compatible HTTP client
+playwright==1.65.0    # browser end-to-end tests
+pip-audit==2.10.1

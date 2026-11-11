@@ -4,11 +4,15 @@ import pytest
 from alembic import command
 from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
-from sqlalchemy import create_engine, inspect, text
+from sqlalchemy import create_engine, inspect, text, select
+from sqlalchemy.exc import DBAPIError
+from sqlalchemy.orm import sessionmaker
 
 from app.config import _normalise_db_url
 from app.db import MigrationError, alembic_config, migrate
-from app.models import Base
+from app.enums import ClaimType, HandoverStatus, Role, Sensitivity, SourceKind, Stance
+from app.models import (AuditEvent, Base, Chunk, Claim, Evidence, Handover, HandoverRelease,
+                        Project, Source, User, ClaimVersion)
 from tests.dbutil import PG_URL, on_postgres
 
 
@@ -122,3 +126,60 @@ def test_adopt_refuses_empty_and_already_migrated_databases(eng):
     migrate(eng)
     with pytest.raises(MigrationError, match="already has migration history"):
         adopt_legacy(eng)
+
+
+def test_migration_enforces_append_only_audit_and_evidence_guards(eng):
+    migrate(eng)
+    Session = sessionmaker(eng, expire_on_commit=False)
+    with Session() as session:
+        project = Project(name="Audit migration test")
+        reviewer = User(username="reviewer", display_name="Reviewer", role=Role.approver)
+        source = Source(project=project, kind=SourceKind.notes, name="audit.md",
+                        sensitivity=Sensitivity.team)
+        chunk = Chunk(source=source, idx=0, text="Use Redis for the seat-lock service.",
+                      sensitivity=Sensitivity.team)
+        claim = Claim.create(
+            project_id=1, statement="Use Redis for the seat-lock service.",
+            type=ClaimType.decision, created_by="migration-test", sensitivity=Sensitivity.team,
+        )
+        claim.evidence.append(Evidence(
+            chunk=chunk, snippet="Use Redis for the seat-lock service.", stance=Stance.supports,
+        ))
+        session.add_all([project, reviewer, source, chunk, claim])
+        session.flush()
+        claim.project_id = project.id
+        from app.verify import verify_claim
+        verify_claim(claim)
+
+        handover = Handover(
+            project_id=project.id, title="Handover", outgoing_name="Riya",
+            status=HandoverStatus.approved, approved_by_id=reviewer.id,
+        )
+        session.add(handover)
+        session.flush()
+        release = HandoverRelease(
+            handover_id=handover.id, number=1, approved_by_id=reviewer.id,
+            approved_by_name=reviewer.display_name, claims_json="[]",
+        )
+        session.add(release)
+        session.commit()
+
+        audit_id = session.scalar(select(AuditEvent.id).limit(1))
+        version_id = session.scalar(select(ClaimVersion.id).limit(1))
+        release_id, evidence_id = release.id, claim.evidence[0].id
+
+        for statement, params in [
+            ("UPDATE audit_events SET actor='tampered' WHERE id=:id", {"id": audit_id}),
+            ("DELETE FROM claim_versions WHERE id=:id", {"id": version_id}),
+            ("UPDATE handover_releases SET claims_json='[]' WHERE id=:id", {"id": release_id}),
+            ("UPDATE evidence SET snippet='rewritten' WHERE id=:id", {"id": evidence_id}),
+            ("DELETE FROM evidence WHERE id=:id", {"id": evidence_id}),
+        ]:
+            with pytest.raises(DBAPIError):
+                session.execute(text(statement), params)
+            session.rollback()
+
+        # The one derived verification flag remains writable.
+        session.execute(text("UPDATE evidence SET snippet_verified=1 WHERE id=:id"),
+                        {"id": evidence_id})
+        session.commit()

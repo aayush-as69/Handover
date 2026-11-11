@@ -4,8 +4,8 @@ import json
 from datetime import timedelta
 
 import pytest
-from sqlalchemy import create_engine, select, text
-from sqlalchemy.exc import DBAPIError, IntegrityError
+from sqlalchemy import create_engine, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -322,62 +322,6 @@ def test_release_history_page_is_reviewer_only(env):
     m.post("/handover/approve", data={"csrf": token(m, "/handover")})
     assert "Release history" in m.get("/handover/releases").text
     assert login(app, "kabir").get("/handover/releases").status_code == 403
-
-
-# ------------------------------------------------------------ database-level immutability
-
-def test_database_rejects_direct_mutation_of_audit_history(session, project):
-    from app.models import Handover, HandoverRelease
-    from app.verify import verify_claim
-
-    claim = add_claim(session, project, "Use Redis for locks.")
-    verify_claim(claim)
-    reviewer = staff(session)
-    handover = Handover(project_id=project.id, title="Handover",
-                        outgoing_name="Riya", status=HandoverStatus.approved,
-                        approved_by_id=reviewer.id)
-    session.add(handover)
-    session.flush()
-    release = HandoverRelease(
-        handover_id=handover.id, number=1, approved_by_id=reviewer.id,
-        approved_by_name=reviewer.display_name, claims_json="[]",
-    )
-    session.add(release)
-    session.commit()
-
-    event_id = session.scalar(select(AuditEvent.id).limit(1))
-    version_id = session.scalar(select(ClaimVersion.id).limit(1))
-    release_id = release.id
-
-    with pytest.raises(DBAPIError):
-        session.execute(text("UPDATE audit_events SET actor='tampered' WHERE id=:id"),
-                        {"id": event_id})
-    session.rollback()
-    with pytest.raises(DBAPIError):
-        session.execute(text("DELETE FROM claim_versions WHERE id=:id"), {"id": version_id})
-    session.rollback()
-    with pytest.raises(DBAPIError):
-        session.execute(text("UPDATE handover_releases SET claims_json='[]' WHERE id=:id"),
-                        {"id": release_id})
-    session.rollback()
-
-
-def test_database_protects_stored_evidence_except_verification_flag(session, project):
-    from app.models import Evidence
-
-    add_claim(session, project, "Use Redis for locks.")
-    session.commit()
-    evidence = session.scalar(select(Evidence))
-    evidence.snippet_verified = True
-    session.commit()
-
-    with pytest.raises(DBAPIError):
-        session.execute(text("UPDATE evidence SET snippet='rewritten' WHERE id=:id"),
-                        {"id": evidence.id})
-    session.rollback()
-    with pytest.raises(DBAPIError):
-        session.execute(text("DELETE FROM evidence WHERE id=:id"), {"id": evidence.id})
-    session.rollback()
 
 
 def test_sensitivity_changes_create_a_reviewable_version(session, project):

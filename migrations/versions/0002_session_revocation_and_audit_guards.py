@@ -47,6 +47,7 @@ def upgrade() -> None:
             AS $$
             BEGIN
                 RAISE EXCEPTION '% records are append-only', TG_TABLE_NAME;
+                RETURN OLD;
             END;
             $$
         """)

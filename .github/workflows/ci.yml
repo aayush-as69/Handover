@@ -80,9 +80,9 @@ jobs:
     steps:
       - name: Require every independent check to pass
         env:
-          SQLITE_RESULT: \${{ needs.sqlite-tests.result }}
-          POSTGRESQL_RESULT: \${{ needs.postgresql-tests.result }}
-          AUDIT_RESULT: \${{ needs.dependency-audit.result }}
+          SQLITE_RESULT: ${{ needs.sqlite-tests.result }}
+          POSTGRESQL_RESULT: ${{ needs.postgresql-tests.result }}
+          AUDIT_RESULT: ${{ needs.dependency-audit.result }}
         run: |
           printf 'SQLite: %s\nPostgreSQL: %s\nDependency audit: %s\n' \
             "$SQLITE_RESULT" "$POSTGRESQL_RESULT" "$AUDIT_RESULT"

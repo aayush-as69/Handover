@@ -66,11 +66,42 @@ Unexpected application exceptions are logged server-side with request method/pat
 
 Do not log API keys, passwords or raw secret material.
 
-## 8. Operational limitations
+## 8. Shared rate limiting at the edge
 
-- Render configuration exists but the repository documentation explicitly states that the live Render deployment has not been verified.
-- In-memory request rate limiting is process-local.
-- GitHub ingestion is subject to unauthenticated GitHub API limits.
+The application limiter is deliberately retained as a lightweight per-process fallback. It cannot enforce a shared quota across Render instances. For a public deployment, route a custom domain through a CDN or reverse proxy that supports shared rate limiting, such as Cloudflare.
+
+Configure edge rules for:
+- `POST /login`: strict per-client-IP rate limiting with a short mitigation window;
+- other dynamic application routes: a broader per-IP limit;
+- `/health` and static assets: exempt or use a separate, higher limit.
+
+Do not rely on the direct `*.onrender.com` address as the public URL when enforcing a Cloudflare rule; traffic should enter through the proxied custom domain. Confirm the origin sees the correct client address. Keep `TRUST_PROXY=true` only when the app is reachable exclusively through the trusted Render proxy chain; the app uses the last appended forwarded address and ignores the untrusted prefix. Never use a client-controlled forwarding value as a trust signal.
+
+The repository cannot install Cloudflare rules in the Render account. Treat edge throttling as a deployment checklist item and verify it against the public custom domain before production use.
+
+## 9. Audit and credential guarantees
+
+Claim versions, verification audit events, handover releases, and stored evidence are protected by database triggers as well as ORM guards. Verification may update only the derived `evidence.snippet_verified` flag. A database owner can still disable triggers or rewrite the database, so use least-privilege credentials and retain independent backups.
+
+Authenticated cookies carry the user's `session_version`. Password rotation increments it, invalidating cookies with the previous version. Future credential-reset paths must use `set_user_password()` rather than assigning `password_hash` directly. Hosted demo startup synchronizes `DEMO_PASSWORD` to synthetic demo accounts; changing it rotates those sessions.
+
+## 10. Data volume and ingestion bounds
+
+The review queue already performs filtering, counting and pagination in SQL, returning 50 claims per page. GitHub commits, issues, pull requests and pull-request detail collections are fetched in bounded pages; detailed collections stop at 200 entries and deep details are limited to the newest configured pull requests/commits. The GitHub API remains unauthenticated by default and subject to its rate limits.
+
+Conflict, question and release-history pages still load project-level working sets. Add database-backed pagination to those views before onboarding projects with very large histories.
+
+## 11. Accessibility and responsive QA
+
+Browser coverage checks the login flow on a 390px viewport, verifies accessible names on the sign-in controls and asserts that the page does not overflow horizontally. These automated checks are not a substitute for manual assistive-technology testing. Before release, complete keyboard-only navigation and a screen-reader walkthrough with NVDA on Windows or VoiceOver on macOS/iOS. Check focus order, visible focus, error announcements, form labels, table navigation and reduced-motion behavior.
+
+The global stylesheet remains in place to avoid an unreviewed visual regression during the security work. Keep new component rules grouped by page/component and split the file only alongside visual regression coverage for both light and dark themes.
+
+## 12. Operational limitations
+
+- Render configuration exists but the live Render deployment has not been verified from this repository.
+- Shared edge throttling requires CDN/proxy configuration by the deployment operator; the in-memory limiter alone is not distributed.
+- Conflict, question and release-history views still need database pagination for very large projects.
 - Live LLM behavior is not part of the ordinary deterministic CI baseline.
 
 ## 9. Troubleshooting
