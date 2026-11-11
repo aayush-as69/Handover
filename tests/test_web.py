@@ -712,7 +712,7 @@ def test_conflict_page_uses_compact_page_specific_spacing(env):
     assert response.status_code == 200
     assert 'class="page-shell conflicts-page"' in response.text
 
-    css_url = re.search(r'href="(/static/style\\.css\\?v=[0-9a-f]{10})"', response.text)
+    css_url = re.search(r'href="(/static/style\.css\?v=[0-9a-f]{10})"', response.text)
     assert css_url
     css = reviewer.get(css_url.group(1)).text
     assert ".conflicts-page .section-heading{\n  margin:1rem 0 .7rem;" in css
