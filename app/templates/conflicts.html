@@ -14,7 +14,7 @@
   <div class="section-heading"><div><p class="page-eyebrow">REVIEW REQUIRED</p><h2>Detected conflicts</h2></div><div class="table-tools"><label class="table-search"><span class="sr-only">Search conflicts</span><input type="search" placeholder="Search topics or claims..." data-live-search data-search-target="#conflict-list" data-search-count="#conflict-search-count"></label><span class="panel-hint" id="conflict-search-count">{{ rows|length }} item(s)</span></div></div>
   <div class="bento work-card-grid" id="conflict-list">
   {% for cf, members in rows %}
-    <section class="tile s6 work-card conflict-card" data-search-item>
+    <section class="tile s12 work-card conflict-card" data-search-item>
       <div class="work-card-head">
         <div class="meta"><span class="pill {{ 'conflicting' if cf.status.value == 'open' else 'verified' }}">{{ cf.status.value }}</span><strong>{{ cf.topic }}</strong></div>
       </div>
