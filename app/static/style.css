@@ -1089,3 +1089,42 @@ small{font-size:.86rem;line-height:1.55}
   .login-roles{grid-template-columns:1fr 1fr}
   .login-role{padding:.5rem .55rem}
 }
+
+
+/* Conflict page: keep the review queue compact and avoid stretched empty card space. */
+.conflicts-page .page-header{
+  margin-bottom:1rem;
+  padding-bottom:.95rem;
+}
+.conflicts-page .section-heading{
+  margin:1rem 0 .7rem;
+}
+.conflicts-page .work-card-grid{
+  align-items:start;
+  gap:.9rem;
+  margin:.65rem 0 0;
+}
+.conflicts-page .work-card{
+  padding:1rem 1.1rem;
+  gap:.65rem;
+}
+.conflicts-page .conflict-members{
+  gap:.45rem;
+  margin:0;
+}
+.conflicts-page .conflict-member{
+  padding:.6rem .7rem;
+}
+.conflicts-page .conflict-resolve{
+  margin-top:.1rem;
+  padding-top:.6rem;
+}
+@media (max-width:760px){
+  .conflicts-page .page-header{
+    margin-bottom:.85rem;
+    padding-bottom:.8rem;
+  }
+  .conflicts-page .section-heading{
+    margin:.85rem 0 .6rem;
+  }
+}

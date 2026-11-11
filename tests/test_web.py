@@ -703,3 +703,17 @@ def test_workspace_search_assets_and_controls_render_for_authenticated_roles(env
     source = reviewer.get(script.group(1))
     assert source.status_code == 200
     assert "data-live-search" in source.text and "data-file-drop" in source.text
+
+
+def test_conflict_page_uses_compact_page_specific_spacing(env):
+    app, _ = env
+    reviewer = login(app, "meera")
+    response = reviewer.get("/conflicts")
+    assert response.status_code == 200
+    assert 'class="page-shell conflicts-page"' in response.text
+
+    css_url = re.search(r'href="(/static/style\\.css\\?v=[0-9a-f]{10})"', response.text)
+    assert css_url
+    css = reviewer.get(css_url.group(1)).text
+    assert ".conflicts-page .section-heading{\n  margin:1rem 0 .7rem;" in css
+    assert ".conflicts-page .work-card-grid{\n  align-items:start;" in css
