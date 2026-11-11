@@ -78,6 +78,11 @@ def _legacy_with_data(eng):
 
     from app.models import Project
     Base.metadata.create_all(eng)
+    # The helper creates the latest model schema; remove the column added by 0002 so
+    # this fixture faithfully represents a database from before Alembic migrations.
+    if "session_version" in {column["name"] for column in inspect(eng).get_columns("users")}:
+        with eng.begin() as conn:
+            conn.execute(text("ALTER TABLE users DROP COLUMN session_version"))
     with sessionmaker(eng)() as s:
         s.add(Project(name="Old project", outgoing_member="Riya"))
         s.commit()
@@ -182,6 +187,6 @@ def test_migration_enforces_append_only_audit_and_evidence_guards(eng):
             session.rollback()
 
         # The one derived verification flag remains writable.
-        session.execute(text("UPDATE evidence SET snippet_verified=1 WHERE id=:id"),
+        session.execute(text("UPDATE evidence SET snippet_verified=TRUE WHERE id=:id"),
                         {"id": evidence_id})
         session.commit()

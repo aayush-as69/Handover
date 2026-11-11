@@ -73,8 +73,15 @@ def adopt_legacy(eng=None, *, dry_run: bool = False) -> list[str]:
         diff = _schema_differences(conn)
         missing = [d[1].name for d in diff if d[0] == "add_table"]
         # Indexes of a missing table are created with it, so they are not separate differences.
+        # A pre-migration database predates migration 0002. This known column is
+        # intentionally absent until the database is stamped at 0001 and upgraded.
+        post_0001_additions = {
+            ("users", "session_version"),
+        }
         other = [d for d in diff if d[0] != "add_table"
-                 and not (d[0] == "add_index" and d[1].table.name in missing)]
+                 and not (d[0] == "add_index" and d[1].table.name in missing)
+                 and not (d[0] == "add_column" and
+                          (d[1].table.name, d[1].name) in post_0001_additions)]
         if other:
             raise MigrationError(
                 "The schema differs from this version in ways that cannot be fixed safely "
