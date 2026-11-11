@@ -78,7 +78,12 @@ The application limiter is deliberately retained as a lightweight per-process fa
 1. Add the public custom domain to Cloudflare and point it to the Render service. Enable the orange-cloud proxy.
 2. Generate a random secret of at least 32 characters. Store it as `EDGE_SHARED_SECRET` in the Render service's Environment settings. Do not place it in source control or browser JavaScript.
 3. In Cloudflare, create a Request Header Transform Rule for the Handover hostname that sets `X-Handover-Origin-Key` to the exact secret. Apply it to every proxied request, including static assets. Keep the secret value private in the Cloudflare rule.
-4. Configure a Cloudflare rate-limiting rule for `POST /login` with a strict per-client-IP threshold and mitigation window, then add a broader per-IP rule for dynamic application paths. Give `/health` and `/ready` separate exemptions or higher thresholds.
+4. Cloudflare rule limits and available match fields depend on the plan. The Free plan currently supports one rate-limiting rule and path-based matching; Pro supports two rules and additional fields such as request method and source IP. Confirm the current plan capabilities in the [Cloudflare rate-limiting documentation](https://developers.cloudflare.com/waf/rate-limiting-rules/).
+
+- **Free plan:** use one IP-counted rule matching dynamic paths (exclude `/static/`, `/health` and `/ready`). This covers the login route as well as other app routes, while Handover's database-backed failed-login lockouts remain active.
+- **Pro or higher:** create one strict rule for `POST /login` and a second broader rule for dynamic application paths, both counted by client IP. Exempt `/health` and `/ready` or give them separate higher thresholds.
+
+Cloudflare's [Request Header Transform Rules](https://developers.cloudflare.com/rules/transform/request-header-modification/) can set the private origin header before forwarding requests. Cloudflare documents `CF-Connecting-IP` as the client IP header it sends to origins over normal proxied traffic; avoid trusting this header from custom Worker subrequests unless that Worker is controlled and reviewed.
 5. Save the Render environment change and redeploy. The app rejects requests without the origin header on all paths except `/health` and `/ready`. Render's liveness check therefore continues to work through the direct origin URL.
 6. Verify that the custom domain can load and sign in, while a direct request to `https://<service>.onrender.com/login` returns HTTP 403. Then test that repeated requests from one client IP are mitigated by Cloudflare.
 
