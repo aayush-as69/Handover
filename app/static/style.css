@@ -1131,6 +1131,10 @@ small{font-size:.86rem;line-height:1.55}
 
 
 /* Conflict review: one full-width card per issue, without a half-page empty column. */
+main:has(.conflicts-page){
+  max-width:none;
+  padding-inline:clamp(1rem,3vw,3rem);
+}
 .conflicts-page{
   max-width:1440px;
 }

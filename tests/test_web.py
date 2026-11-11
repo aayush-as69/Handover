@@ -726,6 +726,7 @@ def test_conflicts_use_full_width_card_flow_and_balanced_evidence_columns():
     css = Path("app/static/style.css").read_text(encoding="utf-8")
     assert 'class="tile s12 work-card conflict-card"' in template
     assert ".conflicts-page #conflict-list{\n  display:flex;\n  flex-direction:column;" in css
+    assert "main:has(.conflicts-page){\n  max-width:none;" in css
     assert ".conflicts-page #conflict-list > .conflict-card{\n  display:flex;\n  flex:0 0 auto;" in css
     assert "columns:2 26rem;" in css
     assert "break-inside:avoid;" in css
