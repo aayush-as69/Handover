@@ -55,7 +55,14 @@ REVIEW_ROLES = REVIEWER_ROLES
 
 def current_user(request: Request, session: Session = Depends(get_session)) -> Optional[User]:
     uid = request.session.get("uid")
-    return session.get(User, uid) if uid else None
+    if not uid:
+        return None
+    user = session.get(User, uid)
+    # Cookies issued before session-version support (or before a password reset) are stale.
+    if user is None or request.session.get("session_version") != user.session_version:
+        request.session.clear()
+        return None
+    return user
 
 
 def require_reviewer(request: Request, user: Optional[User] = Depends(current_user)) -> User:
@@ -163,6 +170,7 @@ def login(request: Request, username: str = Form(""), password: str = Form(""),
     clear_login_failures_for(session, key, ip)    # the address keeps its volume count; it decays
     request.session.clear()                      # new session on login
     request.session["uid"] = user.id
+    request.session["session_version"] = user.session_version
     return RedirectResponse(landing(user), status_code=303)
 
 

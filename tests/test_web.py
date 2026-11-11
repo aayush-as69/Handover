@@ -13,8 +13,8 @@ from app.enums import ChangeType, Confidence, ReviewStatus, Sensitivity
 from app.extract.pipeline import run_extraction
 from app.extract.rules import RuleExtractor
 from app.main import create_app
-from app.models import Chunk, Claim
-from app.security import LoginThrottle, hash_password, verify_password
+from app.models import Chunk, Claim, User
+from app.security import LoginThrottle, hash_password, set_user_password, verify_password
 from app import web
 
 PW = "demo-" + "pass-123"
@@ -151,6 +151,58 @@ def test_logout_ends_the_session(env):
     assert c.get("/review").status_code == 200
     c.post("/logout", data={"csrf": token(c, "/review")})
     assert c.get("/review").status_code == 303
+
+
+def test_password_rotation_revokes_existing_sessions(env):
+    app, Session = env
+    old_client = login(app, "meera")
+    assert old_client.get("/review").status_code == 200
+
+    with Session() as s:
+        user = s.scalar(select(User).where(User.username == "meera"))
+        old_version = user.session_version
+        assert set_user_password(user, "rotated-demo-password")
+        assert user.session_version == old_version + 1
+        s.commit()
+
+    stale = old_client.get("/review")
+    assert stale.status_code == 303 and stale.headers["location"] == "/login"
+
+    fresh = client(app)
+    response = fresh.post("/login", data={
+        "username": "meera", "password": "rotated-demo-password", "csrf": token(fresh)
+    })
+    assert response.status_code == 303
+    assert fresh.get("/review").status_code == 200
+
+
+def test_setting_the_same_password_does_not_revoke_sessions(env):
+    app, Session = env
+    c = login(app, "meera")
+    with Session() as s:
+        user = s.scalar(select(User).where(User.username == "meera"))
+        version = user.session_version
+        assert not set_user_password(user, PW)
+        assert user.session_version == version
+    assert c.get("/review").status_code == 200
+
+
+def test_review_queue_pages_large_projects_in_the_database(env):
+    app, Session = env
+    with Session() as s:
+        project_id = s.scalar(select(Claim.project_id).limit(1))
+        from app.enums import ClaimType
+        for i in range(120):
+            s.add(Claim.create(project_id=project_id, statement=f"Pagination fixture claim {i}",
+                               type=ClaimType.decision, created_by="test"))
+        s.commit()
+
+    c = login(app, "meera")
+    page_one = c.get("/review?status=all&page=1").text
+    page_two = c.get("/review?status=all&page=2").text
+    assert "Page 1 of" in page_one and "Page 2 of" in page_two
+    assert page_one.count('data-search-item') <= 50
+    assert page_two.count('data-search-item') <= 50
 
 
 def test_security_headers(env):

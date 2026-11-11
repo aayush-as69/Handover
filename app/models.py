@@ -60,6 +60,8 @@ class User(Base):
     display_name: Mapped[str] = mapped_column(String(128))
     role: Mapped[Role] = mapped_column(_enum(Role))
     password_hash: Mapped[Optional[str]] = mapped_column(String(256), nullable=True)
+    # Incremented whenever credentials are rotated; older signed cookies then become invalid.
+    session_version: Mapped[int] = mapped_column(Integer, default=1, server_default="1", nullable=False)
 
 
 class Project(Base):
@@ -220,6 +222,15 @@ class Claim(Base):
         self.statement = new_statement
         self.semantic_verdict = self.semantic_note = None     # the old opinion was about old words
         self._bump(ChangeType.edit, by, ReviewStatus.edited, note)
+
+    def set_sensitivity(self, sensitivity: Sensitivity, by: str,
+                        note: str | None = None) -> bool:
+        """Record a sensitivity change as a reviewable claim revision."""
+        if self.sensitivity == sensitivity:
+            return False
+        self.sensitivity = sensitivity
+        self._bump(ChangeType.edit, by, ReviewStatus.edited, note or "Sensitivity changed")
+        return True
 
     def approve(self, by: str, note: str | None = None) -> None:
         self._bump(ChangeType.approve, by, ReviewStatus.approved, note)

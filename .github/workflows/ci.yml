@@ -1,31 +1,91 @@
 name: ci
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+
 jobs:
-  test:
+  sqlite-tests:
+    name: SQLite tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install test dependencies
+        run: pip install -r requirements.lock -r requirements-dev.txt
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Browser end-to-end tests
+        run: python -m pytest -q tests/test_browser_e2e.py
+      - name: Full SQLite test suite
+        run: python -m pytest -q
+
+  postgresql-tests:
+    name: PostgreSQL tests
     runs-on: ubuntu-latest
     services:
       postgres:
         image: postgres:16
-        env: {POSTGRES_PASSWORD: postgres, POSTGRES_DB: handover_test}
-        ports: ["5432:5432"]
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: handover_test
+        ports:
+          - "5432:5432"
         options: >-
-          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PG_BIN: /usr/lib/postgresql/16/bin
+      TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/handover_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: "3.12", cache: pip}
-      - run: pip install -r requirements.lock -r requirements-dev.txt
-      - run: python -m playwright install --with-deps chromium
-      - name: PostgreSQL 16 client tools (for the backup/restore test)
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install test dependencies
+        run: pip install -r requirements.lock -r requirements-dev.txt
+      - name: Install PostgreSQL client tools
         run: |
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get install -y postgresql-client-16
-      - name: Tests on SQLite
+      - name: Full PostgreSQL test suite
         run: python -m pytest -q
-      - name: Tests on PostgreSQL
-        env:
-          PG_BIN: /usr/lib/postgresql/16/bin
-          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/handover_test
-        run: python -m pytest -q
-      - name: Dependency vulnerabilities
+
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned audit tool
+        run: python -m pip install pip-audit==2.10.1
+      - name: Audit runtime dependencies
         run: pip-audit -r requirements.lock
+
+  ci-status:
+    name: CI status
+    if: always()
+    needs:
+      - sqlite-tests
+      - postgresql-tests
+      - dependency-audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every independent check to pass
+        env:
+          SQLITE_RESULT: \${{ needs.sqlite-tests.result }}
+          POSTGRESQL_RESULT: \${{ needs.postgresql-tests.result }}
+          AUDIT_RESULT: \${{ needs.dependency-audit.result }}
+        run: |
+          printf 'SQLite: %s\nPostgreSQL: %s\nDependency audit: %s\n' \
+            "$SQLITE_RESULT" "$POSTGRESQL_RESULT" "$AUDIT_RESULT"
+          test "$SQLITE_RESULT" = "success"
+          test "$POSTGRESQL_RESULT" = "success"
+          test "$AUDIT_RESULT" = "success"

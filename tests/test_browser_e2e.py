@@ -110,7 +110,7 @@ def test_demo_role_selection_prefills_username_and_password(live_server, browser
 
     # The visitor still explicitly submits the existing CSRF-protected form.
     page.locator("#sign-in-form button[type='submit']").click()
-    page.wait_for_url(lambda url: not url.path.endswith("/login"))
+    page.wait_for_url("**/handover")
     assert page.url.endswith("/review") or page.url.endswith("/handover")
     page.close()
 
@@ -130,4 +130,18 @@ def test_review_queue_search_filters_and_restores_claims(live_server, browser):
     search.fill("")
     assert page.locator("#claims-table-body [data-search-item]:visible").count() == original_count
     assert not page.locator("#claims-table-body [data-search-empty]").is_visible()
+    page.close()
+
+
+def test_mobile_login_layout_and_accessible_fields(live_server, browser):
+    page = browser.new_page(viewport={"width": 390, "height": 844}, is_mobile=True)
+    page.goto(live_server + "/login")
+    assert page.get_by_role("heading", name="Welcome back.").is_visible()
+    assert page.get_by_label("Username").is_visible()
+    assert page.get_by_label("Password").is_visible()
+    assert page.get_by_role("group", name="Choose a demo account").is_visible()
+    dimensions = page.evaluate(
+        "() => ({width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth})"
+    )
+    assert dimensions["scroll"] <= dimensions["width"], dimensions
     page.close()

@@ -23,7 +23,7 @@ from .extract.pipeline import run_extraction
 from .extract.rules import RuleExtractor
 from .ingest.service import ingest_source
 from .models import Project, User
-from .security import hash_password
+from .security import set_user_password
 
 DEMO_DIR = Path(__file__).resolve().parents[1] / "data" / "demo"
 
@@ -50,8 +50,8 @@ def load_demo_project(session: Session, demo_dir: Path = DEMO_DIR,
             user = User(username=u["username"], display_name=u["display_name"],
                         role=Role(u["role"]))
             session.add(user)
-        if password and not user.password_hash:
-            user.password_hash = hash_password(password)
+        if password:
+            set_user_password(user, password)
 
     for s in manifest["sources"]:
         ingest_source(
@@ -116,6 +116,13 @@ def bootstrap_demo(session: Session, password: str) -> None:
     from .models import Claim
 
     project = load_demo_project(session, password=password)
+    # The hosted demo password is deployment configuration. Keep only these synthetic users
+    # aligned with it; changing the environment variable rotates their sessions too.
+    manifest = json.loads((DEMO_DIR / "manifest.json").read_text(encoding="utf-8"))
+    for item in manifest["users"]:
+        user = session.scalar(select(User).where(User.username == item["username"]))
+        if user is not None:
+            set_user_password(user, password)
     if session.scalar(select(Claim.id).where(Claim.project_id == project.id)) is None:
         run_extraction(session, project, RuleExtractor())
     seed_review_examples(session, project)

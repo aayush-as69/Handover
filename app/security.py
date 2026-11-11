@@ -71,7 +71,7 @@ from datetime import timedelta  # noqa: E402
 from sqlalchemy import delete, func, select  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
-from .models import LoginAttempt, utcnow  # noqa: E402
+from .models import LoginAttempt, User, utcnow  # noqa: E402
 
 MAX_FAILURES = 5
 WINDOW = timedelta(minutes=5)
@@ -168,3 +168,18 @@ def record_login_failure(session: Session, key: str) -> None:
 def clear_login_failures(session: Session, key: str) -> None:
     session.execute(delete(LoginAttempt).where(LoginAttempt.key == key))
     session.commit()
+
+
+def set_user_password(user: User, password: str) -> bool:
+    """Set a password and revoke all previously issued sessions for the user.
+
+    Return False when the supplied password already matches, avoiding needless hash
+    churn and session invalidation on each demo boot.
+    """
+    if not isinstance(password, str) or not password:
+        raise ValueError("password cannot be empty")
+    if verify_password(password, user.password_hash):
+        return False
+    user.password_hash = hash_password(password)
+    user.session_version = (user.session_version or 0) + 1
+    return True
