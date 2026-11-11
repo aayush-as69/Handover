@@ -1130,18 +1130,28 @@ small{font-size:.86rem;line-height:1.55}
 }
 
 
-/* Keep conflict evidence compact without equal-height grid rows. */
+/* Conflict review: one full-width card per issue, without a half-page empty column. */
 .conflicts-page{
   max-width:1440px;
 }
-.conflicts-page .conflict-card{
-  grid-column:span 12;
+.conflicts-page #conflict-list{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:.85rem;
+  margin:.65rem 0 0;
+}
+.conflicts-page #conflict-list > .conflict-card{
+  display:flex;
+  flex:0 0 auto;
   width:100%;
+  max-width:none;
+  min-width:0;
 }
 .conflicts-page .conflict-members{
   display:block;
   columns:2 26rem;
-  column-gap:.75rem;
+  column-gap:.85rem;
   column-fill:balance;
 }
 .conflicts-page .conflict-member{

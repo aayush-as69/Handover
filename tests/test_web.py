@@ -719,13 +719,14 @@ def test_conflict_page_uses_compact_page_specific_spacing(env):
     assert ".conflicts-page .work-card-grid{\n  align-items:start;" in css
 
 
-def test_conflicts_use_full_width_cards_and_balanced_evidence_columns():
+def test_conflicts_use_full_width_card_flow_and_balanced_evidence_columns():
     from pathlib import Path
 
     template = Path("app/templates/conflicts.html").read_text(encoding="utf-8")
     css = Path("app/static/style.css").read_text(encoding="utf-8")
     assert 'class="tile s12 work-card conflict-card"' in template
-    assert ".conflicts-page{\n  max-width:1440px;" in css
-    assert ".conflicts-page .conflict-members{\n  display:block;\n  columns:2 26rem;" in css
+    assert ".conflicts-page #conflict-list{\n  display:flex;\n  flex-direction:column;" in css
+    assert ".conflicts-page #conflict-list > .conflict-card{\n  display:flex;\n  flex:0 0 auto;" in css
+    assert "columns:2 26rem;" in css
     assert "break-inside:avoid;" in css
     assert ".conflicts-page .conflict-members{\n    columns:1;" in css
