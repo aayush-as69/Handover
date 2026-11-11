@@ -113,7 +113,7 @@ The global stylesheet remains in place to avoid an unreviewed visual regression 
 
 ## 12. Operational limitations
 
-- Render configuration exists but the live Render deployment has not been verified from this repository.
+- The demo is deployed at https://handover-2hpd.onrender.com. The author confirmed on 11 Nov 2026 that it loads and signs in; this repository's tests do not exercise the hosted service, and the restore exercise has not been run against its database.
 - Shared edge throttling requires CDN/proxy configuration by the deployment operator; the in-memory limiter alone is not distributed.
 - Conflict, question and release-history views still need database pagination for very large projects.
 - Live LLM behavior is not part of the ordinary deterministic CI baseline.

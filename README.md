@@ -18,6 +18,8 @@
 
 <br />
 
+<p><strong><a href="https://handover-2hpd.onrender.com">Live demo</a></strong> · the demo password is set by the project team</p>
+
 <a href="https://render.com/deploy?repo=https://github.com/aayush-as69/Handover">
   <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" />
 </a>
@@ -306,7 +308,7 @@ Handover is designed with explicit trust boundaries, but it is not a guarantee o
 - Secret detection and field redaction are pattern based and may miss unusual values or mask benign text.
 - Conflict and question detection are rule based and require human judgment.
 - Live LLM quality has not been verified in the documented CI baseline.
-- Render configuration exists, but a live deployment has not been independently verified.
+- The demo is deployed on Render at https://handover-2hpd.onrender.com, and the author confirmed it loads and signs in on 11 Nov 2026. It has not had an independent check, and the backup-restore exercise has not been run against the hosted database.
 - Request throttling is process-local; use an edge/proxy rate limiter for production.
 - The current deployment model assumes one project per deployment.
 

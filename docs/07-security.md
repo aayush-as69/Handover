@@ -93,4 +93,4 @@ Append-only guards protect claim versions, audit events and handover releases. E
 - Conflict detection is rule based and may miss disagreements or produce noise.
 - Live LLM behavior has not been validated in the documented CI baseline.
 - In-memory request limiting is not a distributed production defense.
-- A configured Render deployment is not the same as a verified live deployment.
+- The Render deployment at https://handover-2hpd.onrender.com was confirmed by the author to load and sign in on 11 Nov 2026. That is not an independent check, and the restore exercise has not been run against the hosted database.
