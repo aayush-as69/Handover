@@ -324,7 +324,9 @@ See [Security](docs/07-security.md) and [Limitations](docs/13-limitations-roadma
 
 ## Acknowledgements
 
-Built for the CodeFrontier hackathon (We Code Coders) by team **STARTEND**.
+Built for **CodeFrontier Hackathon · Team STARTEND · Round 2: The Build**.
+
+The project was solo developed by **Aayush Singh**. AI tools assisted with planning and implementation; the code and project decisions were reviewed by the author.
 
 ## License
 
