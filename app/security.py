@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import ipaddress
 import hmac
 import os
 import secrets
@@ -85,9 +86,22 @@ MAX_USERNAMES_PER_IP = 15                     # one address trying many accounts
 MAX_FAILURES_PER_IP = 100                     # raw volume from one address
 
 
-def client_ip(request, trust_proxy: bool) -> str:
-    """The caller's address. Behind a proxy (Render) the proxy appends the real address as the
-    LAST X-Forwarded-For entry; earlier entries are client-supplied and can be forged."""
+def client_ip(request, trust_proxy: bool,
+              edge_shared_secret: str | None = None) -> str:
+    """Return the trusted client address behind Render or an authenticated Cloudflare edge.
+
+    Cloudflare's CF-Connecting-IP is only trusted when the request also carries the private
+    origin header. Without that edge configuration, Render's appended final X-Forwarded-For
+    address remains the source of truth.
+    """
+    if trust_proxy and edge_shared_secret:
+        supplied = request.headers.get("x-handover-origin-key", "")
+        if hmac.compare_digest(supplied, edge_shared_secret):
+            candidate = request.headers.get("cf-connecting-ip", "").strip()
+            try:
+                return str(ipaddress.ip_address(candidate))
+            except ValueError:
+                pass
     if trust_proxy:
         forwarded = request.headers.get("x-forwarded-for", "")
         last = forwarded.split(",")[-1].strip()

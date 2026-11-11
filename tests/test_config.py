@@ -19,6 +19,7 @@ def test_production_accepts_good_settings():
     {"SECRET_KEY": ""}, {"SECRET_KEY": "short"}, {"COOKIE_SECURE": "false"},
     {"DATABASE_URL": "sqlite:///x.db"},
     {"DEMO_MODE": "1", "DEMO_PASSWORD": "demo1234"}, {"DEMO_MODE": "1"},
+    {"EDGE_SHARED_SECRET": "too-short"},
 ])
 def test_production_refuses_unsafe_settings(change):
     with pytest.raises(ConfigError):
@@ -53,3 +54,48 @@ def test_session_cookie_flags_and_expiry(monkeypatch):
         monkeypatch.setattr(time, "time", lambda: real() + 9 * 3600)
         r2 = c.post("/login", data={"username": "a", "password": "b", "csrf": token})
         assert r2.status_code in (400, 403)
+
+
+def test_edge_origin_secret_blocks_direct_render_origin():
+    secret = "edge-origin-secret-" + "x" * 40
+    app = create_app(config=Settings({
+        **GOOD,
+        "EDGE_SHARED_SECRET": secret,
+    }))
+    with TestClient(app) as c:
+        assert c.get("/health").status_code == 200
+        assert c.get("/ready").status_code in (200, 503)
+        assert c.get("/login").status_code == 403
+        assert c.get("/static/theme.js").status_code == 403
+        trusted = c.get("/login", headers={"X-Handover-Origin-Key": secret})
+        assert trusted.status_code == 200
+
+
+def test_cloudflare_client_ip_is_trusted_only_with_edge_secret():
+    from starlette.requests import Request
+    from app.security import client_ip
+
+    secret = "edge-origin-secret-" + "x" * 40
+    def request(headers):
+        return Request({
+            "type": "http",
+            "method": "GET",
+            "path": "/",
+            "headers": [(k.lower().encode(), v.encode()) for k, v in headers.items()],
+            "client": ("10.0.0.2", 443),
+            "server": ("10.0.0.3", 443),
+            "scheme": "https",
+        })
+
+    trusted = request({
+        "X-Handover-Origin-Key": secret,
+        "CF-Connecting-IP": "203.0.113.25",
+        "X-Forwarded-For": "198.51.100.10, 10.0.0.2",
+    })
+    assert client_ip(trusted, True, secret) == "203.0.113.25"
+
+    untrusted = request({
+        "CF-Connecting-IP": "203.0.113.25",
+        "X-Forwarded-For": "198.51.100.10, 10.0.0.2",
+    })
+    assert client_ip(untrusted, True, secret) == "10.0.0.2"

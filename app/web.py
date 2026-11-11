@@ -157,7 +157,8 @@ def login(request: Request, username: str = Form(""), password: str = Form(""),
           csrf: str = Form(""), session: Session = Depends(get_session)):
     check_csrf(request, csrf)
     key = username.strip().lower()[:64]
-    ip = client_ip(request, request.app.state.cfg.trust_proxy)
+    cfg = request.app.state.cfg
+    ip = client_ip(request, cfg.trust_proxy, cfg.edge_shared_secret)
     if not login_allowed(session, key, ip):
         return render_login(request, None, 429,
                             error="Too many failed attempts. Try again in a few minutes.")

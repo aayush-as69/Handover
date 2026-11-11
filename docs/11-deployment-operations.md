@@ -31,11 +31,14 @@ The blueprint sets:
 - generated `SECRET_KEY`
 - `DEMO_MODE=true`
 - a dashboard-supplied `DEMO_PASSWORD`
+- optional `EDGE_SHARED_SECRET` when a Cloudflare-proxied custom domain is used
 - PostgreSQL `DATABASE_URL` from the managed database.
 
 The application itself additionally validates production settings and refuses unsafe combinations.
 
 ## 3. Startup migration behavior
+
+New deployments apply migration `0002` automatically when `MIGRATE_ON_STARTUP=true`. Existing Render services should back up PostgreSQL before deploying a schema migration. After deployment, check `/ready` and the Render logs for migration failures. Session cookies created before the new `session_version` field is introduced will be signed out once and can sign in again.
 
 By default `MIGRATE_ON_STARTUP=true`. Startup calls the database migration routine and upgrades to Alembic head.
 
@@ -68,16 +71,22 @@ Do not log API keys, passwords or raw secret material.
 
 ## 8. Shared rate limiting at the edge
 
-The application limiter is deliberately retained as a lightweight per-process fallback. It cannot enforce a shared quota across Render instances. For a public deployment, route a custom domain through a CDN or reverse proxy that supports shared rate limiting, such as Cloudflare.
+The application limiter is deliberately retained as a lightweight per-process fallback. For a public deployment, put the custom domain behind a CDN/reverse proxy that enforces shared rate limits. The app supports an optional origin lock through `EDGE_SHARED_SECRET`, which prevents visitors from bypassing those edge rules by calling Render's direct `*.onrender.com` service URL.
 
-Configure edge rules for:
-- `POST /login`: strict per-client-IP rate limiting with a short mitigation window;
-- other dynamic application routes: a broader per-IP limit;
-- `/health` and static assets: exempt or use a separate, higher limit.
+### Render + Cloudflare setup
 
-Do not rely on the direct `*.onrender.com` address as the public URL when enforcing a Cloudflare rule; traffic should enter through the proxied custom domain. Confirm the origin sees the correct client address. Keep `TRUST_PROXY=true` only when the app is reachable exclusively through the trusted Render proxy chain; the app uses the last appended forwarded address and ignores the untrusted prefix. Never use a client-controlled forwarding value as a trust signal.
+1. Add the public custom domain to Cloudflare and point it to the Render service. Enable the orange-cloud proxy.
+2. Generate a random secret of at least 32 characters. Store it as `EDGE_SHARED_SECRET` in the Render service's Environment settings. Do not place it in source control or browser JavaScript.
+3. In Cloudflare, create a Request Header Transform Rule for the Handover hostname that sets `X-Handover-Origin-Key` to the exact secret. Apply it to every proxied request, including static assets. Keep the secret value private in the Cloudflare rule.
+4. Configure a Cloudflare rate-limiting rule for `POST /login` with a strict per-client-IP threshold and mitigation window, then add a broader per-IP rule for dynamic application paths. Give `/health` and `/ready` separate exemptions or higher thresholds.
+5. Save the Render environment change and redeploy. The app rejects requests without the origin header on all paths except `/health` and `/ready`. Render's liveness check therefore continues to work through the direct origin URL.
+6. Verify that the custom domain can load and sign in, while a direct request to `https://<service>.onrender.com/login` returns HTTP 403. Then test that repeated requests from one client IP are mitigated by Cloudflare.
 
-The repository cannot install Cloudflare rules in the Render account. Treat edge throttling as a deployment checklist item and verify it against the public custom domain before production use.
+Configure the Cloudflare header rule before enabling `EDGE_SHARED_SECRET` in Render, otherwise normal visitors will temporarily receive 403 responses.
+
+When the edge secret is configured, Handover trusts Cloudflare's `CF-Connecting-IP` value for rate limiting only after the private origin header matches. Without the edge secret, the existing Render behavior remains: use the last appended `X-Forwarded-For` entry and ignore earlier client-supplied entries. Keep `TRUST_PROXY=true` only when traffic comes through the trusted Render proxy chain.
+
+The repository cannot create Cloudflare rules or change Render settings in the hosting account. The deployment operator must configure and verify these external settings. The general in-app limiter remains enabled as a fallback.
 
 ## 9. Audit and credential guarantees
 
@@ -104,7 +113,7 @@ The global stylesheet remains in place to avoid an unreviewed visual regression 
 - Conflict, question and release-history views still need database pagination for very large projects.
 - Live LLM behavior is not part of the ordinary deterministic CI baseline.
 
-## 9. Troubleshooting
+## 13. Troubleshooting
 
 ### Application refuses to start in production
 

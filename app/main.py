@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hmac
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -76,8 +77,14 @@ def create_app(secret_key: str | None = None, config: Settings | None = None) ->
     @app.middleware("http")
     async def rate_limit(request, call_next):
         path = request.url.path
+        # Optional origin lock: the CDN injects this secret header on every proxied request.
+        # Render's direct *.onrender.com URL stays usable only for public liveness/readiness.
+        if cfg.edge_shared_secret and path not in ("/health", "/ready"):
+            supplied = request.headers.get("x-handover-origin-key", "")
+            if not hmac.compare_digest(supplied, cfg.edge_shared_secret):
+                return PlainTextResponse("Use the public application domain.", status_code=403)
         if path not in ("/health", "/ready") and not path.startswith("/static/"):
-            ip = client_ip(request, cfg.trust_proxy)
+            ip = client_ip(request, cfg.trust_proxy, cfg.edge_shared_secret)
             ok = general.allow(ip)
             if ok and path == "/login" and request.method == "POST":
                 ok = logins.allow(ip)

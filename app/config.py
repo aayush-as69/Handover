@@ -37,6 +37,7 @@ class Settings:
         self.secret_key = env.get("SECRET_KEY") or None
         self.demo_mode = (env.get("DEMO_MODE", "").lower() in ("1", "true", "yes", "on"))
         self.demo_password = env.get("DEMO_PASSWORD") or None
+        self.edge_shared_secret = env.get("EDGE_SHARED_SECRET") or None
         cookie = env.get("COOKIE_SECURE")
         self.rate_limit_per_min = int(env.get("RATE_LIMIT_PER_MIN") or 300)        # 0 turns it off
         self.login_rate_per_min = int(env.get("LOGIN_RATE_PER_MIN") or 30)
@@ -63,6 +64,8 @@ class Settings:
                 problems.append("COOKIE_SECURE cannot be off in production")
             if self.database_url.startswith("sqlite"):
                 problems.append("DATABASE_URL must point at PostgreSQL, not SQLite")
+            if self.edge_shared_secret and len(self.edge_shared_secret) < 32:
+                problems.append("EDGE_SHARED_SECRET must be at least 32 characters when configured")
             if self.demo_mode:
                 pw = self.demo_password or ""
                 if len(pw) < 10 or pw.lower() in WEAK_PASSWORDS:
