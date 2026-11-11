@@ -81,7 +81,7 @@ def adopt_legacy(eng=None, *, dry_run: bool = False) -> list[str]:
         other = [d for d in diff if d[0] != "add_table"
                  and not (d[0] == "add_index" and d[1].table.name in missing)
                  and not (d[0] == "add_column" and
-                          (d[1].table.name, d[1].name) in post_0001_additions)]
+                          (d[2], d[3].name) in post_0001_additions)]
         if other:
             raise MigrationError(
                 "The schema differs from this version in ways that cannot be fixed safely "
