@@ -138,7 +138,7 @@ def test_mobile_login_layout_and_accessible_fields(live_server, browser):
     page.goto(live_server + "/login")
     assert page.get_by_role("heading", name="Welcome back.").is_visible()
     assert page.get_by_label("Username").is_visible()
-    assert page.get_by_label("Password").is_visible()
+    assert page.get_by_role("textbox", name="Password").is_visible()
     assert page.get_by_role("group", name="Choose a demo account").is_visible()
     dimensions = page.evaluate(
         "() => ({width: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth})"

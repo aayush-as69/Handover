@@ -46,6 +46,7 @@ def _list(payload, what: str) -> list:
 
 
 MAX_PAGES = 5          # hard ceiling on requests per list, whatever max_items says
+MAX_DETAIL_ITEMS = 200  # bounded cap for each detailed pull-request collection
 
 
 def _paged(client, path: str, what: str, max_items: int, extra: dict | None = None) -> list:
@@ -105,12 +106,12 @@ def fetch_public_repo(
                     continue
                 base = f"/repos/{owner}/{repo}/pulls/{n}"
                 pull_details[n] = {
-                    "files": _list(_get(client, f"{base}/files", f"pull request #{n} files",
-                                        {"per_page": 30}), "files"),
-                    "reviews": _list(_get(client, f"{base}/reviews", f"pull request #{n} reviews",
-                                          {"per_page": 30}), "reviews"),
-                    "comments": _list(_get(client, f"{base}/comments", f"pull request #{n} comments",
-                                           {"per_page": 30}), "comments"),
+                    "files": _paged(client, f"{base}/files", f"pull request #{n} files",
+                                    MAX_DETAIL_ITEMS),
+                    "reviews": _paged(client, f"{base}/reviews", f"pull request #{n} reviews",
+                                      MAX_DETAIL_ITEMS),
+                    "comments": _paged(client, f"{base}/comments", f"pull request #{n} comments",
+                                       MAX_DETAIL_ITEMS),
                 }
             for c in commits[:detail_limit]:
                 sha = str(c.get("sha", ""))

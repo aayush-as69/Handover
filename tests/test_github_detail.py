@@ -199,3 +199,27 @@ def test_stops_on_a_short_page_and_never_exceeds_the_page_cap():
     calls = []
     fetch_public_repo("o", "r", client=client(_pager(10_000, calls)), max_items=10_000, detail_limit=0)
     assert len([c for c in calls if c[0].endswith("/commits")]) == 5
+
+
+def test_pull_request_detail_collections_follow_bounded_pagination():
+    calls = []
+    base_handler = handler(calls)
+    file_pages = []
+
+    def paged_handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/repos/o/r/pulls/3/files":
+            page = int(request.url.params.get("page", "1"))
+            file_pages.append((page, int(request.url.params.get("per_page", "0"))))
+            if page == 1:
+                return httpx.Response(200, json=[
+                    {"filename": f"module_{i}.py", "additions": 1, "deletions": 0}
+                    for i in range(100)
+                ])
+            return httpx.Response(200, json=[
+                {"filename": "module_last.py", "additions": 2, "deletions": 0}
+            ])
+        return base_handler(request)
+
+    snapshot = fetch_public_repo("o", "r", client=client(paged_handler), detail_limit=1)
+    assert len(snapshot["pulls"][0]["files"]) == 101
+    assert file_pages == [(1, 100), (2, 100)]

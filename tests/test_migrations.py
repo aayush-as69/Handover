@@ -134,20 +134,22 @@ def test_migration_enforces_append_only_audit_and_evidence_guards(eng):
     with Session() as session:
         project = Project(name="Audit migration test")
         reviewer = User(username="reviewer", display_name="Reviewer", role=Role.approver)
-        source = Source(project=project, kind=SourceKind.notes, name="audit.md",
+        session.add_all([project, reviewer])
+        session.flush()
+
+        source = Source(project_id=project.id, kind=SourceKind.notes, name="audit.md",
                         sensitivity=Sensitivity.team)
         chunk = Chunk(source=source, idx=0, text="Use Redis for the seat-lock service.",
                       sensitivity=Sensitivity.team)
         claim = Claim.create(
-            project_id=1, statement="Use Redis for the seat-lock service.",
+            project_id=project.id, statement="Use Redis for the seat-lock service.",
             type=ClaimType.decision, created_by="migration-test", sensitivity=Sensitivity.team,
         )
         claim.evidence.append(Evidence(
             chunk=chunk, snippet="Use Redis for the seat-lock service.", stance=Stance.supports,
         ))
-        session.add_all([project, reviewer, source, chunk, claim])
+        session.add_all([source, chunk, claim])
         session.flush()
-        claim.project_id = project.id
         from app.verify import verify_claim
         verify_claim(claim)
 
