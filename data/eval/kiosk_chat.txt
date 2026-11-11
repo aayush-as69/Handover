@@ -1,0 +1,14 @@
+[02/10/2026, 09:05] Dev Patel: we're going with sqlite for the kiosk catalogue, postgres is overkill for 4k books and we have no one to run it
+[02/10/2026, 09:07] Ana Rossi: lol fine by me
+[02/10/2026, 09:30] Sam Okafor: lunch anyone?
+[05/10/2026, 11:12] Ana Rossi: the usb hub keeps dropping barcode reads, so we are switching to the bluetooth scanner because it has its own battery and no hub
+[05/10/2026, 11:15] Dev Patel: thanks!
+[09/10/2026, 17:40] Dev Patel: Ana owns the late-fee rules now, ask her before touching them
+[12/10/2026, 10:02] Dev Patel: the receipt printer driver only works on windows 10, which blocks the ubuntu kiosk image
+[14/10/2026, 15:20] Ana Rossi: don't forget to renew the domain by 30 nov or the kiosk page goes down
+[16/10/2026, 12:45] Sam Okafor: who has the admin password for the library router? nobody answered last time
+[18/10/2026, 19:05] Dev Patel: i still need to write the backup script for the catalogue db, nothing is scheduled yet
+[19/10/2026, 08:15] Ana Rossi: happy diwali everyone
+[20/10/2026, 10:30] Ana Rossi: the wifi drops in the reading room again, that is every monday now
+[22/10/2026, 14:00] Dev Patel: for kiosk power outlets talk to Priya at the facilities office, her extension is on the wiki
+[23/10/2026, 09:00] Sam Okafor: ok

@@ -33,7 +33,7 @@ def _claims(session: Session, project) -> dict[int, Claim]:
 @router.get("/conflicts")
 def conflicts_page(request: Request, user: User = Depends(require_reviewer),
                    session: Session = Depends(get_session)):
-    project = project_for(session)
+    project = project_for(session, request, user)
     claims = _claims(session, project)
     rows = []
     for cf in session.scalars(select(Conflict).where(Conflict.project_id == project.id)
@@ -49,7 +49,7 @@ def conflicts_page(request: Request, user: User = Depends(require_reviewer),
 def conflicts_detect(request: Request, csrf: str = Form(""), user: User = Depends(require_reviewer),
                      session: Session = Depends(get_session)):
     check_csrf(request, csrf)
-    project = project_for(session)
+    project = project_for(session, request, user)
     detect_conflicts(session, project)
     generate_questions(session, project)
     session.commit()
@@ -61,7 +61,7 @@ def conflict_action(conflict_id: int, action: str, request: Request, csrf: str =
                     note: str = Form(""), user: User = Depends(require_reviewer),
                     session: Session = Depends(get_session)):
     check_csrf(request, csrf)
-    project = project_for(session)
+    project = project_for(session, request, user)
     cf = session.get(Conflict, conflict_id)
     if cf is None or cf.project_id != project.id or not visible_members(
             user.role, cf, _claims(session, project)):
@@ -88,7 +88,7 @@ def conflict_action(conflict_id: int, action: str, request: Request, csrf: str =
 @router.get("/questions")
 def questions_page(request: Request, user: User = Depends(require_reviewer),
                    session: Session = Depends(get_session)):
-    project = project_for(session)
+    project = project_for(session, request, user)
     claims = _claims(session, project)
     items = []
     for q in session.scalars(select(Question).where(Question.project_id == project.id)
@@ -106,7 +106,7 @@ def questions_page(request: Request, user: User = Depends(require_reviewer),
 def questions_refresh(request: Request, csrf: str = Form(""), user: User = Depends(require_reviewer),
                       session: Session = Depends(get_session)):
     check_csrf(request, csrf)
-    project = project_for(session)
+    project = project_for(session, request, user)
     detect_conflicts(session, project)
     generate_questions(session, project)
     session.commit()
@@ -118,7 +118,7 @@ def question_action(question_id: int, action: str, request: Request, csrf: str =
                     text: str = Form(""), user: User = Depends(require_reviewer),
                     session: Session = Depends(get_session)):
     check_csrf(request, csrf)
-    project = project_for(session)
+    project = project_for(session, request, user)
     q = session.get(Question, question_id)
     claims = _claims(session, project)
     linked = [claims[i] for i in (q.claim_ids if q else []) if i in claims]

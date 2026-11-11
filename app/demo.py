@@ -23,6 +23,7 @@ from .extract.pipeline import run_extraction
 from .extract.rules import RuleExtractor
 from .ingest.service import ingest_source
 from .models import Project, User
+from .projects import add_member
 from .security import set_user_password
 
 DEMO_DIR = Path(__file__).resolve().parents[1] / "data" / "demo"
@@ -35,6 +36,7 @@ def load_demo_project(session: Session, demo_dir: Path = DEMO_DIR,
     info = manifest["project"]
 
     project = session.scalar(select(Project).where(Project.name == info["name"]))
+    fresh_project = project is None
     if project is None:
         project = Project(
             name=info["name"],
@@ -46,10 +48,15 @@ def load_demo_project(session: Session, demo_dir: Path = DEMO_DIR,
 
     for u in manifest["users"]:
         user = session.scalar(select(User).where(User.username == u["username"]))
+        fresh_user = user is None
         if user is None:
             user = User(username=u["username"], display_name=u["display_name"],
                         role=Role(u["role"]))
             session.add(user)
+            session.flush()
+        # Only on first creation, so an admin who later removes someone is not overruled on reboot.
+        if fresh_project or fresh_user:
+            add_member(session, project, user, "demo")
         if password:
             set_user_password(user, password)
 

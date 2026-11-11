@@ -360,8 +360,13 @@ def test_an_approver_cannot_see_or_act_on_confidential_claims(env):
     from app.models import User
     from app.enums import Role
     with Session() as s:
-        s.add(User(username="low", display_name="Low", role=Role.approver,
-                   password_hash=hash_password(PW)))
+        low = User(username="low", display_name="Low", role=Role.approver,
+                   password_hash=hash_password(PW))
+        s.add(low)
+        s.flush()
+        from app.models import Project
+        from app.projects import add_member
+        add_member(s, s.scalar(select(Project)), low, "test")
         s.commit()
     from app import access
     orig = dict(access.ROLE_CLEARANCE)

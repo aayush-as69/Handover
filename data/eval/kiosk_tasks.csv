@@ -1,0 +1,4 @@
+id,title,owner,status,due,notes
+K1,Bluetooth scanner pairing,Ana Rossi,in_progress,2026-11-03,Pairing drops after sleep
+K2,Late fee rules module,UNASSIGNED,todo,2026-11-10,
+K3,Receipt printer on ubuntu,Dev Patel,blocked,2026-11-12,Driver only supports windows 10

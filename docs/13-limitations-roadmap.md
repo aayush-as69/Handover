@@ -40,9 +40,9 @@ It uses fixed technology categories and available topic/value information. It ca
 
 The checklist can generate noise and requires reviewer judgment.
 
-### One project per deployment
+### Projects share users and roles
 
-The current review/handover architecture assumes a single project in a deployment.
+A deployment can hold several projects with membership-based access (see `15-round-improvements.md`), but users and roles are global: a person has the same role in every project they belong to.
 
 ### Distributed rate limiting is not implemented
 

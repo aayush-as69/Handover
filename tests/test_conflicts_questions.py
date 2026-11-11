@@ -369,8 +369,12 @@ def test_questions_above_a_reviewers_clearance_are_hidden_and_closed_to_actions(
         generate_questions(s, p)
         s.commit()
         qid = s.scalars(select(Question).where(Question.text.contains("Cassandra"))).first().id
-        s.add(User(username="low", display_name="Low", role=Role.approver,
-                   password_hash=__import__("app.security", fromlist=["x"]).hash_password(PW)))
+        low = User(username="low", display_name="Low", role=Role.approver,
+                   password_hash=__import__("app.security", fromlist=["x"]).hash_password(PW))
+        s.add(low)
+        s.flush()
+        from app.projects import add_member
+        add_member(s, p, low, "test")
         s.commit()
     orig = dict(access.ROLE_CLEARANCE)
     access.ROLE_CLEARANCE[Role.approver] = Sensitivity.team

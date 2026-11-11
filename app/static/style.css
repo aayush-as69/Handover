@@ -1169,3 +1169,12 @@ main:has(.conflicts-page){
     columns:1;
   }
 }
+
+/* timeline, plain lists and inline forms */
+.timeline{list-style:none;margin:1.2rem 0 0;padding:0;display:grid;gap:.9rem}
+.timeline-item{display:grid;grid-template-columns:8.5rem 1fr;gap:1.2rem;align-items:start}
+.timeline-date{font-weight:700;margin:0}
+.timeline-item p{margin:.35rem 0}
+ul.plain{list-style:none;margin:.6rem 0;padding:0;display:grid;gap:.5rem}
+form.inline{display:inline;margin-left:.6rem}
+@media (max-width:640px){.timeline-item{grid-template-columns:1fr;gap:.3rem}}

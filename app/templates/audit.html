@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block body %}
+<div class="page-shell">
+  <header class="page-header">
+    <div><p class="page-eyebrow">ACCOUNTABILITY / {{ project.name|upper }}</p><h1>Audit log</h1>
+      <p class="page-intro">Who changed what, and when. Claim edits, approvals, release sign-offs, acknowledgements, conflict resolutions, answers and loaded sources. Claims above your clearance are not listed.</p>
+    </div>
+    <div class="page-header-aside"><span class="page-aside-label">TIMES</span><strong>UTC</strong></div>
+  </header>
+  <section class="page-panel table-panel">
+    <div class="panel-heading"><div><p class="page-eyebrow">EVENTS</p><h2>Latest activity</h2></div>
+      <form method="get" class="filters"><label>Show <select name="kind"><option value="">Everything</option>{% for k in kinds %}<option value="{{ k }}" {% if k == kind %}selected{% endif %}>{{ k }}</option>{% endfor %}</select></label><button>Filter</button></form>
+    </div>
+    <div class="table-scroll">
+      <table><thead><tr><th>When (UTC)</th><th>Who</th><th>What</th><th>Note</th></tr></thead>
+      <tbody>{% for e in entries %}<tr><td data-label="When (UTC)">{{ e.at.strftime("%Y-%m-%d %H:%M") }}</td><td data-label="Who">{{ e.actor }}</td><td data-label="What"><span class="pill">{{ e.kind }}</span> {% if e.claim_id %}<a href="/review/claims/{{ e.claim_id }}">{{ e.action }}</a>{% else %}{{ e.action }}{% endif %}</td><td data-label="Note">{{ e.detail }}</td></tr>
+      {% else %}<tr><td colspan="4" class="muted table-empty">Nothing recorded yet.</td></tr>{% endfor %}</tbody></table>
+    </div>
+  </section>
+</div>
+{% endblock %}

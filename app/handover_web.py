@@ -53,7 +53,7 @@ def _flash(request: Request, msg: str, to: str):
 @router.get("/handover")
 def handover_page(request: Request, user: User = Depends(require_user),
                   session: Session = Depends(get_session), view_as: str = ""):
-    project = project_for(session)
+    project = project_for(session, request, user)
     handover = get_handover(session, project)
     if handover is None and user.role in REVIEWER_ROLES:
         handover = get_or_create_handover(session, project)
@@ -112,14 +112,21 @@ def release_history(request: Request, user: User = Depends(require_user),
                     session: Session = Depends(get_session)):
     if user.role not in REVIEWER_ROLES:
         raise HTTPException(status_code=403, detail="Only reviewers can see release history.")
-    handover = get_handover(session, project_for(session))
+    handover = get_handover(session, project_for(session, request, user))
     from sqlalchemy import func
     rels = releases(session, handover) if handover else []
     counts = dict(session.execute(
         select(Acknowledgement.release_id, func.count()).where(
             Acknowledgement.release_id.in_([r.id for r in rels]))
         .group_by(Acknowledgement.release_id)).all()) if rels else {}
-    rows = [(r, len(r.entries), counts.get(r.id, 0)) for r in rels]
+    names: dict[int, list[tuple[str, object]]] = {r.id: [] for r in rels}
+    if rels:
+        for a, who in session.execute(
+                select(Acknowledgement, User.display_name).join(User, User.id == Acknowledgement.user_id)
+                .where(Acknowledgement.release_id.in_([r.id for r in rels]))
+                .order_by(Acknowledgement.acknowledged_at)):
+            names[a.release_id].append((who, a.acknowledged_at))
+    rows = [(r, len(r.entries), counts.get(r.id, 0), names[r.id]) for r in rels]
     return render(request, "releases.html", user, rows=rows)
 
 
@@ -127,7 +134,7 @@ def release_history(request: Request, user: User = Depends(require_user),
 def handover_action(action: str, request: Request, csrf: str = Form(""),
                     user: User = Depends(require_user), session: Session = Depends(get_session)):
     check_csrf(request, csrf)
-    project = project_for(session)
+    project = project_for(session, request, user)
     handover = get_handover(session, project)
     if handover is None and user.role in REVIEWER_ROLES:
         handover = get_or_create_handover(session, project)
@@ -159,7 +166,7 @@ def semantic_check(request: Request, csrf: str = Form(""), user: User = Depends(
     from .semantic import judge_from_env, semantic_review
     try:
         with judge_from_env() as judge:
-            report = semantic_review(session, project_for(session), judge)
+            report = semantic_review(session, project_for(session, request, user), judge)
     except ExtractionError as exc:
         session.rollback()
         return _flash(request, f"Semantic check failed: {exc}", "/admin/sources")
@@ -175,7 +182,7 @@ def semantic_check(request: Request, csrf: str = Form(""), user: User = Depends(
 @router.get("/admin/sources")
 def sources_page(request: Request, user: User = Depends(require_admin),
                  session: Session = Depends(get_session)):
-    project = project_for(session)
+    project = project_for(session, request, user)
     import os
     return render(request, "sources.html", user, project=project, sources=project.sources,
                   kinds=[k.value for k in SourceKind], levels=[s.value for s in Sensitivity],
@@ -196,7 +203,7 @@ async def upload_source(request: Request, kind: str = Form(""), sensitivity: str
     data = await file.read(MAX_BYTES + 1)
     name = (file.filename or "upload").replace("\\", "/").split("/")[-1][:200]
     try:
-        result = ingest_source(session, project_for(session), kind=k, name=name,
+        result = ingest_source(session, project_for(session, request, user), kind=k, name=name,
                                content=decode_upload(data), sensitivity=level,
                                origin=f"upload by {user.username}")
     except IngestError as exc:
@@ -221,7 +228,7 @@ def extract_claims(request: Request, engine: str = Form("rules"), csrf: str = Fo
     try:
         if engine not in ("rules", "llm"):
             raise ExtractionError("unknown extraction engine")
-        project = project_for(session)
+        project = project_for(session, request, user)
         if engine == "rules":
             report = run_extraction(session, project, RuleExtractor())
         else:

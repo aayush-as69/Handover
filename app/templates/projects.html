@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Projects{% endblock %}
+{% block body %}
+<div class="page-shell">
+  <header class="page-header">
+    <div><p class="page-eyebrow">WORKSPACE / ACCESS</p><h1>Projects</h1>
+      <p class="page-intro">Each project keeps its own sources, claims, conflicts, questions and handover. You only see projects you were added to. Admins can see all of them.</p>
+    </div>
+    <div class="page-header-aside"><span class="page-aside-label">WORKING IN</span><strong>{{ current.name if current else "No project yet" }}</strong></div>
+  </header>
+
+  {% if not projects %}
+  <section class="page-panel"><p class="muted">You have not been added to a project yet. Ask an admin to add you.</p></section>
+  {% endif %}
+
+  <div class="bento work-card-grid">
+  {% for p in projects %}
+    <section class="tile s6 work-card">
+      <div class="work-card-head"><div class="meta">
+        {% if current and p.id == current.id %}<span class="pill verified">Current</span>{% endif %}
+        <span class="muted">Created {{ p.created_at.strftime("%Y-%m-%d") }}</span></div></div>
+      <h2>{{ p.name }}</h2>
+      {% if p.description %}<p class="work-card-summary">{{ p.description }}</p>{% endif %}
+      <p class="muted">Outgoing member: {{ p.outgoing_member or "not set" }}</p>
+      {% if not (current and p.id == current.id) %}
+      <form method="post" action="/projects/switch"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="project_id" value="{{ p.id }}"><button class="primary">Switch to this project</button></form>
+      {% endif %}
+      {% if user.role.value == "admin" %}
+      <h3>People</h3>
+      <ul class="plain">
+        {% for m in members[p.id] %}
+        <li>{{ m.display_name }} <span class="muted">· {{ m.role.value }}</span>
+          <form method="post" action="/projects/{{ p.id }}/members/remove" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="user_id" value="{{ m.id }}"><button class="link" aria-label="Remove {{ m.display_name }} from {{ p.name }}">Remove</button></form></li>
+        {% else %}<li class="muted">No members yet. Admins can still open it.</li>{% endfor %}
+      </ul>
+      {% if others[p.id] %}
+      <form method="post" action="/projects/{{ p.id }}/members/add" class="filters">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label>Add a person <select name="user_id">{% for u in others[p.id] %}<option value="{{ u.id }}">{{ u.display_name }} ({{ u.role.value }})</option>{% endfor %}</select></label>
+        <button>Add</button>
+      </form>
+      {% endif %}
+      {% endif %}
+    </section>
+  {% endfor %}
+  </div>
+
+  {% if user.role.value == "admin" %}
+  <section class="page-panel">
+    <div class="panel-heading"><div><p class="page-eyebrow">NEW HANDOVER</p><h2>Create a project</h2></div></div>
+    <form method="post" action="/projects/new" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label>Project name <input name="name" maxlength="200" required></label>
+      <label>Who is leaving? <input name="outgoing" maxlength="128"></label>
+      <label>Short description <textarea name="description" rows="2" maxlength="1000"></textarea></label>
+      <div class="buttons"><button class="primary">Create project</button></div>
+    </form>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

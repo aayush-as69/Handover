@@ -23,6 +23,7 @@ from .access import (chunk_visible, clearance_rank, effective_rank_sql, effectiv
 from .db import get_session
 from .enums import REVIEWER_ROLES, Confidence, ReviewStatus
 from .models import Chunk, Claim, Project, User
+from .projects import can_access_project
 from .security import (clear_login_failures_for, client_ip, csrf_ok, login_allowed, new_csrf_token,
                        record_login_failure_for, verify_password, DUMMY_HASH)
 from .verify import verify_claim
@@ -103,10 +104,15 @@ def word_diff(old: str, new: str) -> list[tuple[str, str]]:
     return out
 
 
-def project_for(session: Session) -> Project:
-    project = session.scalar(select(Project).order_by(Project.id))
+def project_for(session: Session, request: Request, user: User) -> Project:
+    """The project this person is working in: their chosen one if they may use it, else the
+    first they may use. Never a project they have no access to."""
+    from .projects import resolve_project
+    wanted = request.session.get("project_id")
+    project = resolve_project(session, user, wanted if isinstance(wanted, int) else None)
     if project is None:
-        raise HTTPException(status_code=404, detail="No project has been loaded yet.")
+        raise HTTPException(status_code=404, detail="You have not been added to a project yet.")
+    request.session["project_id"] = project.id
     return project
 
 
@@ -118,7 +124,8 @@ def _flash_stale(request: Request) -> None:
 def get_reviewable(session: Session, user: User, claim_id: int) -> Claim:
     claim = session.get(Claim, claim_id)
     # Same answer whether it is missing or above clearance: do not reveal that it exists.
-    if claim is None or not visible_in_review(user.role, claim):
+    if claim is None or not visible_in_review(user.role, claim) or not can_access_project(
+            session, user, claim.project_id):
         raise HTTPException(status_code=404, detail="Claim not found.")
     return claim
 
@@ -193,7 +200,7 @@ def review_queue(request: Request, status: str = "open", confidence: str = "", p
                  user: User = Depends(require_reviewer), session: Session = Depends(get_session)):
     """Filtering by clearance, status and confidence, counting, ordering and paging all happen in
     the database; only the page being shown is loaded."""
-    project = project_for(session)
+    project = project_for(session, request, user)
     rank = effective_rank_sql().label("rank")
     clearance = clearance_rank(user.role)
     base = select(Claim.id, Claim.review_status, rank).where(Claim.project_id == project.id).subquery()
@@ -327,7 +334,8 @@ def claim_action(claim_id: int, action: str, request: Request, csrf: str = Form(
 def source_text(chunk_id: int, request: Request, user: User = Depends(require_reviewer),
                 session: Session = Depends(get_session), snippet: str = ""):
     chunk = session.get(Chunk, chunk_id)
-    if chunk is None or not chunk_visible(user.role, chunk):
+    if chunk is None or not chunk_visible(user.role, chunk) or not can_access_project(
+            session, user, chunk.source.project_id):
         raise HTTPException(status_code=404, detail="Source not found.")
     text, i = chunk.text, chunk.text.find(snippet) if snippet else -1
     parts = (text[:i], text[i:i + len(snippet)], text[i + len(snippet):]) if i >= 0 else (text, "", "")

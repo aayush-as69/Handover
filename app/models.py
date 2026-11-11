@@ -81,6 +81,19 @@ class Project(Base):
     )
 
 
+class ProjectMember(Base):
+    """Who may work in a project. Admins reach every project; everyone else needs a row here."""
+
+    __tablename__ = "project_members"
+    __table_args__ = (UniqueConstraint("project_id", "user_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    added_by: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    added_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
 class Source(Base):
     __tablename__ = "sources"
     # Two simultaneous uploads of the same content cannot both be stored.

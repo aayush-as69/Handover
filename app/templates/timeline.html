@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Timeline{% endblock %}
+{% block body %}
+<div class="page-shell">
+  <header class="page-header">
+    <div><p class="page-eyebrow">HOW WE GOT HERE / {{ project.name|upper }}</p><h1>Decision timeline</h1>
+      <p class="page-intro">Dated decisions, blockers, risks and open questions, in order. Each links to its claim and sources. You see approved claims your role may read{% if reviewer %}; reviewers can also include drafts, which are marked{% endif %}.</p>
+    </div>
+    <div class="page-header-aside"><span class="page-aside-label">ITEMS</span><strong>{{ items|length }}</strong></div>
+  </header>
+  <form method="get" class="filters">
+    <label>Type <select name="type"><option value="">All types</option>{% for t in types %}<option value="{{ t }}" {% if t == type %}selected{% endif %}>{{ t.replace("_", " ") }}</option>{% endfor %}</select></label>
+    {% if reviewer %}<label><input type="checkbox" name="drafts" value="1" {% if drafts %}checked{% endif %}> Include drafts</label>{% endif %}
+    <button>Apply</button>
+  </form>
+  <ol class="timeline">
+  {% for i in items %}
+    <li class="tile timeline-item">
+      <p class="timeline-date">{% if i.when %}{{ i.when.strftime("%Y-%m-%d") }}{% else %}Undated{% endif %}</p>
+      <div>
+        <div class="meta"><span class="pill">{{ i.claim.type.value.replace("_", " ") }}</span>
+          <span class="pill {{ i.claim.confidence.value }}">{{ conf_label(i.claim.confidence) }}</span>
+          {% if not i.approved %}<span class="pill inferred">not approved yet</span>{% endif %}</div>
+        <p>{{ i.claim.statement }}</p>
+        <p class="muted">{% if i.sources %}Sources: {{ i.sources|join(", ") }}{% endif %}{% if reviewer %} · <a href="/review/claims/{{ i.claim.id }}">Open claim</a>{% endif %}</p>
+      </div>
+    </li>
+  {% else %}
+    <li class="tile"><p class="muted">Nothing to show for these filters.</p></li>
+  {% endfor %}
+  </ol>
+</div>
+{% endblock %}

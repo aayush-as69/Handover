@@ -1,0 +1,28 @@
+{
+  "name": "Library kiosk (synthetic)",
+  "note": "Invented project, written for this evaluation. Matching is by claim type and key words in the statement, so it rewards what was found, not exact wording.",
+  "sources": [
+    {"path": "kiosk_chat.txt", "kind": "chat"},
+    {"path": "kiosk_notes.md", "kind": "notes"},
+    {"path": "kiosk_tasks.csv", "kind": "tasks"}
+  ],
+  "expected": [
+    {"id": "chat-sqlite", "source": "chat", "types": ["decision"], "all": ["sqlite"], "reason_any": ["overkill", "no one to run", "4k"]},
+    {"id": "chat-scanner", "source": "chat", "types": ["decision"], "all": ["bluetooth"], "reason_any": ["hub", "battery"]},
+    {"id": "chat-latefee-owner", "source": "chat", "types": ["owner"], "all": ["ana", "late"]},
+    {"id": "chat-printer", "source": "chat", "types": ["blocker", "risk", "dependency"], "all": ["printer", "windows"]},
+    {"id": "chat-domain", "source": "chat", "types": ["risk", "next_action"], "all": ["domain"]},
+    {"id": "chat-router", "source": "chat", "types": ["open_question", "risk"], "all": ["router"]},
+    {"id": "chat-backup", "source": "chat", "types": ["next_action", "risk"], "all": ["backup"]},
+    {"id": "chat-wifi", "source": "chat", "types": ["recurring_problem", "risk"], "all": ["wifi"]},
+    {"id": "chat-priya", "source": "chat", "types": ["contact"], "all": ["priya"]},
+    {"id": "notes-sso", "source": "notes", "types": ["decision"], "all": ["single sign-on"], "reason_any": ["accounts", "reset"]},
+    {"id": "notes-search", "source": "notes", "types": ["decision"], "all": ["like"]},
+    {"id": "notes-firmware", "source": "notes", "types": ["risk"], "all": ["firmware"]},
+    {"id": "notes-waiver", "source": "notes", "types": ["open_question"], "all": ["waiver"]},
+    {"id": "notes-backup-action", "source": "notes", "types": ["next_action"], "all": ["backup", "schedule"]},
+    {"id": "tasks-scanner", "source": "tasks", "types": ["next_action"], "all": ["scanner"]},
+    {"id": "tasks-latefee-unowned", "source": "tasks", "types": ["owner"], "all": ["k2"]},
+    {"id": "tasks-printer-blocked", "source": "tasks", "types": ["blocker"], "all": ["k3"]}
+  ]
+}

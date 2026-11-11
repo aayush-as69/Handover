@@ -1,0 +1,65 @@
+{
+  "engine": "rules-v1",
+  "overall": {
+    "expected": 17,
+    "found": 8,
+    "produced": 8,
+    "correct": 8,
+    "recall": 0.471,
+    "precision": 1.0,
+    "reasons_expected": 3,
+    "reasons_kept": 1
+  },
+  "by_source": {
+    "chat": {
+      "expected": 9,
+      "found": 0,
+      "produced": 0,
+      "correct": 0,
+      "recall": 0.0,
+      "precision": 0.0,
+      "reasons_expected": 2,
+      "reasons_kept": 0
+    },
+    "notes": {
+      "expected": 5,
+      "found": 5,
+      "produced": 5,
+      "correct": 5,
+      "recall": 1.0,
+      "precision": 1.0,
+      "reasons_expected": 1,
+      "reasons_kept": 1
+    },
+    "tasks": {
+      "expected": 3,
+      "found": 3,
+      "produced": 3,
+      "correct": 3,
+      "recall": 1.0,
+      "precision": 1.0,
+      "reasons_expected": 0,
+      "reasons_kept": 0
+    }
+  },
+  "missed": [
+    "chat-sqlite",
+    "chat-scanner",
+    "chat-latefee-owner",
+    "chat-printer",
+    "chat-domain",
+    "chat-router",
+    "chat-backup",
+    "chat-wifi",
+    "chat-priya"
+  ],
+  "unmatched_claims": [],
+  "confidence": {
+    "verified": 8
+  },
+  "verified_unmatched": 0,
+  "quote_failures": 0,
+  "warnings": [
+    "14 chat messages were not interpreted: the rule-based extractor only reads structured sources. Use an LLM extractor to read chat."
+  ]
+}

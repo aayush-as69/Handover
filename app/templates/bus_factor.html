@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Bus factor{% endblock %}
+{% block body %}
+<div class="page-shell">
+  <header class="page-header">
+    <div><p class="page-eyebrow">KNOWLEDGE RISK / {{ project.name|upper }}</p><h1>Bus-factor view</h1>
+      <p class="page-intro">Claims that rest only on one person’s own messages or commits. If that person leaves, nothing else in the sources backs them up. Notes and task sheets name no author, so they are counted but not assigned.</p>
+    </div>
+    <div class="page-header-aside"><span class="page-aside-label">EXAMINED</span><strong>{{ result.examined }} claims<br>{{ result.unattributed }} without a named author</strong></div>
+  </header>
+  <div class="bento work-card-grid">
+  {% for p in result.people %}
+    <section class="tile s6 work-card">
+      <div class="meta"><span class="pill {{ 'conflicting' if p.sole >= 5 else ('inferred' if p.sole else 'verified') }}">{{ p.sole }} only here</span><span class="muted">{{ p.total_claims_touched }} claims touch {{ p.person }}</span></div>
+      <h2>{{ p.person }}</h2>
+      {% if p.claims %}
+      <ul class="plain">{% for c in p.claims[:8] %}<li><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a> <span class="muted">· {{ c.type.value.replace("_", " ") }}</span></li>{% endfor %}</ul>
+      {% if p.claims|length > 8 %}<p class="muted">and {{ p.claims|length - 8 }} more.</p>{% endif %}
+      {% else %}<p class="muted">Every claim they appear in is backed by someone else too.</p>{% endif %}
+    </section>
+  {% else %}
+    <section class="tile s12"><p class="muted">No claim has a named author yet. Load chat or GitHub sources to see this view.</p></section>
+  {% endfor %}
+  </div>
+</div>
+{% endblock %}
