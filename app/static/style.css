@@ -1130,19 +1130,28 @@ small{font-size:.86rem;line-height:1.55}
 }
 
 
-/* Give conflict evidence enough horizontal room instead of leaving half the page unused. */
+/* Keep conflict evidence compact without equal-height grid rows. */
 .conflicts-page{
-  max-width:1280px;
+  max-width:1440px;
 }
 .conflicts-page .conflict-card{
   grid-column:span 12;
+  width:100%;
 }
 .conflicts-page .conflict-members{
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  align-items:start;
+  display:block;
+  columns:2 26rem;
+  column-gap:.75rem;
+  column-fill:balance;
+}
+.conflicts-page .conflict-member{
+  display:flex;
+  width:100%;
+  break-inside:avoid;
+  margin:0 0 .5rem;
 }
 @media (max-width:760px){
   .conflicts-page .conflict-members{
-    grid-template-columns:1fr;
+    columns:1;
   }
 }
