@@ -78,8 +78,6 @@ Decisions live in meeting notes. Ownership is buried in task boards. Risks are s
 - Generate “Questions Before I Leave” for missing context.
 - Identify ownership, decision and risk gaps.
 - Let incoming teammates acknowledge a specific release.
-- Show a dated decision timeline and a bus-factor view of single-person knowledge.
-- Keep several projects apart, with an audit log of who changed what.
 
 </td>
 </tr>
@@ -278,7 +276,7 @@ Detailed guides live in [`docs/`](docs/README.md).
 
 - **Product:** [Overview](docs/01-project-overview.md) · [Product requirements](docs/02-prd.md) · [Software requirements](docs/03-srs.md) · [User and demo guide](docs/12-user-demo-guide.md) · [Features](docs/FEATURES.md)
 - **Engineering:** [Architecture](docs/04-architecture.md) · [Database design](docs/05-database-design.md) · [Implementation](docs/06-technical-implementation.md) · [Security](docs/07-security.md) · [API and routes](docs/08-api-reference.md) · [Testing](docs/09-testing.md) · [Development setup](docs/10-development.md)
-- **Operations:** [Deployment and operations](docs/11-deployment-operations.md) · [Production readiness](docs/PRODUCTION_READINESS.md) · [Limitations and roadmap](docs/13-limitations-roadmap.md) · [Quality report, timeline, projects](docs/15-round-improvements.md) · [Disclosures](docs/DISCLOSURES.md)
+- **Operations:** [Deployment and operations](docs/11-deployment-operations.md) · [Production readiness](docs/PRODUCTION_READINESS.md) · [Limitations and roadmap](docs/13-limitations-roadmap.md) · [Disclosures](docs/DISCLOSURES.md)
 
 ## Repository map
 
@@ -312,7 +310,7 @@ Handover is designed with explicit trust boundaries, but it is not a guarantee o
 - Live LLM quality has not been verified in the documented CI baseline.
 - The demo is deployed on Render at https://handover-2hpd.onrender.com, and the author confirmed it loads and signs in on 11 Nov 2026. It has not had an independent check, and the backup-restore exercise has not been run against the hosted database.
 - Request throttling is process-local; use an edge/proxy rate limiter for production.
-- Projects share one user table and role per person; extraction-quality numbers for a live model have not been measured yet (see [the quality report guide](docs/15-round-improvements.md)).
+- The current deployment model assumes one project per deployment.
 
 See [Security](docs/07-security.md) and [Limitations](docs/13-limitations-roadmap.md) before using real project data.
 
