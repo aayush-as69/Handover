@@ -317,3 +317,23 @@ def test_guide_page_is_role_aware(env):
     assert viewer.status_code == 200
     assert "/conflicts" not in viewer.text and "acknowledge" in viewer.text
     assert client(app).get("/guide").status_code in (303, 401)
+
+
+def test_takeover_brief_respects_role_and_release(env):
+    app, Session = env
+    meera = login(app, "meera")
+    # Nothing is signed off yet: readers get the pending page, reviewers a draft preview.
+    assert "Draft preview" in meera.get("/handover/brief").text
+    kabir = login(app, "kabir")
+    assert "Where to start" not in kabir.get("/handover/brief").text
+    with Session() as s:
+        for c in s.scalars(select(Claim)):
+            c.review_status = ReviewStatus.approved
+        s.commit()
+    r = meera.post("/handover/approve", data={"csrf": token(meera, "/handover")})
+    assert r.status_code == 303
+    page = kabir.get("/handover/brief")
+    assert page.status_code == 200 and "Where to start" in page.text
+    restricted = login(app, "rao").get("/handover/brief").text
+    assert restricted.count("pill") <= page.text.count("pill")
+    assert kabir.get("/handover/brief?view_as=admin").status_code == 403

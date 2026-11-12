@@ -107,6 +107,41 @@ def _latest_approvals(session, claim_ids):
     return out
 
 
+@router.get("/handover/brief")
+def takeover_brief(request: Request, user: User = Depends(require_user),
+                   session: Session = Depends(get_session), view_as: str = ""):
+    from .brief import build_brief
+    from .enums import QuestionStatus
+    from .models import Question
+    project = project_for(session, request, user)
+    handover = get_handover(session, project)
+    if handover is None and user.role in REVIEWER_ROLES:
+        handover = get_or_create_handover(session, project)
+        session.commit()
+    if not can_view(user, handover) or (
+            user.role not in REVIEWER_ROLES and is_stale(session, project, handover)):
+        return render(request, "handover_pending.html", user, project=project)
+    role = user.role
+    if view_as:
+        try:
+            role = Role(view_as)
+        except ValueError:
+            raise HTTPException(status_code=404, detail="Unknown role.") from None
+        if role != user.role and user.role not in REVIEWER_ROLES:
+            raise HTTPException(status_code=403, detail="Only reviewers can preview another role.")
+    sections = build_sections(session, project, user, role)
+    shown = {c.id for sec in sections for c in sec.claims}
+    open_rows = [q for q in session.scalars(select(Question).where(
+        Question.project_id == project.id, Question.status == QuestionStatus.open)
+        .order_by(Question.id)) if q.claim_ids and all(i in shown for i in q.claim_ids)]
+    brief = build_brief(sections, conflict_notes(session, project, shown), open_rows,
+                        answered_questions(session, project, shown))
+    return render(request, "brief.html", user, project=project, handover=handover,
+                  release=latest_release(session, handover), brief=brief, view_role=role,
+                  previewing=role != user.role, sens=effective_sensitivity,
+                  hide=lambda text: redact_text(role, text))
+
+
 @router.get("/handover/releases")
 def release_history(request: Request, user: User = Depends(require_user),
                     session: Session = Depends(get_session)):

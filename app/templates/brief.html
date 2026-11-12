@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Takeover brief{% endblock %}
+{% macro claim_row(c) %}
+<li><span class="pill {{ c.confidence.value }}">{{ conf_label(c.confidence) }}</span> {{ hide(c.statement) }}</li>
+{% endmacro %}
+{% block body %}
+<div class="page-shell brief">
+  <header class="page-header">
+    <div><p class="page-eyebrow">TAKEOVER BRIEF / {{ project.name|upper }}</p><h1>Where to start</h1>
+      <p class="page-intro">{% if release %}From release {{ release.number }}, signed off by {{ release.approved_by_name }} on {{ release.approved_at.strftime("%Y-%m-%d") }}. {% else %}<strong>Draft preview. Not signed off yet.</strong> {% endif %}Every line is an approved claim your role may read. Priorities follow fixed rules, not a model's guess. <a href="/handover{% if previewing %}?view_as={{ view_role.value }}{% endif %}">Open the full handover</a> for the evidence behind each line.</p>
+    </div>
+    <div class="page-header-aside"><span class="page-aside-label">VERIFIED</span><strong>{{ brief.health.verified_pct }}%</strong></div>
+  </header>
+  {% if previewing %}<p class="flash">Previewing what a <strong>{{ view_role.value }}</strong> sees.</p>{% endif %}
+
+  {% set h = brief.health %}
+  <div class="bento queue-stats">
+    <div class="tile s3 stat ok"><span class="l">Quote-verified</span><span class="n">{{ h.verified }}<small>/{{ h.total }}</small></span><span class="stat-foot">Words found in a source</span></div>
+    <div class="tile s3 stat warn"><span class="l">Check yourself</span><span class="n">{{ h.needs_care }}</span><span class="stat-foot">Inferred, conflicting or unsupported</span></div>
+    <div class="tile s3 stat bad"><span class="l">Open conflicts</span><span class="n">{{ h.open_conflicts }}</span><span class="stat-foot">Sources disagree</span></div>
+    <div class="tile s3 stat warn"><span class="l">Open questions</span><span class="n">{{ h.open_questions }}</span><span class="stat-foot">Unanswered gaps</span></div>
+  </div>
+
+  {% if not h.total %}
+  <section class="tile"><p class="muted">Nothing is approved for your role yet, so there is no brief to show.</p></section>
+  {% endif %}
+
+  {% if brief.start_here %}
+  <section class="tile"><h2>Start here</h2>
+    <ol class="plain guide-steps">
+      {% for s in brief.start_here %}<li>{{ hide(s.claim.statement) }}<br><span class="muted">{{ s.reason }}</span></li>{% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+
+  {% if brief.decisions %}
+  <section class="tile"><h2>Decisions you inherit</h2><ul class="plain">{% for c in brief.decisions %}{{ claim_row(c) }}{% endfor %}</ul></section>
+  {% endif %}
+
+  {% if brief.risks %}
+  <section class="tile"><h2>Risks and blockers</h2><ul class="plain">{% for c in brief.risks %}{{ claim_row(c) }}{% endfor %}</ul></section>
+  {% endif %}
+
+  {% if brief.people or brief.depends_on %}
+  <section class="tile"><h2>Who knows what</h2>
+    {% if brief.people %}<ul class="plain">{% for c in brief.people %}{{ claim_row(c) }}{% endfor %}</ul>{% endif %}
+    {% for person, cs in brief.depends_on %}
+    <p class="muted">{{ person }} is the only recorded source for {{ cs|length }} claims here. Ask them before they leave.</p>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if brief.questions or brief.unanswered or brief.answered %}
+  <section class="tile"><h2>Questions</h2>
+    <ul class="plain">
+      {% for c in brief.questions %}{{ claim_row(c) }}{% endfor %}
+      {% for q in brief.unanswered %}<li><span class="pill inferred">unanswered</span> {{ hide(q.text) }}</li>{% endfor %}
+      {% for text, answer, who in brief.answered %}<li><span class="pill verified">answered</span> {{ hide(text) }}<br><span class="muted">{{ who }}: {{ hide(answer) }}</span></li>{% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if brief.actions %}
+  <section class="tile"><h2>Next actions on record</h2><ul class="plain">{% for c in brief.actions %}{{ claim_row(c) }}{% endfor %}</ul></section>
+  {% endif %}
+</div>
+{% endblock %}

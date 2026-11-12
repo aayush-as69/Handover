@@ -1188,3 +1188,5 @@ form.inline{display:inline;margin-left:.6rem}
 .guide .pill{margin-right:.4rem}
 .guide-tip{display:block;margin-bottom:1rem;padding:.8rem 1rem;border:1px solid var(--line);border-radius:12px;background:var(--tile-2)}
 [hidden],.table-scroll tr[hidden],.table-scroll tr[hidden] td{display:none!important}
+.brief .tile{margin-bottom:12px;padding:1.3rem 1.4rem}
+.brief .stat .n small{font-size:1rem;font-weight:500;color:var(--mut)}

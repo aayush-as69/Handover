@@ -22,6 +22,8 @@
     </div>
   </header>
 
+  <p class="guide-tip">Short on time? Open the <a href="/handover/brief{% if previewing %}?view_as={{ view_role.value }}{% endif %}">takeover brief</a> for where to start.</p>
+
   {% if is_reviewer and stale %}<p class="warnbox handover-alert" role="alert"><strong>The sign-off is out of date.</strong> {{ state.withdrawn }} signed-off claim(s) were edited, rejected or reopened. Readers cannot see this handover until you sign off again.</p>{% endif %}
   {% if is_reviewer %}
   <section class="page-panel handover-controls">
