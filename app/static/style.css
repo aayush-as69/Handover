@@ -1203,3 +1203,8 @@ form.inline{display:inline;margin-left:.6rem}
 @media(max-width:600px){.bar-row{grid-template-columns:1fr;gap:.2rem}}
 .onboarding-nav{display:flex;gap:.6rem;margin-top:1rem}
 .checks li{padding:.15rem 0}
+.tree,.tree ul{list-style:none;margin:0;padding-left:1.1rem;border-left:2px solid var(--line)}
+.tree{border-left:0;padding-left:0}.tree>li{margin:.4rem 0}.tree ul li{padding:.15rem 0 .15rem .4rem}
+.cite{display:block;margin-top:.25rem;font-size:.85rem}
+.resolve-options{display:flex;flex-wrap:wrap;gap:.4rem;margin:.3rem 0}
+.resolve-options button{font-size:.85rem}

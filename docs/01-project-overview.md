@@ -8,6 +8,8 @@
 
 </div>
 
+![Typical AI summary compared with Handover](assets/workflow.svg)
+
 ## At a glance
 
 | Attribute | Description |

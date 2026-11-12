@@ -270,10 +270,10 @@ def claim_detail(claim_id: int, request: Request, user: User = Depends(require_r
         others = [m for m in visible_members(user.role, cf, members) if m.id != claim.id]
         if others:
             disputes.append((cf, others))
-    from .connections import claim_connections
+    from .connections import claim_connections, evidence_breakdown
     from .freshness import claim_freshness
     return render(request, "claim.html", user, claim=claim, evidence=evidence, disputes=disputes,
-                  connections=claim_connections(session, user, claim), freshness=claim_freshness(claim),
+                  connections=claim_connections(session, user, claim), freshness=claim_freshness(claim), breakdown=evidence_breakdown(user, claim),
                   history=list(reversed(history)), sensitivity=effective_sensitivity(claim),
                   max_statement=MAX_STATEMENT)
 

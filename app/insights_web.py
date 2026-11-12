@@ -7,7 +7,7 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .access import visible_in_review
+from .access import chunk_visible, visible_in_review
 from .conflicts import detect_conflicts, reopen, resolve, visible_members
 from .db import get_session
 from .enums import ConflictStatus, QuestionStatus
@@ -42,7 +42,14 @@ def conflicts_page(request: Request, user: User = Depends(require_reviewer),
         if members and cf.status != ConflictStatus.stale:
             rows.append((cf, members))
     rows.sort(key=lambda r: r[0].status != ConflictStatus.open)
-    return render(request, "conflicts.html", user, rows=rows)
+    cites: dict[int, tuple] = {}
+    for _, members in rows:
+        for c in members:
+            for e in c.evidence:
+                if e.stance.value == "supports" and e.chunk is not None and chunk_visible(user.role, e.chunk):
+                    cites[c.id] = (e.chunk.source.name, e.chunk.locator, e.snippet, e.chunk.id)
+                    break
+    return render(request, "conflicts.html", user, rows=rows, cites=cites)
 
 
 @router.post("/conflicts/detect")

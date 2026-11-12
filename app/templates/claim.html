@@ -59,6 +59,26 @@
     {% endfor %}
   </div>
 
+  {% set b = breakdown %}
+  <section class="tile" style="margin-bottom:12px;padding:1.3rem 1.4rem">
+    <h3>Evidence breakdown</h3>
+    <ul class="plain checks">
+      <li>{{ "✓" if b.quotes and b.found == b.quotes else "✗" }} {{ b.found }} of {{ b.quotes }} supporting quote{{ "s" if b.quotes != 1 }} found word for word.</li>
+      <li>{{ "✓" if b.sources > 1 else "•" }} {{ b.sources }} source{{ "s" if b.sources != 1 }}{% if b.kinds %} ({{ b.kinds|join(", ") }}){% endif %}.{% if b.sources == 1 %} <span class="muted">One source is easy to be wrong about.</span>{% endif %}</li>
+      <li>{{ "✗" if b.contradicting else "✓" }} {{ b.contradicting }} contradicting quote{{ "s" if b.contradicting != 1 }}.</li>
+      <li>{% if b.semantic %}• A model's second opinion said <strong>{{ b.semantic }}</strong>. It is advisory only.{% else %}• No model second opinion recorded.{% endif %}</li>
+    </ul>
+    {% if b.tree %}
+    <h3>Where it comes from</h3>
+    <ul class="tree">
+      {% for name, kind, items in b.tree %}
+      <li><strong>{{ name }}</strong> <span class="muted">({{ kind }})</span>
+        <ul>{% for loc, quote, cid in items %}<li><a href="/review/chunks/{{ cid }}">{{ loc }}</a> <span class="muted">“{{ quote[:110] }}{{ "…" if quote|length > 110 }}”</span></li>{% endfor %}</ul></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+
   {% set f = freshness %}
   <section class="tile" style="margin-bottom:12px;padding:1.3rem 1.4rem">
     <h3>Evidence age</h3>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 380" role="img" aria-labelledby="t d" font-family="Inter, Arial, sans-serif">
+<title id="t">How Handover differs from an AI summary</title>
+<desc id="d">An AI summary goes from documents to a model to a summary you must trust. Handover goes from sources to claims with quotes, a mechanical check, human approval, a numbered release and an acknowledgement.</desc>
+<rect width="960" height="380" fill="#f8fafd"/>
+<text x="30" y="40" font-size="20" font-weight="700" fill="#131d3b">A typical AI summary</text>
+<g font-size="15" fill="#131d3b" text-anchor="middle">
+<rect x="30" y="56" width="170" height="52" rx="10" fill="#e5e9f2"/><text x="115" y="88">Documents</text>
+<rect x="250" y="56" width="170" height="52" rx="10" fill="#e5e9f2"/><text x="335" y="88">Language model</text>
+<rect x="470" y="56" width="170" height="52" rx="10" fill="#e5e9f2"/><text x="555" y="88">Summary</text>
+<rect x="690" y="56" width="240" height="52" rx="10" fill="#fde2e0" stroke="#c0392b"/><text x="810" y="88">Trust it, with no proof</text>
+</g>
+<g stroke="#5b667f" stroke-width="2" fill="none"><path d="M200 82h50M420 82h50M640 82h50"/></g>
+<text x="30" y="170" font-size="20" font-weight="700" fill="#131d3b">Handover</text>
+<g font-size="14" fill="#131d3b" text-anchor="middle">
+<rect x="30" y="186" width="120" height="64" rx="10" fill="#dbe7ff"/><text x="90" y="213">Sources</text><text x="90" y="232" font-size="12" fill="#435068">notes, chat, tasks</text>
+<rect x="170" y="186" width="120" height="64" rx="10" fill="#dbe7ff"/><text x="230" y="213">Claims</text><text x="230" y="232" font-size="12" fill="#435068">each with a quote</text>
+<rect x="310" y="186" width="120" height="64" rx="10" fill="#dff5e6"/><text x="370" y="213">Check</text><text x="370" y="232" font-size="12" fill="#435068">quote must exist</text>
+<rect x="450" y="186" width="120" height="64" rx="10" fill="#fff1d6"/><text x="510" y="213">Person decides</text><text x="510" y="232" font-size="12" fill="#435068">approve or reject</text>
+<rect x="590" y="186" width="120" height="64" rx="10" fill="#dbe7ff"/><text x="650" y="213">Release</text><text x="650" y="232" font-size="12" fill="#435068">numbered, fixed</text>
+<rect x="730" y="186" width="200" height="64" rx="10" fill="#dff5e6" stroke="#15803d"/><text x="830" y="213">New owner acknowledges</text><text x="830" y="232" font-size="12" fill="#435068">name and time recorded</text>
+</g>
+<g stroke="#5b667f" stroke-width="2" fill="none"><path d="M150 218h20M290 218h20M430 218h20M570 218h20M710 218h20"/></g>
+<text x="30" y="300" font-size="15" fill="#435068">Every line can be traced to the words it came from. A label says what was checked, never that a claim is true.</text>
+<text x="30" y="326" font-size="15" fill="#435068">Each role sees only what its clearance allows, and nothing is approved automatically.</text>
+</svg>

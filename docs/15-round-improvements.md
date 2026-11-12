@@ -93,3 +93,7 @@ Code: `app/projects.py`, `app/audit_log.py`, `app/workspace_web.py`.
 - **Extraction quality page** (`/quality`): shows the saved scoring reports, so a live-model report appears beside the rule baseline once it is committed.
 - **Claim page**: a plain list of what a label checked and a reminder of what it does not mean.
 - **Per-project roles**: an admin can give a member a different role in each project (approver, viewer or restricted). With none set, the person's default role applies. The role for the project being viewed is applied to every request and never written back to the account. Admin is instance-wide and is not a per-project role, so no project can promote anyone to admin. Migration `0005` adds a nullable `role` column to `project_members`, so existing access is unchanged.
+- **Evidence breakdown and source tree** on each claim page: quotes found word for word, number and kinds of sources, contradicting quotes, any model opinion (advisory) and the exact passages the claim rests on. These are counts, not scores.
+- **Conflicts** now cite the source passage behind each side.
+- **Sources page** shows when each source was loaded and the date of its newest content.
+- **Workflow diagram**: `docs/assets/workflow.svg` compares a typical AI summary with Handover's evidence-first flow.

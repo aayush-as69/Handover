@@ -23,7 +23,8 @@
         {% for c in members %}
         <div class="conflict-member">
           <span class="conflict-member-mark" aria-hidden="true">“</span>
-          <div><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a><span class="muted">{{ c.review_status.value }}</span></div>
+          <div><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a><span class="muted">{{ c.review_status.value }}</span>
+            {% if c.id in cites %}{% set src, loc, quote, cid = cites[c.id] %}<a class="cite" href="/review/chunks/{{ cid }}">{{ src }} · {{ loc }}: “{{ quote[:120] }}{{ "…" if quote|length > 120 }}”</a>{% endif %}</div>
         </div>
         {% endfor %}
       </div>

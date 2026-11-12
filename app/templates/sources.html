@@ -47,12 +47,15 @@
     <div class="panel-heading"><div><p class="page-eyebrow">INGESTED MATERIAL</p><h2>Source library</h2></div><div class="table-tools"><label class="table-search"><span class="sr-only">Search sources</span><input type="search" placeholder="Search sources..." data-live-search data-search-target="#source-list" data-search-count="#source-search-count"></label><span class="panel-hint" id="source-search-count">{{ sources|length }} source(s)</span></div></div>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>Source</th><th>Type</th><th>Sensitivity</th><th>Passages</th><th>Masked</th></tr></thead>
+        <thead><tr><th>Source</th><th>Type</th><th>Sensitivity</th><th>Passages</th><th>Masked</th><th>Loaded</th><th>Newest content</th></tr></thead>
         <tbody id="source-list">{% for s in sources %}
         <tr data-search-item><td data-label="Source"><strong>{{ s.name }}</strong></td><td data-label="Type">{{ s.kind.value }}</td><td data-label="Sensitivity"><span class="pill s-{{ s.sensitivity.value }}">{{ s.sensitivity.value }}</span></td>
-        <td data-label="Passages">{{ s.chunks|length }}</td><td data-label="Masked">{{ s.chunks|selectattr("redacted")|list|length }}</td></tr>
-        {% else %}<tr><td colspan="5" class="muted table-empty">No sources yet. Upload the first project source above.</td></tr>{% endfor %}
-        <tr data-search-empty hidden><td colspan="5" class="muted table-empty">No sources match your search.</td></tr></tbody>
+        <td data-label="Passages">{{ s.chunks|length }}</td><td data-label="Masked">{{ s.chunks|selectattr("redacted")|list|length }}</td>
+        {% set dated = s.chunks|map(attribute="occurred_at")|select|list %}
+        <td data-label="Loaded" class="muted">{{ s.ingested_at.strftime("%Y-%m-%d") }}</td>
+        <td data-label="Newest content" class="muted">{% if dated %}{{ (dated|max).strftime("%Y-%m-%d") }}{% else %}undated{% endif %}</td></tr>
+        {% else %}<tr><td colspan="7" class="muted table-empty">No sources yet. Upload the first project source above.</td></tr>{% endfor %}
+        <tr data-search-empty hidden><td colspan="7" class="muted table-empty">No sources match your search.</td></tr></tbody>
       </table>
     </div>
   </section>

@@ -547,3 +547,32 @@ def test_project_role_is_checked_on_actions_not_just_pages(env):
     assert r.status_code in (403, 404)
     with Session() as s:
         assert s.get(Claim, cid).review_status.value == "generated"
+
+
+def test_claim_page_shows_evidence_breakdown_and_source_tree(env):
+    from app.connections import evidence_breakdown
+    app, Session = env
+    with Session() as s:
+        meera = s.scalar(select(User).where(User.username == "meera"))
+        project = s.scalar(select(Project))
+        claim = next(c for c in s.scalars(select(Claim).where(Claim.project_id == project.id)) if c.evidence)
+        b = evidence_breakdown(meera, claim)
+        assert 0 <= b.found <= b.quotes and b.sources == len(b.tree)
+        cid = claim.id
+    page = login(app, "meera").get(f"/review/claims/{cid}").text
+    assert "Evidence breakdown" in page and "Where it comes from" in page
+
+
+def test_conflict_cards_cite_their_sources(env):
+    from app.conflicts import detect_conflicts
+    app, Session = env
+    with Session() as s:
+        detect_conflicts(s, s.scalar(select(Project)))
+        s.commit()
+    page = login(app, "meera").get("/conflicts").text
+    assert "conflict-member" in page and "class=\"cite\"" in page
+
+
+def test_sources_page_shows_load_and_content_dates(env):
+    page = login(env[0], "riya").get("/admin/sources").text
+    assert "Newest content" in page and "Loaded" in page

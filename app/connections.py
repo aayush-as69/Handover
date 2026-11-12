@@ -71,3 +71,30 @@ def claim_connections(session: Session, user: User, claim: Claim) -> Connections
         if all(visible_in_review(user.role, c) for c in linked.values()):
             out.questions.append(q)
     return out
+
+
+@dataclass
+class Breakdown:
+    quotes: int                 # supporting quotes the role may see
+    found: int                  # of those, found word for word in the source
+    sources: int
+    kinds: list
+    contradicting: int
+    semantic: str | None        # advisory model opinion, if one was recorded
+    tree: list = field(default_factory=list)    # (source name, kind, [(locator, quote, chunk id)])
+
+
+def evidence_breakdown(user: User, claim: Claim) -> Breakdown:
+    """Plain facts about a claim's evidence. Counts, not scores: nothing here is a guess."""
+    sup = [e for e in claim.evidence
+           if e.stance.value == "supports" and e.chunk is not None and chunk_visible(user.role, e.chunk)]
+    tree: dict[int, tuple] = {}
+    for e in sup:
+        src = e.chunk.source
+        entry = tree.setdefault(e.chunk.source_id, (src.name, src.kind.value, []))
+        entry[2].append((e.chunk.locator, e.snippet, e.chunk.id))
+    return Breakdown(
+        quotes=len(sup), found=sum(1 for e in sup if e.snippet_verified),
+        sources=len(tree), kinds=sorted({t[1] for t in tree.values()}),
+        contradicting=sum(1 for e in claim.evidence if e.stance.value == "contradicts"),
+        semantic=claim.semantic_verdict, tree=list(tree.values()))
