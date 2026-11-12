@@ -337,3 +337,21 @@ def test_takeover_brief_respects_role_and_release(env):
     restricted = login(app, "rao").get("/handover/brief").text
     assert restricted.count("pill") <= page.text.count("pill")
     assert kabir.get("/handover/brief?view_as=admin").status_code == 403
+
+
+def test_claim_connections_show_recorded_links_and_hide_above_clearance(env):
+    app, Session = env
+    from app.connections import claim_connections
+    with Session() as s:
+        meera = s.scalar(select(User).where(User.username == "meera"))
+        project = s.scalar(select(Project))
+        claims = list(s.scalars(select(Claim).where(Claim.project_id == project.id)))
+        with_ev = next(c for c in claims if c.evidence)
+        conn = claim_connections(s, meera, with_ev)
+        assert conn.sources
+        assert all(o.id != with_ev.id for o, _ in conn.related)
+        # An approver can never be shown a related claim above their clearance.
+        from app.access import visible_in_review
+        assert all(visible_in_review(meera.role, o) for o, _ in conn.related)
+    page = login(app, "meera").get(f"/review/claims/{with_ev.id}")
+    assert page.status_code == 200 and "Connections" in page.text

@@ -1190,3 +1190,5 @@ form.inline{display:inline;margin-left:.6rem}
 [hidden],.table-scroll tr[hidden],.table-scroll tr[hidden] td{display:none!important}
 .brief .tile{margin-bottom:12px;padding:1.3rem 1.4rem}
 .brief .stat .n small{font-size:1rem;font-weight:500;color:var(--mut)}
+.connections h3{font-size:1rem;margin:.9rem 0 .2rem}
+.connections h3:first-child{margin-top:0}

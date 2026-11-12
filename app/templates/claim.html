@@ -45,6 +45,19 @@
     {% endfor %}
   </div>
 
+  {% if not connections.empty() %}
+  <div class="section-heading">
+    <div><p class="page-eyebrow">WHAT THIS TOUCHES</p><h2>Connections</h2></div>
+    <span class="panel-hint">Only recorded links, not guesses</span>
+  </div>
+  <section class="tile connections">
+    {% if connections.sources %}<h3>Sources</h3><ul class="plain">{% for src, locs in connections.sources %}<li>{{ src.name }} <span class="muted">({{ src.kind.value }}) · {{ locs|join(", ") }}</span></li>{% endfor %}</ul>{% endif %}
+    {% if connections.people %}<h3>People in the evidence</h3><ul class="plain">{% for name, n in connections.people %}<li>{{ name }} <span class="muted">wrote {{ n }} supporting passage{{ "s" if n != 1 }}</span></li>{% endfor %}</ul>{% endif %}
+    {% if connections.related %}<h3>Other claims from the same sources</h3><ul class="plain">{% for other, shared in connections.related %}<li><span class="pill">{{ other.type.value.replace("_", " ") }}</span> <a href="/review/claims/{{ other.id }}">{{ other.statement }}</a> <span class="muted">via {{ shared|join(", ") }}</span></li>{% endfor %}</ul>{% endif %}
+    {% if connections.questions %}<h3>Open questions about it</h3><ul class="plain">{% for q in connections.questions %}<li>{{ q.text }} <a href="/questions">Answer</a></li>{% endfor %}</ul>{% endif %}
+  </section>
+  {% endif %}
+
   <div class="section-heading">
     <div><p class="page-eyebrow">REVIEW DECISION</p><h2>Decide what happens next</h2></div>
     <span class="panel-hint">Edits are checked again before approval</span>
