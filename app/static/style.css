@@ -1178,3 +1178,11 @@ main:has(.conflicts-page){
 ul.plain{list-style:none;margin:.6rem 0;padding:0;display:grid;gap:.5rem}
 form.inline{display:inline;margin-left:.6rem}
 @media (max-width:640px){.timeline-item{grid-template-columns:1fr;gap:.3rem}}
+.guide .tile{margin-bottom:12px;padding:1.3rem 1.4rem}
+.guide h2{margin-bottom:.6rem}
+.guide-steps{counter-reset:step;padding:0;list-style:none}
+.guide-steps>li{counter-increment:step;position:relative;padding:.35rem 0 .35rem 2.2rem}
+.guide-steps>li::before{content:counter(step);position:absolute;left:0;top:.35rem;width:1.5rem;height:1.5rem;border-radius:50%;background:var(--tile-2);border:1px solid var(--line);font-size:.8rem;font-weight:650;text-align:center;line-height:1.4rem}
+.guide ul.plain li{padding:.35rem 0}
+.guide .pill{margin-right:.4rem}
+.guide-tip{display:block;margin-bottom:1rem;padding:.8rem 1rem;border:1px solid var(--line);border-radius:12px;background:var(--tile-2)}

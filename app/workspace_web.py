@@ -25,6 +25,17 @@ def _flash(request: Request, msg: str, to: str):
     return RedirectResponse(to, status_code=303)
 
 
+# ------------------------------------------------------------------ guide
+
+
+@router.get("/guide")
+def guide_page(request: Request, user: User = Depends(require_user),
+               session: Session = Depends(get_session)):
+    project = project_for(session, request, user)
+    return render(request, "guide.html", user, project=project,
+                  reviewer=user.role in REVIEWER_ROLES)
+
+
 # ------------------------------------------------------------------ projects
 
 

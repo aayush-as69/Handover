@@ -306,3 +306,14 @@ def test_migration_gives_existing_users_access_to_existing_projects(tmp_path):
     migrate(eng)
     with eng.connect() as conn:
         assert conn.execute(text("SELECT COUNT(*) FROM project_members")).scalar() == 2
+
+
+def test_guide_page_is_role_aware(env):
+    app, Session = env
+    reviewer = login(app, "meera").get("/guide")
+    assert reviewer.status_code == 200
+    assert "How Handover works" in reviewer.text and "/conflicts" in reviewer.text
+    viewer = login(app, "kabir").get("/guide")
+    assert viewer.status_code == 200
+    assert "/conflicts" not in viewer.text and "acknowledge" in viewer.text
+    assert client(app).get("/guide").status_code in (303, 401)

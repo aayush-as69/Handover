@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}How it works{% endblock %}
+{% block body %}
+<div class="page-shell guide">
+  <header class="page-header">
+    <div><p class="page-eyebrow">START HERE</p><h1>How Handover works</h1>
+      <p class="page-intro">When someone leaves a project, what they knew leaves with them. Handover turns their notes, chat and tasks into a short list of facts, each one tied to the exact words it came from, so the next person can trust it.</p>
+    </div>
+  </header>
+
+  <section class="tile">
+    <h2>The story in this demo</h2>
+    <p><strong>{{ project.name }}</strong> is an invented campus app for finding club events and booking seats. <strong>Riya Sharma</strong> built the backend and leaves on 20 November. <strong>Kabir Mehta</strong> takes over. <strong>Meera Iyer</strong> leads the club and approves what Riya leaves behind. <strong>Mr. Rao</strong> is a mentor who may only see a limited view. Everything here is made up.</p>
+  </section>
+
+  <section class="tile">
+    <h2>What happens, in order</h2>
+    <ol class="plain guide-steps">
+      <li><strong>Sources go in.</strong> Meeting notes, team chat, a task list and a code-activity export. See them under <em>Sources</em> (admin).</li>
+      <li><strong>Claims come out.</strong> A claim is one plain statement, such as a decision, an owner, a risk or an open question. These are the rows in the Review queue.</li>
+      <li><strong>Every claim shows its proof.</strong> The system looks for the claim's quote in the original source. If the words are really there, it is marked <span class="pill verified">quote-verified</span>. If not, it says so.</li>
+      <li><strong>A person decides.</strong> A reviewer approves, edits or rejects each claim. Nothing is trusted just because software wrote it.</li>
+      <li><strong>A release is published.</strong> The approved claims become a numbered handover. It cannot be changed afterwards.</li>
+      <li><strong>The new owner acknowledges it.</strong> Kabir reads his view and confirms, and the confirmation is recorded with his name.</li>
+    </ol>
+  </section>
+
+  <section class="tile">
+    <h2>What the coloured labels mean</h2>
+    <ul class="plain">
+      <li><span class="pill verified">quote-verified</span> The exact quote was found in the source. This checks the words, not the meaning, which is why a person still approves it.</li>
+      <li><span class="pill inferred">inferred</span> The source suggests it but does not say it directly. Check it before approving.</li>
+      <li><span class="pill conflicting">conflicting</span> Two sources disagree. A reviewer must pick which is right. See <em>Conflicts</em>.</li>
+      <li><span class="pill unsupported">unsupported</span> No source backs it up. Treat it as a guess until someone finds proof.</li>
+    </ul>
+    <p class="muted">The pills for <em>team</em>, <em>restricted</em> and <em>confidential</em> are sensitivity levels. Each role can only read up to its own level, and anything higher is hidden, not blurred.</p>
+  </section>
+
+  <section class="tile">
+    <h2>Try it, two minutes</h2>
+    {% if reviewer %}
+    <ol class="plain guide-steps">
+      <li>Open the <a href="/review">Review queue</a>. Four weak claims are planted on purpose, one for each label.</li>
+      <li>Click a <em>conflicting</em> claim. The page shows the quote from each source side by side.</li>
+      <li>Open <a href="/conflicts">Conflicts</a> and resolve one. The decision is saved with your name.</li>
+      <li>Approve a few claims, then open <a href="/handover">Handover</a> and publish a release.</li>
+      <li>Check the <a href="/timeline">Timeline</a>, <a href="/bus-factor">Bus factor</a> (what only one person knows) and <a href="/audit">Audit log</a> to see everything that changed.</li>
+      <li>Sign out and sign in as <strong>kabir</strong> (viewer) and then <strong>rao</strong> (restricted) to see how the same handover looks different for each role.</li>
+    </ol>
+    {% else %}
+    <ol class="plain guide-steps">
+      <li>Open <a href="/handover">Handover</a>. It shows only what has been approved and what your role may read.</li>
+      <li>Look at the <a href="/timeline">Timeline</a> to see how decisions and risks developed.</li>
+      <li>Open a claim to see the exact source quote behind it.</li>
+      <li>If you are the incoming owner, acknowledge the handover. Your name and the time are recorded.</li>
+      <li>Ask a reviewer to sign in as <strong>riya</strong> or <strong>meera</strong> to see the review side.</li>
+    </ol>
+    {% endif %}
+  </section>
+
+  <section class="tile">
+    <h2>What this does not do</h2>
+    <p>It does not decide what is true. It shows where each statement came from, flags weak ones, and makes a human responsible for the final call.</p>
+  </section>
+</div>
+{% endblock %}

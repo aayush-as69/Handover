@@ -14,6 +14,8 @@
     </div>
   </header>
 
+  <p class="guide-tip">New here? <a href="/guide">Read how Handover works</a> and try the two-minute walkthrough.</p>
+
   <div class="bento queue-stats">
     <a class="tile s4 stat warn {{ 'on' if status == 'open' }}" href="/review?status=open"><span class="l">Needs review</span><span class="n">{{ totals["generated"] + totals["edited"] }}</span><span class="stat-foot">Draft and edited claims</span></a>
     <a class="tile s4 stat ok {{ 'on' if status == 'approved' }}" href="/review?status=approved"><span class="l">Approved</span><span class="n">{{ totals["approved"] }}</span><span class="stat-foot">Ready for sign-off</span></a>
