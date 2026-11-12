@@ -922,8 +922,8 @@ small{font-size:.86rem;line-height:1.55}
   .table-scroll tbody tr{padding:.75rem 1rem;border-bottom:1px solid var(--line-soft)}
   .table-scroll tbody tr:last-child{border-bottom:0}
   .table-scroll td,.table-scroll tbody tr:hover td{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;padding:.32rem 0;border:0;background:transparent;text-align:right}
-  .table-scroll td:first-child{display:block;text-align:left;padding-left:0;font-size:1rem}
-  .table-scroll td:first-child::before{display:none}
+  .table-scroll td:first-child{display:block;text-align:left;padding-left:1rem;font-size:1rem}
+  .table-scroll td:first-child::before,.table-scroll td:first-child[data-label]::before{left:0;top:.4rem;bottom:.4rem}
   .table-scroll td[data-label]:not(:first-child)::before{content:attr(data-label);display:block;position:static;width:auto;height:auto;background:none;color:var(--mut);font-size:.82rem;font-weight:600;flex:0 0 auto}
   .table-scroll .table-empty{display:block;text-align:center!important;padding:1.5rem .5rem!important}
   .claim-summary .s8,.claim-summary .s4,.decision-grid .s7,.decision-grid .s5{grid-column:span 12}
