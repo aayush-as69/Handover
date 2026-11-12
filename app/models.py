@@ -450,3 +450,25 @@ def _evidence_guard(mapper, connection, target):
 
 event.listen(Evidence, "before_update", _evidence_guard)
 event.listen(Evidence, "before_delete", _forbid)
+
+
+class Job(Base):
+    """A slow task run in the background, so a web request does not have to wait for it.
+
+    Runs inside the web process on a worker thread. It does not survive a restart: a job
+    still queued or running at startup is marked failed rather than left looking busy.
+    """
+
+    __tablename__ = "jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(32))               # "extract_llm"
+    status: Mapped[str] = mapped_column(String(16), default="queued")   # queued|running|done|failed
+    created_by: Mapped[str] = mapped_column(String(128))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    chunks_total: Mapped[int] = mapped_column(Integer, default=0)
+    claims_created: Mapped[int] = mapped_column(Integer, default=0)
+    message: Mapped[str] = mapped_column(Text, default="")

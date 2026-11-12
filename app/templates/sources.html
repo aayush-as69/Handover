@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block head %}{% if jobs_active %}<meta http-equiv="refresh" content="4">{% endif %}{% endblock %}
 {% block title %}Sources{% endblock %}
 {% block body %}
 <div class="page-shell">
@@ -34,6 +35,10 @@
       {% if llm_ready %}
       <form method="post" action="/admin/sources/semantic" class="semantic-form"><input type="hidden" name="csrf" value="{{ csrf }}"><button>Run model second opinion (advisory)</button></form>
       {% else %}<p class="muted tool-description">LLM extraction is off: configure LLM_BASE_URL, LLM_API_KEY and LLM_MODEL on the server to enable it.</p>{% endif %}
+      {% if jobs %}
+      <h3>Background runs</h3>
+      <ul class="plain">{% for j in jobs %}<li><span class="pill {{ 'verified' if j.status == 'done' else 'unsupported' if j.status == 'failed' else 'inferred' }}">{{ j.status }}</span> LLM extraction by {{ j.created_by }}, {{ j.created_at.strftime("%Y-%m-%d %H:%M") }} UTC. <span class="muted">{{ j.message or ("Working on " ~ j.chunks_total ~ " passages…" if j.status == "running" else "Waiting to start…") }}</span></li>{% endfor %}</ul>
+      {% endif %}
       <p class="tool-footnote">Draft claims are never approved automatically.</p>
     </section>
   </div>

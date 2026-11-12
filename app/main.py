@@ -33,6 +33,10 @@ _HEADERS = {
 async def lifespan(app: FastAPI):
     settings = app.state.cfg
     init_db(settings.migrate_on_startup)
+    from .db import SessionLocal as _Session
+    from .jobs import recover_interrupted
+    with _Session() as _s:
+        recover_interrupted(_s)
     if settings.demo_mode and settings.demo_password:
         from .db import SessionLocal
         from .demo import bootstrap_demo

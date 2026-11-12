@@ -77,3 +77,13 @@ Code: `app/projects.py`, `app/audit_log.py`, `app/workspace_web.py`.
   project they belong to.
 - The quality set is small (17 expected claims) and synthetic; treat the numbers as a
   comparison between extractors, not as a general accuracy figure.
+
+## Later additions
+
+- **Takeover brief** (`/handover/brief`): where to start, built only from approved claims the role may read.
+- **Connections** on each claim page: sources, people, other claims on the same sources, open questions. Recorded links only.
+- **Freshness** (`/freshness`): the age of the newest dated supporting passage per claim, with fixed thresholds (30 and 90 days). Age is a reason to re-check, not proof a claim is wrong.
+- **Release comparison** on the release history page: added, reworded and dropped claims and conflicts resolved since the previous release.
+- **Slack export reader**: upload a channel's JSON export as a chat source. Each message keeps its author, time and channel, for example `Slack #backend message 12 (04 Nov 14:21)`.
+- **Jira CSV reader**: upload a Jira CSV export as a task source. Jira column names are mapped, and the Updated or Created date is kept so freshness can be measured.
+- **Background extraction**: LLM extraction runs as a job on a worker thread and its status shows on the Sources page. This is an in-process job, not a distributed queue. A job does not survive a restart, and a job still active at startup is marked failed. Rule-based extraction stays immediate. Migration `0004` adds the `jobs` table.

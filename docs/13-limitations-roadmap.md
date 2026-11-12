@@ -65,3 +65,6 @@ These are proposals, not commitments:
 ## Explicit non-goals
 
 The project should not silently replace human approval with model confidence, expose confidential evidence to remote models by default, or turn verification into a claim of semantic truth.
+
+- Background jobs run on a thread inside the web process. They are not a distributed queue, do not survive a restart, and give a status, not a percentage.
+- Slack and Jira are read from exported files, not a live connection. There is no scheduled sync.

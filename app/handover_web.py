@@ -7,7 +7,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from .access import effective_sensitivity
 from .conflicts import detect_conflicts
@@ -223,7 +223,11 @@ def sources_page(request: Request, user: User = Depends(require_admin),
                  session: Session = Depends(get_session)):
     project = project_for(session, request, user)
     import os
+    from .models import Job
+    recent_jobs = list(session.scalars(select(Job).where(Job.project_id == project.id)
+                                       .order_by(Job.id.desc()).limit(5)))
     return render(request, "sources.html", user, project=project, sources=project.sources,
+                  jobs=recent_jobs, jobs_active=any(j.status in ("queued", "running") for j in recent_jobs),
                   kinds=[k.value for k in SourceKind], levels=[s.value for s in Sensitivity],
                   llm_ready=all(os.environ.get(n) for n in ("LLM_BASE_URL", "LLM_API_KEY", "LLM_MODEL")),
                   max_mb=MAX_BYTES // 1_000_000)
@@ -264,6 +268,23 @@ async def upload_source(request: Request, kind: str = Form(""), sensitivity: str
 def extract_claims(request: Request, engine: str = Form("rules"), csrf: str = Form(""),
                    user: User = Depends(require_admin), session: Session = Depends(get_session)):
     check_csrf(request, csrf)
+    if engine == "llm":
+        # Model calls are slow: run them in the background and let the page show progress.
+        from . import jobs
+        project = project_for(session, request, user)
+        if jobs.active_job(session, project.id, "extract_llm"):
+            return _flash(request, "An LLM extraction is already running. Wait for it to finish.",
+                          "/admin/sources")
+        try:
+            with llm_from_env():    # fail now, with a clear message, if the settings are missing
+                pass
+        except ExtractionError as exc:
+            return _flash(request, f"Extraction failed: {exc}", "/admin/sources")
+        job = jobs.create_job(session, project, "extract_llm", user.username)
+        session.commit()
+        jobs.start_thread(sessionmaker(bind=session.get_bind(), expire_on_commit=False), job.id)
+        return _flash(request, "LLM extraction started in the background. Status is shown below.",
+                      "/admin/sources")
     try:
         if engine not in ("rules", "llm"):
             raise ExtractionError("unknown extraction engine")

@@ -56,8 +56,13 @@ def test_provider_failures_become_a_message_and_change_nothing(env, monkeypatch,
     app, Session = env
     import app.handover_web as hw
     from app.extract.llm import OpenAICompatibleExtractor
-    monkeypatch.setattr(hw, "llm_from_env", lambda: OpenAICompatibleExtractor(
-        base_url="http://x", api_key="k", model="m", client=_llm_client(handler)))
+    make = lambda: OpenAICompatibleExtractor(
+        base_url="http://x", api_key="k", model="m", client=_llm_client(handler))
+    monkeypatch.setattr(hw, "llm_from_env", make)
+    # Run the background job right away so the outcome is there when the page reloads.
+    from app import jobs
+    monkeypatch.setattr(jobs, "start_thread",
+                        lambda factory, job_id: jobs.run_job(Session, job_id, make))
     c = login(app, "riya")
     with Session() as s:
         before = len(s.scalars(select(Claim)).all())

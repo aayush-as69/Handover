@@ -117,7 +117,53 @@ _CHAT = re.compile(
 )
 
 
+def _slack_name(msg: dict) -> str:
+    prof = msg.get("user_profile") or {}
+    return (prof.get("real_name") or prof.get("display_name") or msg.get("user_name")
+            or msg.get("username") or msg.get("user") or "unknown")
+
+
+def _parse_slack_export(text: str, name: str) -> ParseResult | None:
+    """A Slack channel export: a JSON list of messages with `ts`, `user` and `text`.
+
+    The channel name comes from the file name (Slack exports one folder per channel). Each
+    message keeps its author and exact time, so a claim can cite 'Slack #backend, 4 Nov 14:21'.
+    """
+    stripped = text.lstrip()
+    if not stripped.startswith("["):
+        return None
+    try:
+        data = json.loads(stripped)
+    except ValueError:
+        return None
+    if not isinstance(data, list) or not data or not all(isinstance(m, dict) for m in data):
+        return None
+    if not any("ts" in m and "text" in m for m in data):
+        return None
+    channel = re.sub(r"\.json$", "", name.split("/")[-1], flags=re.I) or "channel"
+    warnings: list[str] = []
+    chunks: list[ParsedChunk] = []
+    for n, m in enumerate(data, 1):
+        body = str(m.get("text") or "").strip()
+        if not body or m.get("subtype") in {"channel_join", "channel_leave"}:
+            continue
+        when = None
+        try:
+            when = datetime.fromtimestamp(float(m["ts"]), tz=timezone.utc).replace(tzinfo=None)
+        except (KeyError, TypeError, ValueError, OverflowError, OSError):
+            warnings.append(f"message {n}: no usable timestamp, kept without a date")
+        stamp = when.strftime("%d %b %H:%M") if when else "undated"
+        chunks.append(ParsedChunk(text=body, locator=f"Slack #{channel} message {n} ({stamp})",
+                                  author=str(_slack_name(m))[:128], occurred_at=when))
+    if not chunks:
+        raise IngestError("the Slack export has no messages with text")
+    return ParseResult(chunks, warnings)
+
+
 def parse_chat(text: str, name: str) -> ParseResult:
+    slack = _parse_slack_export(text, name)
+    if slack is not None:
+        return slack
     warnings: list[str] = []
     msgs: list[dict] = []
     for n, line in enumerate(text.splitlines(), 1):
@@ -172,11 +218,30 @@ def parse_chat(text: str, name: str) -> ParseResult:
 # ---------------------------------------------------------------- tasks
 
 
+def _jira_date(value: str) -> Optional[datetime]:
+    """Dates from a Jira export, such as '04/Nov/26 2:21 PM' or '2026-11-04 14:21'."""
+    value = value.strip()
+    if not value:
+        return None
+    for fmt in ("%d/%b/%y %I:%M %p", "%d/%b/%Y %I:%M %p", "%Y-%m-%d %H:%M:%S",
+                "%Y-%m-%d %H:%M", "%Y-%m-%d", "%d/%m/%Y %H:%M"):
+        try:
+            return datetime.strptime(value, fmt)
+        except ValueError:
+            continue
+    return _iso(value)
+
+
 def parse_tasks(text: str, name: str) -> ParseResult:
     reader = csv.DictReader(io.StringIO(text))
     if not reader.fieldnames:
         raise IngestError("the task file has no header row")
     fields = {f.strip().lower(): f for f in reader.fieldnames if f}
+    # A Jira CSV export uses its own column names; map them to the ones used here.
+    for ours, theirs in (("id", "issue key"), ("id", "key"), ("title", "summary"),
+                         ("owner", "assignee"), ("due", "due date"), ("notes", "description")):
+        if ours not in fields and theirs in fields:
+            fields[ours] = fields[theirs]
     missing = {"id", "title"} - set(fields)
     if missing:
         raise IngestError(f"the task file is missing required column(s): {', '.join(sorted(missing))}")
@@ -202,7 +267,11 @@ def parse_tasks(text: str, name: str) -> ParseResult:
         )
         if get(row, "notes"):
             line += f" | notes: {get(row, 'notes')}"
-        chunks.append(ParsedChunk(text=line, locator=f"{name} row {n} ({task_id})"))
+        when = None
+        for col in ("updated", "created"):
+            when = when or _jira_date(get(row, col))
+        chunks.append(ParsedChunk(text=line, locator=f"{name} row {n} ({task_id})",
+                                  author=get(row, "reporter") or None, occurred_at=when))
     if not chunks:
         raise IngestError("the task file has no task rows")
     return ParseResult(chunks, warnings)
