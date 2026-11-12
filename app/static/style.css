@@ -1045,6 +1045,7 @@ small{font-size:.86rem;line-height:1.55}
   .handover-search-row{align-items:stretch;flex-direction:column;gap:.35rem}
   .handover-search-row .table-search{max-width:none}
   .table-tools{align-items:stretch;flex-direction:column}
+  .table-tools .table-search{flex:0 0 auto}
 }
 @media (max-width:380px){
   .lp-nav-actions .lp-nav-cta{padding:.45rem .65rem!important}
@@ -1186,3 +1187,4 @@ form.inline{display:inline;margin-left:.6rem}
 .guide ul.plain li{padding:.35rem 0}
 .guide .pill{margin-right:.4rem}
 .guide-tip{display:block;margin-bottom:1rem;padding:.8rem 1rem;border:1px solid var(--line);border-radius:12px;background:var(--tile-2)}
+[hidden],.table-scroll tr[hidden],.table-scroll tr[hidden] td{display:none!important}
