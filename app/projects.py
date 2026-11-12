@@ -37,11 +37,47 @@ def resolve_project(session: Session, user: User, wanted_id: int | None) -> Proj
     return projects[0] if projects else None
 
 
-def add_member(session: Session, project: Project, user: User, by: str) -> bool:
+# Roles a project may give. Admin is deliberately not one of them: it is an instance-wide
+# role (loading sources, creating projects, managing people) and is never granted per project.
+PROJECT_ROLES = (Role.approver, Role.viewer, Role.restricted)
+
+
+def effective_role(session: Session, user: User, wanted_id: int | None) -> Role:
+    """The role this person has in the project they are looking at.
+
+    Admins keep admin everywhere. Otherwise a role set on their membership wins, and a person
+    with none set keeps their default role.
+    """
+    if user.role == Role.admin:
+        return Role.admin
+    project = resolve_project(session, user, wanted_id)
+    if project is None:
+        return user.role
+    row = session.scalar(select(ProjectMember).where(
+        ProjectMember.project_id == project.id, ProjectMember.user_id == user.id))
+    return row.role if row is not None and row.role is not None else user.role
+
+
+def set_member_role(session: Session, project: Project, user: User, role: Role | None) -> bool:
+    """Set (or clear, with None) a member's role in one project. False if they are not a member."""
+    if role is not None and role not in PROJECT_ROLES:
+        raise ValueError("Admin is not a project role.")
+    row = session.scalar(select(ProjectMember).where(
+        ProjectMember.project_id == project.id, ProjectMember.user_id == user.id))
+    if row is None:
+        return False
+    row.role = role
+    return True
+
+
+def add_member(session: Session, project: Project, user: User, by: str,
+               role: Role | None = None) -> bool:
     if session.scalar(select(ProjectMember.id).where(
             ProjectMember.project_id == project.id, ProjectMember.user_id == user.id)):
         return False
-    session.add(ProjectMember(project_id=project.id, user_id=user.id, added_by=by))
+    if role is not None and role not in PROJECT_ROLES:
+        raise ValueError("Admin is not a project role.")
+    session.add(ProjectMember(project_id=project.id, user_id=user.id, added_by=by, role=role))
     return True
 
 

@@ -63,6 +63,13 @@ def current_user(request: Request, session: Session = Depends(get_session)) -> O
     if user is None or request.session.get("session_version") != user.session_version:
         request.session.clear()
         return None
+    # A person can hold a different role in each project. Apply the one for the project they
+    # are looking at. The object is detached first, so this never writes back to their account.
+    from .projects import effective_role
+    role = effective_role(session, user, request.session.get("project_id"))
+    if role != user.role:
+        session.expunge(user)
+        user.role = role
     return user
 
 

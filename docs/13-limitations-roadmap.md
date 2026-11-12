@@ -42,7 +42,7 @@ The checklist can generate noise and requires reviewer judgment.
 
 ### Projects share users and roles
 
-A deployment can hold several projects with membership-based access (see `15-round-improvements.md`), but users and roles are global: a person has the same role in every project they belong to.
+A deployment can hold several projects with membership-based access (see `15-round-improvements.md`), and a person can hold a different role in each project (approver, viewer or restricted, set by an admin on the membership; with none set, their default role applies). The admin role stays instance-wide and is never granted per project. There are still no organisations, teams or separate tenants.
 
 ### Distributed rate limiting is not implemented
 

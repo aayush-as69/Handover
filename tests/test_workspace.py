@@ -455,3 +455,95 @@ def test_quality_page_is_reviewer_only(env):
     page = login(app, "meera").get("/quality")
     assert page.status_code == 200 and "rules-v1" in page.text and "Not measured yet" in page.text
     assert login(app, "kabir").get("/quality").status_code in (403, 404)
+
+
+def _set_role(Session, project_id, username, role):
+    from app.models import ProjectMember
+    with Session() as s:
+        uid = s.scalar(select(User.id).where(User.username == username))
+        row = s.scalar(select(ProjectMember).where(
+            ProjectMember.project_id == project_id, ProjectMember.user_id == uid))
+        row.role = role
+        s.commit()
+
+
+def test_a_role_can_differ_per_project(env):
+    from app.enums import Role
+    from app.models import ProjectMember
+    app, Session = env
+    pid, cid = _other_project(Session, members=["kabir", "meera"])
+    _set_role(Session, pid, "kabir", Role.approver)     # a viewer by default, approver in Library App
+    _set_role(Session, pid, "meera", Role.viewer)       # an approver by default, viewer in Library App
+
+    kabir = login(app, "kabir")
+    assert kabir.get("/review").status_code == 403       # demo project: still just a viewer
+    kabir.post("/projects/switch", data={"project_id": pid, "csrf": token(kabir, "/projects")})
+    assert kabir.get("/review").status_code == 200       # Library App: approver
+    assert kabir.get(f"/review/claims/{cid}").status_code == 200
+
+    meera = login(app, "meera")
+    assert meera.get("/review").status_code == 200       # demo project: approver
+    meera.post("/projects/switch", data={"project_id": pid, "csrf": token(meera, "/projects")})
+    assert meera.get("/review").status_code == 403       # Library App: viewer only
+    assert meera.get("/handover").status_code == 200
+
+    # Taking effect for a request must never change the account itself.
+    with Session() as s:
+        roles = {u.username: u.role.value for u in s.scalars(select(User))}
+    assert roles["kabir"] == "viewer" and roles["meera"] == "approver"
+
+
+def test_admin_stays_admin_and_cannot_be_given_a_project_role(env):
+    from app.enums import Role
+    app, Session = env
+    pid, _ = _other_project(Session, members=["kabir", "riya"])
+    riya = login(app, "riya")
+    t = token(riya, "/projects")
+    with Session() as s:
+        ids = {u.username: u.id for u in s.scalars(select(User))}
+    # Admin is never a per-project role, and an admin's own role cannot be lowered per project.
+    r = riya.post(f"/projects/{pid}/members/role", data={"user_id": ids["kabir"], "role": "admin", "csrf": t},
+                  follow_redirects=True)
+    assert "whole workspace" in r.text
+    r = riya.post(f"/projects/{pid}/members/role", data={"user_id": ids["riya"], "role": "viewer", "csrf": t},
+                  follow_redirects=True)
+    assert "admin everywhere" in r.text
+    assert riya.get("/admin/sources").status_code == 200
+    with Session() as s:
+        assert s.scalar(select(User.role).where(User.username == "kabir")) == Role.viewer
+
+
+def test_admin_sets_and_clears_a_project_role_and_it_is_applied(env):
+    from app.enums import Role
+    app, Session = env
+    pid, _ = _other_project(Session, members=["kabir"])
+    riya = login(app, "riya")
+    t = token(riya, "/projects")
+    with Session() as s:
+        kid = s.scalar(select(User.id).where(User.username == "kabir"))
+    r = riya.post(f"/projects/{pid}/members/role", data={"user_id": kid, "role": "approver", "csrf": t},
+                  follow_redirects=True)
+    assert "is now approver here" in r.text
+    kabir = login(app, "kabir")
+    kabir.post("/projects/switch", data={"project_id": pid, "csrf": token(kabir, "/projects")})
+    assert kabir.get("/review").status_code == 200
+    assert "Your role here: approver" in kabir.get("/projects").text
+    riya.post(f"/projects/{pid}/members/role", data={"user_id": kid, "role": "", "csrf": t})
+    assert kabir.get("/review").status_code == 403       # back to the default viewer role
+    # Only admins may do this.
+    assert kabir.post(f"/projects/{pid}/members/role",
+                      data={"user_id": kid, "role": "approver", "csrf": token(kabir, "/projects")}
+                      ).status_code == 403
+
+
+def test_project_role_is_checked_on_actions_not_just_pages(env):
+    from app.enums import Role
+    app, Session = env
+    pid, cid = _other_project(Session, members=["meera"])
+    _set_role(Session, pid, "meera", Role.viewer)
+    meera = login(app, "meera")
+    meera.post("/projects/switch", data={"project_id": pid, "csrf": token(meera, "/projects")})
+    r = meera.post(f"/review/claims/{cid}/approve", data={"csrf": token(meera, "/projects")})
+    assert r.status_code in (403, 404)
+    with Session() as s:
+        assert s.get(Claim, cid).review_status.value == "generated"

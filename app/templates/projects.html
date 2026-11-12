@@ -4,7 +4,7 @@
 <div class="page-shell">
   <header class="page-header">
     <div><p class="page-eyebrow">WORKSPACE / ACCESS</p><h1>Projects</h1>
-      <p class="page-intro">Each project keeps its own sources, claims, conflicts, questions and handover. You only see projects you were added to. Admins can see all of them.</p>
+      <p class="page-intro">Each project keeps its own sources, claims, conflicts, questions and handover. You only see projects you were added to, and you can hold a different role in each one. Admins see every project and are admins everywhere.</p>
     </div>
     <div class="page-header-aside"><span class="page-aside-label">WORKING IN</span><strong>{{ current.name if current else "No project yet" }}</strong></div>
   </header>
@@ -22,6 +22,7 @@
       <h2>{{ p.name }}</h2>
       {% if p.description %}<p class="work-card-summary">{{ p.description }}</p>{% endif %}
       <p class="muted">Outgoing member: {{ p.outgoing_member or "not set" }}</p>
+      {% if user.role.value != "admin" and p.id in mine %}<p class="muted">Your role here: {{ (mine[p.id] or default_role).value }}</p>{% endif %}
       {% if not (current and p.id == current.id) %}
       <form method="post" action="/projects/switch"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="project_id" value="{{ p.id }}"><button class="primary">Switch to this project</button></form>
       {% endif %}
@@ -29,7 +30,8 @@
       <h3>People</h3>
       <ul class="plain">
         {% for m in members[p.id] %}
-        <li>{{ m.display_name }} <span class="muted">· {{ m.role.value }}</span>
+        <li>{{ m.display_name }} <span class="muted">· {{ (roles[(p.id, m.id)] or m.role).value }}{% if not roles[(p.id, m.id)] %} (default){% endif %}</span>
+          {% if m.role.value != "admin" %}<form method="post" action="/projects/{{ p.id }}/members/role" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="user_id" value="{{ m.id }}"><select name="role" aria-label="Role of {{ m.display_name }} in {{ p.name }}"><option value="">Default role</option>{% for r in project_roles %}<option value="{{ r }}" {% if roles[(p.id, m.id)] and roles[(p.id, m.id)].value == r %}selected{% endif %}>{{ r }}</option>{% endfor %}</select><button class="link">Set</button></form>{% endif %}
           <form method="post" action="/projects/{{ p.id }}/members/remove" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="user_id" value="{{ m.id }}"><button class="link" aria-label="Remove {{ m.display_name }} from {{ p.name }}">Remove</button></form></li>
         {% else %}<li class="muted">No members yet. Admins can still open it.</li>{% endfor %}
       </ul>
@@ -37,6 +39,7 @@
       <form method="post" action="/projects/{{ p.id }}/members/add" class="filters">
         <input type="hidden" name="csrf" value="{{ csrf }}">
         <label>Add a person <select name="user_id">{% for u in others[p.id] %}<option value="{{ u.id }}">{{ u.display_name }} ({{ u.role.value }})</option>{% endfor %}</select></label>
+        <label>Role here <select name="role"><option value="">Their default role</option>{% for r in project_roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}</select></label>
         <button>Add</button>
       </form>
       {% endif %}

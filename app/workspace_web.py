@@ -9,11 +9,11 @@ from sqlalchemy.orm import Session
 
 from .audit_log import KINDS, audit_entries
 from .db import get_session
-from .enums import REVIEWER_ROLES, ClaimType
+from .enums import REVIEWER_ROLES, ClaimType, Role
 from .handover import can_view, get_handover, is_stale
 from .handover_web import require_admin, require_user
 from .models import Project, ProjectMember, User
-from .projects import accessible_projects, add_member, can_access_project, remove_member
+from .projects import PROJECT_ROLES, accessible_projects, add_member, can_access_project, remove_member, set_member_role
 from .timeline import TIMELINE_TYPES, build_bus_factor, build_concentration, build_timeline
 from .web import check_csrf, project_for, render, require_reviewer
 
@@ -64,15 +64,21 @@ def projects_page(request: Request, user: User = Depends(require_user),
         current = project_for(session, request, user)
     members: dict[int, list[User]] = {}
     others: dict[int, list[User]] = {}
+    roles: dict[tuple[int, int], object] = {}
     if user.role.value == "admin":
         everyone = list(session.scalars(select(User).order_by(User.display_name)))
         for p in projects:
-            ids = {m.user_id for m in session.scalars(
-                select(ProjectMember).where(ProjectMember.project_id == p.id))}
+            rows = list(session.scalars(select(ProjectMember).where(ProjectMember.project_id == p.id)))
+            ids = {m.user_id for m in rows}
+            roles.update({(p.id, m.user_id): m.role for m in rows})
             members[p.id] = [u for u in everyone if u.id in ids]
             others[p.id] = [u for u in everyone if u.id not in ids]
+    mine = {m.project_id: m.role for m in session.scalars(
+        select(ProjectMember).where(ProjectMember.user_id == user.id))}
     return render(request, "projects.html", user, projects=projects, current=current,
-                  members=members, others=others)
+                  members=members, others=others, roles=roles, mine=mine,
+                  default_role=session.scalar(select(User.role).where(User.id == user.id)),
+                  project_roles=[r.value for r in PROJECT_ROLES])
 
 
 @router.post("/projects/switch")
@@ -82,7 +88,9 @@ def switch_project(request: Request, project_id: int = Form(0), csrf: str = Form
     if not can_access_project(session, user, project_id):
         raise HTTPException(status_code=404, detail="Project not found.")
     request.session["project_id"] = project_id
-    return _flash(request, "Switched project.", "/handover" if user.role not in REVIEWER_ROLES else "/review")
+    from .projects import effective_role
+    role = effective_role(session, user, project_id)
+    return _flash(request, "Switched project.", "/review" if role in REVIEWER_ROLES else "/handover")
 
 
 @router.post("/projects/new")
@@ -107,15 +115,29 @@ def new_project(request: Request, name: str = Form(""), outgoing: str = Form("")
 
 @router.post("/projects/{project_id}/members/{action}")
 def change_members(project_id: int, action: str, request: Request, user_id: int = Form(0),
-                   csrf: str = Form(""), admin: User = Depends(require_admin),
+                   role: str = Form(""), csrf: str = Form(""), admin: User = Depends(require_admin),
                    session: Session = Depends(get_session)):
     check_csrf(request, csrf)
     project, person = session.get(Project, project_id), session.get(User, user_id)
     if project is None or person is None:
         raise HTTPException(status_code=404, detail="Not found.")
+    chosen = None
+    if role:
+        try:
+            chosen = Role(role)
+        except ValueError:
+            return _flash(request, "Choose a valid role.", "/projects")
+        if chosen not in PROJECT_ROLES:
+            return _flash(request, "Admin is set for the whole workspace, not per project.", "/projects")
+    if action in ("add", "role") and person.role == Role.admin and chosen is not None:
+        return _flash(request, f"{person.display_name} is an admin everywhere, so a project role changes nothing.", "/projects")
     if action == "add":
-        changed = add_member(session, project, person, admin.username)
+        changed = add_member(session, project, person, admin.username, chosen)
         msg = f"Added {person.display_name}." if changed else "Already a member."
+    elif action == "role":
+        changed = set_member_role(session, project, person, chosen)
+        msg = (f"{person.display_name} is now {chosen.value if chosen else 'on their default role'} here."
+               if changed else "Not a member.")
     elif action == "remove":
         changed = remove_member(session, project, person)
         msg = f"Removed {person.display_name}." if changed else "Not a member."

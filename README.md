@@ -310,7 +310,7 @@ Handover is designed with explicit trust boundaries, but it is not a guarantee o
 - Live LLM quality has not been verified in the documented CI baseline.
 - The demo is deployed on Render at https://handover-2hpd.onrender.com, and the author confirmed it loads and signs in on 11 Nov 2026. It has not had an independent check, and the backup-restore exercise has not been run against the hosted database.
 - Request throttling is process-local; use an edge/proxy rate limiter for production.
-- Users and roles are shared across projects, and live-model extraction quality has not been measured yet.
+- Admin is an instance-wide role (approver, viewer and restricted can differ per project), and live-model extraction quality has not been measured yet.
 
 See [Security](docs/07-security.md) and [Limitations](docs/13-limitations-roadmap.md) before using real project data.
 

@@ -92,6 +92,8 @@ class ProjectMember(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     added_by: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
     added_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    # The role this person has in this project. None means "use their default role".
+    role: Mapped[Optional[Role]] = mapped_column(_enum(Role), nullable=True)
 
 
 class Source(Base):
