@@ -45,6 +45,14 @@
     {% endfor %}
   </div>
 
+  {% set f = freshness %}
+  <section class="tile" style="margin-bottom:12px;padding:1.3rem 1.4rem">
+    <h3>Evidence age</h3>
+    <p><span class="pill {{ 'unsupported' if f.state == 'stale' else 'inferred' if f.state in ('ageing', 'undated') else 'verified' }}">{{ f.label }}</span>
+      {% if f.newest %}Newest supporting passage is from {{ f.newest.strftime("%Y-%m-%d") }} ({{ f.age_days }} days ago).{% else %}No supporting passage carries a date.{% endif %}</p>
+    <p class="muted">{{ f.supporting }} supporting quote(s) from {{ f.sources }} source(s){% if f.kinds %} ({{ f.kinds|join(", ") }}){% endif %}{% if f.contradicting %}; {{ f.contradicting }} contradicting{% endif %}. Age is a reason to re-check, not proof the claim is wrong.</p>
+  </section>
+
   {% if not connections.empty() %}
   <div class="section-heading">
     <div><p class="page-eyebrow">WHAT THIS TOUCHES</p><h2>Connections</h2></div>

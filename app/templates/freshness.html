@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Freshness{% endblock %}
+{% block body %}
+<div class="page-shell">
+  <header class="page-header">
+    <div><p class="page-eyebrow">KNOWLEDGE DECAY / {{ project.name|upper }}</p><h1>Claims to re-check</h1>
+      <p class="page-intro">A claim can be quoted word for word and still be out of date. This page measures one thing: the age of the newest dated passage that supports each claim. Recent is up to {{ fresh_days }} days, ageing up to {{ ageing_days }}, possibly stale beyond that. Age is a reason to look again, not proof the claim is wrong.</p>
+    </div>
+    <div class="page-header-aside"><span class="page-aside-label">TO RE-CHECK</span><strong>{{ rows|length }}</strong></div>
+  </header>
+  <div class="bento queue-stats">
+    <div class="tile s4 stat bad"><span class="l">Possibly stale</span><span class="n">{{ stale }}</span><span class="stat-foot">Over {{ ageing_days }} days old</span></div>
+    <div class="tile s4 stat warn"><span class="l">Ageing</span><span class="n">{{ ageing }}</span><span class="stat-foot">{{ fresh_days }} to {{ ageing_days }} days</span></div>
+    <div class="tile s4 stat"><span class="l">No dated evidence</span><span class="n">{{ undated }}</span><span class="stat-foot">Age cannot be measured</span></div>
+  </div>
+  <section class="page-panel table-panel">
+    <div class="table-scroll"><table>
+      <thead><tr><th>Claim</th><th>Type</th><th>Newest evidence</th><th>Sources</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr class="{{ 'unsupported' if r.fresh.state == 'stale' else 'inferred' if r.fresh.state == 'ageing' else '' }}">
+        <td data-label="Claim"><a href="/review/claims/{{ r.claim.id }}">{{ r.claim.statement }}</a>{% if r.important %} <span class="pill">key claim</span>{% endif %}</td>
+        <td data-label="Type" class="muted">{{ r.claim.type.value.replace("_", " ") }}</td>
+        <td data-label="Newest evidence">{% if r.fresh.newest %}{{ r.fresh.newest.strftime("%Y-%m-%d") }} <span class="muted">({{ r.fresh.age_days }} days ago)</span>{% else %}<span class="muted">undated</span>{% endif %}</td>
+        <td data-label="Sources" class="muted">{{ r.fresh.sources }}{% if r.fresh.kinds %} ({{ r.fresh.kinds|join(", ") }}){% endif %}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="muted table-empty">Every claim has supporting evidence from the last {{ fresh_days }} days.</td></tr>
+      {% endfor %}
+      </tbody></table></div>
+  </section>
+</div>
+{% endblock %}

@@ -36,6 +36,22 @@ def guide_page(request: Request, user: User = Depends(require_user),
                   reviewer=user.role in REVIEWER_ROLES)
 
 
+# ------------------------------------------------------------------ freshness
+
+
+@router.get("/freshness")
+def freshness_page(request: Request, user: User = Depends(require_reviewer),
+                   session: Session = Depends(get_session)):
+    from .freshness import AGEING_DAYS, FRESH_DAYS, decay_report
+    project = project_for(session, request, user)
+    rows = decay_report(session, project, user.role)
+    return render(request, "freshness.html", user, project=project, rows=rows,
+                  fresh_days=FRESH_DAYS, ageing_days=AGEING_DAYS,
+                  stale=sum(r.fresh.state == "stale" for r in rows),
+                  ageing=sum(r.fresh.state == "ageing" for r in rows),
+                  undated=sum(r.fresh.state == "undated" for r in rows))
+
+
 # ------------------------------------------------------------------ projects
 
 

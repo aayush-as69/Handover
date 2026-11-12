@@ -162,7 +162,11 @@ def release_history(request: Request, user: User = Depends(require_user),
                 .order_by(Acknowledgement.acknowledged_at)):
             names[a.release_id].append((who, a.acknowledged_at))
     rows = [(r, len(r.entries), counts.get(r.id, 0), names[r.id]) for r in rels]
-    return render(request, "releases.html", user, rows=rows)
+    from .release_diff import release_diff
+    changes = release_diff(session, user.role, rels[0], rels[1] if len(rels) > 1 else None,
+                           handover.project_id) if rels else None
+    return render(request, "releases.html", user, rows=rows, changes=changes,
+                  latest=rels[0] if rels else None)
 
 
 @router.post("/handover/{action}")

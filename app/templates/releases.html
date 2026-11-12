@@ -9,6 +9,21 @@
     </div>
     <div class="page-header-aside"><span class="page-aside-label">IMMUTABLE RECORD</span><strong>Every release<br>keeps its history</strong></div>
   </header>
+  {% if changes and latest %}
+  <section class="tile" style="margin-bottom:12px;padding:1.3rem 1.4rem">
+    <h2>What changed in release #{{ latest.number }}</h2>
+    {% if not changes.previous %}<p class="muted">This is the first release, so there is nothing to compare with.</p>
+    {% else %}
+    <p class="muted">Compared with release #{{ changes.previous.number }}. {{ changes.added|length }} added, {{ changes.updated|length }} reworded, {{ changes.removed|length }} dropped, {{ changes.resolved_conflicts|length }} conflict(s) resolved in between.</p>
+    <ul class="plain">
+      {% for c, text in changes.added %}<li><span class="pill verified">added</span> <a href="/review/claims/{{ c.id }}">{{ text }}</a></li>{% endfor %}
+      {% for c, old, new in changes.updated %}<li><span class="pill inferred">reworded</span> <a href="/review/claims/{{ c.id }}">{{ new }}</a><br><span class="muted">was: {{ old }}</span></li>{% endfor %}
+      {% for c, text in changes.removed %}<li><span class="pill unsupported">dropped</span> {{ text }}</li>{% endfor %}
+      {% for cf in changes.resolved_conflicts %}<li><span class="pill verified">resolved</span> {{ cf.topic }}: {{ cf.resolution }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+  {% endif %}
   <section class="page-panel table-panel">
     <div class="panel-heading"><div><p class="page-eyebrow">SIGNED-OFF HANDOVERS</p><h2>Published releases</h2></div><div class="table-tools"><label class="table-search"><span class="sr-only">Search releases</span><input type="search" placeholder="Search releases..." data-live-search data-search-target="#release-list" data-search-count="#release-search-count"></label><span class="panel-hint" id="release-search-count">{{ rows|length }} release(s)</span></div></div>
     <div class="table-scroll">

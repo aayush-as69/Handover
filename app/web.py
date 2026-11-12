@@ -264,8 +264,9 @@ def claim_detail(claim_id: int, request: Request, user: User = Depends(require_r
         if others:
             disputes.append((cf, others))
     from .connections import claim_connections
+    from .freshness import claim_freshness
     return render(request, "claim.html", user, claim=claim, evidence=evidence, disputes=disputes,
-                  connections=claim_connections(session, user, claim),
+                  connections=claim_connections(session, user, claim), freshness=claim_freshness(claim),
                   history=list(reversed(history)), sensitivity=effective_sensitivity(claim),
                   max_statement=MAX_STATEMENT)
 

@@ -355,3 +355,46 @@ def test_claim_connections_show_recorded_links_and_hide_above_clearance(env):
         assert all(visible_in_review(meera.role, o) for o, _ in conn.related)
     page = login(app, "meera").get(f"/review/claims/{with_ev.id}")
     assert page.status_code == 200 and "Connections" in page.text
+
+
+def test_freshness_states_and_decay_page(env):
+    from datetime import timedelta
+    from app.freshness import claim_freshness, decay_report
+    app, Session = env
+    now = datetime(2026, 11, 12)
+    with Session() as s:
+        project = s.scalar(select(Project))
+        by_age = {}
+        for c in s.scalars(select(Claim).where(Claim.project_id == project.id)):
+            f = claim_freshness(c, now)
+            by_age.setdefault(f.state, []).append(c)
+            if f.newest:
+                assert f.age_days == (now - f.newest).days
+        # Pushing "now" far ahead turns every dated claim stale; undated ones stay undated.
+        later = now + timedelta(days=400)
+        assert all(claim_freshness(c, later).state in ("stale", "undated")
+                   for cs in by_age.values() for c in cs)
+        meera = s.scalar(select(User).where(User.username == "meera"))
+        rows = decay_report(s, project, meera.role, later)
+        assert rows and rows[0].fresh.state == "stale"
+    assert login(app, "meera").get("/freshness").status_code == 200
+    assert login(app, "kabir").get("/freshness").status_code in (403, 404)
+
+
+def test_release_diff_lists_added_updated_dropped(env):
+    from app.models import HandoverRelease
+    from app.release_diff import release_diff
+    app, Session = env
+    with Session() as s:
+        project = s.scalar(select(Project))
+        ids = [c.id for c in s.scalars(select(Claim).where(Claim.project_id == project.id).limit(3))]
+        old = HandoverRelease(handover_id=1, number=1, approved_by_id=1, approved_by_name="x",
+                              approved_at=datetime(2026, 11, 1), claims_json=f"[[{ids[0]},1],[{ids[1]},1]]")
+        new = HandoverRelease(handover_id=1, number=2, approved_by_id=1, approved_by_name="x",
+                              approved_at=datetime(2026, 11, 8), claims_json=f"[[{ids[1]},2],[{ids[2]},1]]")
+        meera = s.scalar(select(User).where(User.username == "meera"))
+        d = release_diff(s, meera.role, new, old, project.id)
+        assert [c.id for c, _ in d.added] == [ids[2]]
+        assert [c.id for c, *_ in d.updated] == [ids[1]]
+        assert [c.id for c, _ in d.removed] == [ids[0]]
+        assert release_diff(s, meera.role, old, None, project.id).previous is None
