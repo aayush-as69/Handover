@@ -18,7 +18,21 @@
       <p class="page-eyebrow">VERIFICATION NOTES</p>
       <h2>Why this label?</h2>
       <p class="why">{{ claim.verification_note or "Not checked yet." }}</p>
-      <p class="muted">“Quote-verified” means the quotes exist in the sources and fit the claim. It does not mean the claim is true, current or complete. That is your decision.</p>
+      <ul class="plain checks">
+        {% if claim.confidence.value == "verified" %}
+        <li>✓ Every quote was found word for word in its source.</li>
+        <li>✓ The claim's key terms, numbers and negation match the quotes.</li>
+        <li>✓ No quote in the sources contradicts it.</li>
+        {% elif claim.confidence.value == "inferred" %}
+        <li>✓ At least one quote was found in a source.</li>
+        <li>✗ The quotes do not fully back the wording. See the note above.</li>
+        {% elif claim.confidence.value == "conflicting" %}
+        <li>✗ A quote in the sources contradicts this claim.</li>
+        {% else %}
+        <li>✗ No quote could be found word for word in a source.</li>
+        {% endif %}
+      </ul>
+      <p class="muted">A label like this does not mean the claim is true, current or complete. It only checks the words. That decision is yours.</p>
       {% if claim.semantic_verdict %}<p class="{{ 'warnbox' if claim.semantic_verdict != 'supports' else 'muted' }}">Model second opinion (advisory): <strong>{{ claim.semantic_verdict }}</strong>{% if claim.semantic_note %}. {{ claim.semantic_note }}{% endif %}</p>{% endif %}
       {% for cf, others in disputes %}<p class="warnbox">Disputed ({{ cf.status.value }}): {{ cf.reason }} <a href="/conflicts">See conflicts</a></p>{% endfor %}
     </section>

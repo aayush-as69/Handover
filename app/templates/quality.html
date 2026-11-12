@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Extraction quality{% endblock %}
+{% block body %}
+<div class="page-shell">
+  <header class="page-header">
+    <div><p class="page-eyebrow">MEASURED, NOT ASSUMED / {{ project.name|upper }}</p><h1>Extraction quality</h1>
+      <p class="page-intro">Each extractor is scored against a hand-labelled set of claims. Recall is how many expected claims it found. Precision is how many of its claims were expected. These pages show saved reports; nothing here calls a model.</p>
+    </div>
+  </header>
+  {% for r in reports %}
+  {% set o = r.overall %}
+  <section class="tile" style="margin-bottom:12px;padding:1.3rem 1.4rem">
+    <h2>{{ r.engine }}</h2>
+    <p>Found {{ o.found }} of {{ o.expected }} expected claims (recall {{ (o.recall * 100)|round|int }}%). {{ o.correct }} of {{ o.produced }} claims it produced were expected (precision {{ (o.precision * 100)|round|int }}%). Reasons kept: {{ o.reasons_kept }} of {{ o.reasons_expected }}. Quote failures: {{ r.quote_failures }}.</p>
+    {% for name, b in r.by_source.items() %}
+    <div class="bar-row"><span class="bar-label">{{ name }}</span><span class="bar-track"><span class="bar-fill {{ '' if b.recall >= 0.8 else 'hot' }}" style="width:{{ (b.recall * 100)|round|int }}%"></span></span><span class="bar-note">{{ (b.recall * 100)|round|int }}% <span class="muted">({{ b.found }} of {{ b.expected }})</span></span></div>
+    {% endfor %}
+    {% for w in r.warnings %}<p class="muted">{{ w }}</p>{% endfor %}
+  </section>
+  {% else %}
+  <section class="tile"><p class="muted">No reports saved yet. Run <code>python -m app.quality --engine rules --json docs/quality/rules-baseline.json</code>.</p></section>
+  {% endfor %}
+  <section class="tile"><p class="muted"><strong>Not measured yet:</strong> a live language model. Run <code>python -m app.quality --engine llm</code> with the model settings, save the JSON next to the baseline, and it will appear here beside the rule-based result.</p></section>
+</div>
+{% endblock %}

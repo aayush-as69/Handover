@@ -104,3 +104,46 @@ def build_bus_factor(session: Session, project, role: Role) -> BusFactor:
             by_person[next(iter(authors))].claims.append(c)
     people = sorted(by_person.values(), key=lambda p: (-p.sole, p.person))
     return BusFactor(people, unattributed, examined)
+
+
+@dataclass
+class Concentration:
+    kind: str
+    attributed: int          # claims of this type that name an author
+    top_person: str
+    top_sole: int            # claims of this type resting only on that person
+    other_sole: int          # sole-person claims belonging to anyone else
+
+    @property
+    def share(self) -> int:
+        return round(100 * self.top_sole / self.attributed) if self.attributed else 0
+
+    @property
+    def spread(self) -> bool:
+        return self.top_sole == 0
+
+
+def build_concentration(session: Session, project, role: Role) -> list[Concentration]:
+    """Per claim type: how much of it rests on one person's words alone."""
+    groups: dict[str, dict] = {}
+    for c in session.scalars(select(Claim).where(Claim.project_id == project.id,
+                                                 Claim.review_status != ReviewStatus.rejected)):
+        if not role_can_see(role, effective_sensitivity(c)):
+            continue
+        authors = {e.chunk.author for e in c.evidence if e.chunk is not None and e.chunk.author}
+        if not authors:
+            continue
+        g = groups.setdefault(c.type.value, {"n": 0, "sole": {}})
+        g["n"] += 1
+        if len(authors) == 1:
+            who = next(iter(authors))
+            g["sole"][who] = g["sole"].get(who, 0) + 1
+    out = []
+    for kind, g in groups.items():
+        if g["sole"]:
+            person, top = max(g["sole"].items(), key=lambda x: x[1])
+        else:
+            person, top = "", 0
+        out.append(Concentration(kind.replace("_", " "), g["n"], person, top,
+                                 sum(g["sole"].values()) - top))
+    return sorted(out, key=lambda c: (-c.share, c.kind))

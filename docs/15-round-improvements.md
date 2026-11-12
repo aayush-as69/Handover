@@ -87,3 +87,8 @@ Code: `app/projects.py`, `app/audit_log.py`, `app/workspace_web.py`.
 - **Slack export reader**: upload a channel's JSON export as a chat source. Each message keeps its author, time and channel, for example `Slack #backend message 12 (04 Nov 14:21)`.
 - **Jira CSV reader**: upload a Jira CSV export as a task source. Jira column names are mapped, and the Updated or Created date is kept so freshness can be measured.
 - **Background extraction**: LLM extraction runs as a job on a worker thread and its status shows on the Sources page. This is an in-process job, not a distributed queue. A job does not survive a restart, and a job still active at startup is marked failed. Rule-based extraction stays immediate. Migration `0004` adds the `jobs` table.
+- **Audit log filters**: by person, text and date range, with each entry linking to what it concerns.
+- **Knowledge concentration** on the bus-factor page: per kind of claim, the share resting on one person's words alone, with a suggested action. Small groups show their counts, so "1 of 1" is not read as a trend.
+- **Guided takeover** (`/onboarding`): the brief read one topic at a time, with a reading-time estimate (words at 200 a minute) and a closing list of what is still unresolved. Nothing is stored; the step is in the URL.
+- **Extraction quality page** (`/quality`): shows the saved scoring reports, so a live-model report appears beside the rule baseline once it is committed.
+- **Claim page**: a plain list of what a label checked and a reminder of what it does not mean.

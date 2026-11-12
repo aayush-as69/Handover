@@ -68,3 +68,11 @@ The project should not silently replace human approval with model confidence, ex
 
 - Background jobs run on a thread inside the web process. They are not a distributed queue, do not survive a restart, and give a status, not a percentage.
 - Slack and Jira are read from exported files, not a live connection. There is no scheduled sync.
+
+## Environments
+
+| Environment | Database |
+|---|---|
+| Development | SQLite or PostgreSQL |
+| CI | SQLite and PostgreSQL 16 |
+| Production | PostgreSQL required; SQLite is refused at startup |

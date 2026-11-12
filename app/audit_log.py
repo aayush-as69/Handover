@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -31,6 +31,7 @@ class Entry:
     action: str
     detail: str = ""
     claim_id: int | None = None
+    link: str = ""          # where to see the thing this entry is about
 
 
 _ACTIONS = {"generated": "drafted", "edit": "edited", "approve": "approved",
@@ -39,6 +40,25 @@ _ACTIONS = {"generated": "drafted", "edit": "edited", "approve": "approved",
 
 def _naive(dt: datetime) -> datetime:
     return dt.replace(tzinfo=None) if dt.tzinfo else dt
+
+
+def filter_entries(entries: list[Entry], actor: str = "", text: str = "",
+                   start: datetime | None = None, end: datetime | None = None) -> list[Entry]:
+    """Narrow a trail by person, free text and date range (inclusive of the end day)."""
+    actor, text = actor.strip().lower(), text.strip().lower()
+    keep = []
+    for e in entries:
+        if actor and actor not in e.actor.lower():
+            continue
+        if text and text not in f"{e.action} {e.detail}".lower():
+            continue
+        when = _naive(e.at)
+        if start and when < start:
+            continue
+        if end and when >= end + timedelta(days=1):
+            continue
+        keep.append(e)
+    return keep
 
 
 def audit_entries(session: Session, project, role: Role, kind: str = "",
@@ -71,32 +91,34 @@ def audit_entries(session: Session, project, role: Role, kind: str = "",
         if want("release"):
             for r in rels:
                 out.append(Entry(r.approved_at, "release", r.approved_by_name,
-                                 f"signed off release {r.number}", f"{len(r.entries)} claims"))
+                                 f"signed off release {r.number}", f"{len(r.entries)} claims",
+                                 link="/handover/releases"))
         if want("acknowledgement") and rels:
             numbers = {r.id: r.number for r in rels}
             for a, name in session.execute(
                     select(Acknowledgement, User.display_name).join(User, User.id == Acknowledgement.user_id)
                     .where(Acknowledgement.release_id.in_(list(numbers)))):
                 out.append(Entry(a.acknowledged_at, "acknowledgement", name,
-                                 f"acknowledged release {numbers[a.release_id]}"))
+                                 f"acknowledged release {numbers[a.release_id]}", link="/handover/releases"))
 
     if want("conflict"):
         for c in session.scalars(select(Conflict).where(Conflict.project_id == project.id,
                                                         Conflict.resolved_at.is_not(None))):
             out.append(Entry(c.resolved_at, "conflict", c.resolved_by or "unknown",
-                             f"marked the “{c.topic}” conflict {c.status.value}", c.resolution or ""))
+                             f"marked the “{c.topic}” conflict {c.status.value}", c.resolution or "",
+                             link="/conflicts"))
 
     if want("question"):
         for q in session.scalars(select(Question).where(Question.project_id == project.id,
                                                         Question.answered_at.is_not(None))):
             out.append(Entry(q.answered_at, "question", q.answered_by or "unknown",
-                             f"{q.status.value} a question", q.text[:160]))
+                             f"{q.status.value} a question", q.text[:160], link="/questions"))
 
     if want("source"):
         for s in session.scalars(select(Source).where(Source.project_id == project.id)):
             if role_can_see(role, s.sensitivity):
                 out.append(Entry(s.ingested_at, "source", s.origin, f"loaded source {s.name}",
-                                 f"{s.kind.value}, {s.sensitivity.value}"))
+                                 f"{s.kind.value}, {s.sensitivity.value}", link="/admin/sources"))
 
     out.sort(key=lambda e: _naive(e.at), reverse=True)
     return out[:limit]

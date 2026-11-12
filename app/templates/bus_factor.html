@@ -8,6 +8,17 @@
     </div>
     <div class="page-header-aside"><span class="page-aside-label">EXAMINED</span><strong>{{ result.examined }} claims<br>{{ result.unattributed }} without a named author</strong></div>
   </header>
+  {% if concentration %}
+  <section class="tile concentration" style="margin-bottom:12px;padding:1.3rem 1.4rem">
+    <h2>Knowledge concentration</h2>
+    <p class="muted">For each kind of claim: the share that rests on one person's words alone. Longer bars mean more would be lost if that person left.</p>
+    {% for c in concentration %}
+    <div class="bar-row"><span class="bar-label">{{ c.kind }}</span>
+      <span class="bar-track"><span class="bar-fill {{ 'hot' if c.share >= 60 else 'warm' if c.share >= 30 else '' }}" style="width:{{ c.share }}%"></span></span>
+      <span class="bar-note">{{ c.share }}%{% if c.top_person %} {{ c.top_person }}{% else %} spread across people{% endif %} <span class="muted">({{ c.top_sole }} of {{ c.attributed }})</span></span></div>
+    {% endfor %}
+  </section>
+  {% endif %}
   <div class="bento work-card-grid">
   {% for p in result.people %}
     <section class="tile s6 work-card">
@@ -15,6 +26,8 @@
       <h2>{{ p.person }}</h2>
       {% if p.claims %}
       <ul class="plain">{% for c in p.claims[:8] %}<li><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a> <span class="muted">· {{ c.type.value.replace("_", " ") }}</span></li>{% endfor %}</ul>
+      {% set srcs = namespace(n=0) %}
+      <p class="muted">Backed up by nobody else in the sources. Suggested action: ask {{ p.person }} to write these down, then name a second owner.</p>
       {% if p.claims|length > 8 %}<p class="muted">and {{ p.claims|length - 8 }} more.</p>{% endif %}
       {% else %}<p class="muted">Every claim they appear in is backed by someone else too.</p>{% endif %}
     </section>

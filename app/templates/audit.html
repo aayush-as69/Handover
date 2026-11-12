@@ -9,12 +9,19 @@
     <div class="page-header-aside"><span class="page-aside-label">TIMES</span><strong>UTC</strong></div>
   </header>
   <section class="page-panel table-panel">
-    <div class="panel-heading"><div><p class="page-eyebrow">EVENTS</p><h2>Latest activity</h2></div>
-      <form method="get" class="filters"><label>Show <select name="kind"><option value="">Everything</option>{% for k in kinds %}<option value="{{ k }}" {% if k == kind %}selected{% endif %}>{{ k }}</option>{% endfor %}</select></label><button>Filter</button></form>
+    <div class="panel-heading"><div><p class="page-eyebrow">EVENTS</p><h2>{{ entries|length }} event(s)</h2></div>
+      <form method="get" class="filters audit-filters">
+        <label>Show <select name="kind"><option value="">Everything</option>{% for k in kinds %}<option value="{{ k }}" {% if k == kind %}selected{% endif %}>{{ k }}</option>{% endfor %}</select></label>
+        <label>Person <input type="search" name="actor" value="{{ actor }}" placeholder="Any"></label>
+        <label>Contains <input type="search" name="q" value="{{ q }}" placeholder="Any text"></label>
+        <label>From <input type="date" name="start" value="{{ start }}"></label>
+        <label>To <input type="date" name="end" value="{{ end }}"></label>
+        <button>Filter</button>{% if actor or q or start or end or kind %} <a href="/audit">Clear</a>{% endif %}
+      </form>
     </div>
     <div class="table-scroll">
       <table><thead><tr><th>When (UTC)</th><th>Who</th><th>What</th><th>Note</th></tr></thead>
-      <tbody>{% for e in entries %}<tr><td data-label="When (UTC)">{{ e.at.strftime("%Y-%m-%d %H:%M") }}</td><td data-label="Who">{{ e.actor }}</td><td data-label="What"><span class="pill">{{ e.kind }}</span> {% if e.claim_id %}<a href="/review/claims/{{ e.claim_id }}">{{ e.action }}</a>{% else %}{{ e.action }}{% endif %}</td><td data-label="Note">{{ e.detail }}</td></tr>
+      <tbody>{% for e in entries %}<tr><td data-label="When (UTC)">{{ e.at.strftime("%Y-%m-%d %H:%M") }}</td><td data-label="Who">{{ e.actor }}</td><td data-label="What"><span class="pill">{{ e.kind }}</span> {% if e.claim_id %}<a href="/review/claims/{{ e.claim_id }}">{{ e.action }}</a>{% elif e.link %}<a href="{{ e.link }}">{{ e.action }}</a>{% else %}{{ e.action }}{% endif %}</td><td data-label="Note">{{ e.detail }}</td></tr>
       {% else %}<tr><td colspan="4" class="muted table-empty">Nothing recorded yet.</td></tr>{% endfor %}</tbody></table>
     </div>
   </section>

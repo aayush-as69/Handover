@@ -7,7 +7,7 @@
 <div class="page-shell brief">
   <header class="page-header">
     <div><p class="page-eyebrow">TAKEOVER BRIEF / {{ project.name|upper }}</p><h1>Where to start</h1>
-      <p class="page-intro">{% if release %}From release {{ release.number }}, signed off by {{ release.approved_by_name }} on {{ release.approved_at.strftime("%Y-%m-%d") }}. {% else %}<strong>Draft preview. Not signed off yet.</strong> {% endif %}Every line is an approved claim your role may read. Priorities follow fixed rules, not a model's guess. <a href="/handover{% if previewing %}?view_as={{ view_role.value }}{% endif %}">Open the full handover</a> for the evidence behind each line.</p>
+      <p class="page-intro">{% if release %}From release {{ release.number }}, signed off by {{ release.approved_by_name }} on {{ release.approved_at.strftime("%Y-%m-%d") }}. {% else %}<strong>Draft preview. Not signed off yet.</strong> {% endif %}Every line is an approved claim your role may read. Priorities follow fixed rules, not a model's guess. <a href="/onboarding{% if previewing %}?view_as={{ view_role.value }}{% endif %}">New to this project? Take the guided read</a>. <a href="/handover{% if previewing %}?view_as={{ view_role.value }}{% endif %}">Open the full handover</a> for the evidence behind each line.</p>
     </div>
     <div class="page-header-aside"><span class="page-aside-label">VERIFIED</span><strong>{{ brief.health.verified_pct }}%</strong></div>
   </header>

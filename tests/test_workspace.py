@@ -398,3 +398,60 @@ def test_release_diff_lists_added_updated_dropped(env):
         assert [c.id for c, *_ in d.updated] == [ids[1]]
         assert [c.id for c, _ in d.removed] == [ids[0]]
         assert release_diff(s, meera.role, old, None, project.id).previous is None
+
+
+def test_audit_filters_and_links(env):
+    from app.audit_log import audit_entries, filter_entries
+    app, Session = env
+    with Session() as s:
+        project = s.scalar(select(Project))
+        meera = s.scalar(select(User).where(User.username == "meera"))
+        entries = audit_entries(s, project, meera.role)
+    assert entries
+    who = entries[0].actor
+    assert all(who.lower() in e.actor.lower() for e in filter_entries(entries, actor=who))
+    assert filter_entries(entries, text="zzz-no-such-text") == []
+    day = entries[0].at.replace(tzinfo=None).replace(hour=0, minute=0, second=0, microsecond=0)
+    assert filter_entries(entries, start=day, end=day)       # the end day counts in full
+    c = login(app, "meera")
+    page = c.get(f"/audit?actor={who.split()[0]}&start=2000-01-01&end=2100-01-01&q=")
+    assert page.status_code == 200 and "event(s)" in page.text
+    assert c.get("/audit?start=not-a-date").status_code == 200   # bad input is ignored, not an error
+
+
+def test_concentration_never_exceeds_what_exists(env):
+    from app.timeline import build_concentration
+    app, Session = env
+    with Session() as s:
+        project = s.scalar(select(Project))
+        meera = s.scalar(select(User).where(User.username == "meera"))
+        for row in build_concentration(s, project, meera.role):
+            assert 0 <= row.top_sole <= row.attributed and 0 <= row.share <= 100
+    assert "Knowledge concentration" in login(app, "meera").get("/bus-factor").text \
+        or "No claim has a named author" in login(app, "meera").get("/bus-factor").text
+
+
+def test_onboarding_walks_through_and_respects_role(env):
+    app, Session = env
+    meera = login(app, "meera")
+    first = meera.get("/onboarding")
+    assert first.status_code == 200 and ("Step 1 of" in first.text or "nothing to walk through" in first.text)
+    assert meera.get("/onboarding?step=999").status_code == 200       # past the end is clamped
+    # Nothing is published yet, so a reader gets the pending page and no content.
+    assert "Step 1 of" not in login(app, "kabir").get("/onboarding").text
+    with Session() as s:
+        for c in s.scalars(select(Claim)):
+            c.review_status = ReviewStatus.approved
+        s.commit()
+    assert meera.post("/handover/approve", data={"csrf": token(meera, "/handover")}).status_code == 303
+    kabir = login(app, "kabir")
+    assert "Step 1 of" in kabir.get("/onboarding").text
+    assert kabir.get("/onboarding?view_as=admin").status_code == 403
+    assert "What you went through" in kabir.get("/onboarding?step=99").text
+
+
+def test_quality_page_is_reviewer_only(env):
+    app, Session = env
+    page = login(app, "meera").get("/quality")
+    assert page.status_code == 200 and "rules-v1" in page.text and "Not measured yet" in page.text
+    assert login(app, "kabir").get("/quality").status_code in (403, 404)

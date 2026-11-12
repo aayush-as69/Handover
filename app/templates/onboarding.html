@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Guided takeover{% endblock %}
+{% block body %}
+<div class="page-shell onboarding">
+  <header class="page-header">
+    <div><p class="page-eyebrow">GUIDED TAKEOVER / {{ project.name|upper }}</p><h1>{% if step > total %}Takeover read complete{% else %}Step {{ step }} of {{ total }}{% endif %}</h1>
+      <p class="page-intro">New to this project? Read it one topic at a time. About {{ minutes }} minute{{ "s" if minutes != 1 }} in total. {% if release %}From release {{ release.number }}.{% else %}Draft: not signed off yet.{% endif %}</p>
+    </div>
+  </header>
+  {% if previewing %}<p class="flash">Previewing what a <strong>{{ view_role.value }}</strong> sees.</p>{% endif %}
+  {% if not total %}
+  <section class="tile"><p class="muted">Nothing is approved for your role yet, so there is nothing to walk through.</p></section>
+  {% elif step <= total %}
+  {% set title, key, items = steps[step - 1] %}
+  <section class="tile" style="padding:1.3rem 1.4rem">
+    <h2>{{ title }}</h2>
+    <ul class="plain">
+      {% for i in items %}
+      <li>{% if i.confidence is defined %}<span class="pill {{ i.confidence.value }}">{{ i.confidence.value.replace("-", " ") }}</span> {{ hide(i.statement) }}{% else %}<span class="pill inferred">unanswered</span> {{ hide(i.text) }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  <p class="onboarding-nav">
+    {% if step > 1 %}<a class="btn" href="/onboarding?step={{ step - 1 }}{{ query }}">Back</a>{% endif %}
+    <a class="btn primary" href="/onboarding?step={{ step + 1 }}{{ query }}">{{ "Next: " ~ steps[step][0] if step < total else "Finish" }}</a>
+  </p>
+  {% else %}
+  {% set h = brief.health %}
+  <section class="tile" style="padding:1.3rem 1.4rem">
+    <h2>What you went through</h2>
+    <ul class="plain">
+      <li>{{ h.total }} approved claim{{ "s" if h.total != 1 }}, {{ h.verified }} of them quote-verified.</li>
+      <li>{{ brief.decisions|length }} decision{{ "s" if brief.decisions|length != 1 }}, {{ brief.risks|length }} risk or blocker{{ "s" if brief.risks|length != 1 }}, {{ brief.people|length }} people and ownership note{{ "s" if brief.people|length != 1 }}.</li>
+    </ul>
+    <h2>Still unresolved</h2>
+    <ul class="plain">
+      <li>{{ h.open_conflicts }} open conflict{{ "s" if h.open_conflicts != 1 }} between sources.</li>
+      <li>{{ h.open_questions }} open question{{ "s" if h.open_questions != 1 }}.</li>
+      <li>{{ h.needs_care }} claim{{ "s" if h.needs_care != 1 }} to check yourself (inferred, conflicting or unsupported).</li>
+    </ul>
+    <p><a href="/handover/brief{{ '?view_as=' ~ view_role.value if previewing }}">Open the takeover brief</a> to see these again in one place.</p>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

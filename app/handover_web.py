@@ -107,10 +107,8 @@ def _latest_approvals(session, claim_ids):
     return out
 
 
-@router.get("/handover/brief")
-def takeover_brief(request: Request, user: User = Depends(require_user),
-                   session: Session = Depends(get_session), view_as: str = ""):
-    from .brief import build_brief
+def _brief_inputs(request, user, session, view_as):
+    """Everything the brief and the walkthrough need, or None when nothing is published yet."""
     from .enums import QuestionStatus
     from .models import Question
     project = project_for(session, request, user)
@@ -120,7 +118,7 @@ def takeover_brief(request: Request, user: User = Depends(require_user),
         session.commit()
     if not can_view(user, handover) or (
             user.role not in REVIEWER_ROLES and is_stale(session, project, handover)):
-        return render(request, "handover_pending.html", user, project=project)
+        return None
     role = user.role
     if view_as:
         try:
@@ -134,12 +132,63 @@ def takeover_brief(request: Request, user: User = Depends(require_user),
     open_rows = [q for q in session.scalars(select(Question).where(
         Question.project_id == project.id, Question.status == QuestionStatus.open)
         .order_by(Question.id)) if q.claim_ids and all(i in shown for i in q.claim_ids)]
+    from .brief import build_brief
     brief = build_brief(sections, conflict_notes(session, project, shown), open_rows,
                         answered_questions(session, project, shown))
+    return project, handover, role, brief
+
+
+@router.get("/handover/brief")
+def takeover_brief(request: Request, user: User = Depends(require_user),
+                   session: Session = Depends(get_session), view_as: str = ""):
+    data = _brief_inputs(request, user, session, view_as)
+    if data is None:
+        return render(request, "handover_pending.html", user, project=project_for(session, request, user))
+    project, handover, role, brief = data
     return render(request, "brief.html", user, project=project, handover=handover,
                   release=latest_release(session, handover), brief=brief, view_role=role,
                   previewing=role != user.role, sens=effective_sensitivity,
                   hide=lambda text: redact_text(role, text))
+
+
+ONBOARDING_STEPS = (
+    ("Where things stand", "start", "start_here"),
+    ("Decisions you inherit", "decisions", "decisions"),
+    ("Risks and blockers", "risks", "risks"),
+    ("People and ownership", "people", "people"),
+    ("Open questions", "questions", "questions"),
+    ("Next actions", "actions", "actions"),
+)
+
+
+@router.get("/onboarding")
+def onboarding(request: Request, step: int = 1, user: User = Depends(require_user),
+               session: Session = Depends(get_session), view_as: str = ""):
+    """A guided read of the brief, one topic at a time. Nothing is stored: the step is in the URL."""
+    data = _brief_inputs(request, user, session, view_as)
+    if data is None:
+        return render(request, "handover_pending.html", user, project=project_for(session, request, user))
+    project, handover, role, brief = data
+    steps = []
+    for title, key, attr in ONBOARDING_STEPS:
+        items = getattr(brief, attr)
+        if key == "start":
+            items = [i.claim for i in items]
+        if key == "questions":
+            items = list(items) + list(brief.unanswered)
+        if key == "people":
+            items = list(items)
+        if items:
+            steps.append((title, key, items))
+    words = sum(len(redact_text(role, getattr(i, "statement", getattr(i, "text", ""))).split())
+                for _, _, items in steps for i in items)
+    total = len(steps)
+    step = max(1, min(step, total + 1)) if total else 1
+    return render(request, "onboarding.html", user, project=project, brief=brief,
+                  release=latest_release(session, handover), steps=steps, step=step, total=total,
+                  minutes=max(1, round(words / 200)), view_role=role, previewing=role != user.role,
+                  hide=lambda text: redact_text(role, text),
+                  query=f"&view_as={role.value}" if role != user.role else "")
 
 
 @router.get("/handover/releases")

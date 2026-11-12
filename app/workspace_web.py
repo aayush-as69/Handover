@@ -14,7 +14,7 @@ from .handover import can_view, get_handover, is_stale
 from .handover_web import require_admin, require_user
 from .models import Project, ProjectMember, User
 from .projects import accessible_projects, add_member, can_access_project, remove_member
-from .timeline import TIMELINE_TYPES, build_bus_factor, build_timeline
+from .timeline import TIMELINE_TYPES, build_bus_factor, build_concentration, build_timeline
 from .web import check_csrf, project_for, render, require_reviewer
 
 router = APIRouter()
@@ -129,15 +129,23 @@ def change_members(project_id: int, action: str, request: Request, user_id: int 
 
 
 @router.get("/audit")
-def audit_page(request: Request, kind: str = "", user: User = Depends(require_reviewer),
+def audit_page(request: Request, kind: str = "", actor: str = "", q: str = "",
+               start: str = "", end: str = "", user: User = Depends(require_reviewer),
                session: Session = Depends(get_session)):
+    from datetime import datetime
+    from .audit_log import filter_entries
     project = project_for(session, request, user)
     kind = kind if kind in KINDS else ""
-    entries = audit_entries(session, project, user.role, kind)
-    return render(request, "audit.html", user, project=project, entries=entries, kind=kind, kinds=KINDS)
 
-
-# ------------------------------------------------------------------ timeline
+    def day(value: str):
+        try:
+            return datetime.strptime(value, "%Y-%m-%d")
+        except ValueError:
+            return None
+    entries = filter_entries(audit_entries(session, project, user.role, kind, limit=1000),
+                             actor=actor[:60], text=q[:100], start=day(start), end=day(end))[:300]
+    return render(request, "audit.html", user, project=project, entries=entries, kind=kind,
+                  kinds=KINDS, actor=actor[:60], q=q[:100], start=start[:10], end=end[:10])
 
 
 @router.get("/timeline")
@@ -170,4 +178,25 @@ def bus_factor_page(request: Request, user: User = Depends(require_reviewer),
                     session: Session = Depends(get_session)):
     project = project_for(session, request, user)
     return render(request, "bus_factor.html", user, project=project,
-                  result=build_bus_factor(session, project, user.role))
+                  result=build_bus_factor(session, project, user.role),
+                  concentration=build_concentration(session, project, user.role))
+
+
+# ------------------------------------------------------------------ extraction quality
+
+
+@router.get("/quality")
+def quality_page(request: Request, user: User = Depends(require_reviewer),
+                 session: Session = Depends(get_session)):
+    """Shows the committed extraction reports. It never runs a model."""
+    import json
+    from pathlib import Path
+    reports = []
+    folder = Path(__file__).resolve().parent.parent / "docs" / "quality"
+    for f in sorted(folder.glob("*.json")):
+        try:
+            reports.append(json.loads(f.read_text()))
+        except ValueError:
+            continue
+    return render(request, "quality.html", user, project=project_for(session, request, user),
+                  reports=reports)

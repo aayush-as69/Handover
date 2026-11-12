@@ -1192,3 +1192,14 @@ form.inline{display:inline;margin-left:.6rem}
 .brief .stat .n small{font-size:1rem;font-weight:500;color:var(--mut)}
 .connections h3{font-size:1rem;margin:.9rem 0 .2rem}
 .connections h3:first-child{margin-top:0}
+.audit-filters{display:flex;flex-wrap:wrap;gap:.6rem;align-items:end}
+.audit-filters label{display:flex;flex-direction:column;gap:.2rem;font-size:.85rem}
+.audit-filters input,.audit-filters select{min-width:0;max-width:11rem}
+.bar-row{display:grid;grid-template-columns:9rem 1fr minmax(8rem,14rem);gap:.7rem;align-items:center;padding:.3rem 0}
+.bar-label{text-transform:capitalize}
+.bar-track{height:.7rem;border-radius:99px;background:var(--tile-2);overflow:hidden}
+.bar-fill{display:block;height:100%;background:var(--ok,#4ade80);border-radius:99px;min-width:2px}
+.bar-fill.warm{background:#facc15}.bar-fill.hot{background:#f87171}
+@media(max-width:600px){.bar-row{grid-template-columns:1fr;gap:.2rem}}
+.onboarding-nav{display:flex;gap:.6rem;margin-top:1rem}
+.checks li{padding:.15rem 0}
