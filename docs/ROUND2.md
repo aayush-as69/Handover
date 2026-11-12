@@ -61,7 +61,7 @@ assistant; see `docs/DISCLOSURES.md`. All demo data is synthetic.
 ## 5. Changes from the Round 1 plan
 | Round 1 | Round 2 | Why |
 |---|---|---|
-| React front end | Server-rendered pages (Jinja2, no JavaScript) | Solo build; smaller attack surface; every access check stays on the server |
+| React front end | Server-rendered pages (Jinja2, with a little JavaScript for theme, search and login) | Solo build; smaller attack surface; every access check stays on the server |
 | LLM-led extraction | Rule-based extractor plus an LLM extractor behind one interface | No API key was available at build time; the rule-based path works offline and is fully tested |
 | Conflict detection, gap checklist, redaction views | Built (see `FEATURES.md`) | Planned in Round 1; delivered after the first draft of this document |
 

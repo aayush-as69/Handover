@@ -78,6 +78,8 @@ Decisions live in meeting notes. Ownership is buried in task boards. Risks are s
 - Generate “Questions Before I Leave” for missing context.
 - Identify ownership, decision and risk gaps.
 - Let incoming teammates acknowledge a specific release.
+- Show a dated decision timeline and a bus-factor view of single-person knowledge.
+- Keep several projects apart, with an audit log of who changed what.
 
 </td>
 </tr>

@@ -83,3 +83,11 @@ Conflict detection highlights potentially inconsistent claims. Resolving a confl
 ## 9. Questions Before I Leave
 
 Questions identify gaps such as missing ownership or unresolved context. Answers are displayed as the leaver's own words rather than automatically promoted to verified facts.
+
+## 10. Timeline, bus factor, audit log and projects
+
+- **How it works** (`/guide`): a short in-app explanation of the story, the steps, the labels and a role-based walkthrough. Start here if the demo data looks confusing.
+- **Timeline** (`/timeline`): approved decisions, blockers, risks and open questions in date order. Each role sees only what it may read.
+- **Bus factor** (`/bus-factor`, reviewers): claims whose evidence all comes from one person, so the loss of that person matters most.
+- **Audit log** (`/audit`, reviewers): who changed, approved, released, acknowledged or resolved what, and when.
+- **Projects** (`/projects`): switch between projects you belong to. Admins add members and create projects.

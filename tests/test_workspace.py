@@ -309,7 +309,7 @@ def test_migration_gives_existing_users_access_to_existing_projects(tmp_path):
 
 
 def test_guide_page_is_role_aware(env):
-    app, Session = env
+    app, _ = env
     reviewer = login(app, "meera").get("/guide")
     assert reviewer.status_code == 200
     assert "How Handover works" in reviewer.text and "/conflicts" in reviewer.text

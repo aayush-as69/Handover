@@ -66,6 +66,19 @@ Supported handover actions include `approve`, `withdraw` and `acknowledge`.
 | POST | `/questions/refresh` | admin/approver + CSRF |
 | POST | `/questions/{question_id}/{action}` | admin/approver + CSRF |
 
+## Workspace routes
+
+| Method | Route | Auth |
+|---|---|---|
+| GET | `/guide` | authenticated user (explains the product; steps differ by role) |
+| GET | `/timeline` | authenticated user; approved claims the role may read (`type`, `drafts` filters; drafts for reviewers only) |
+| GET | `/bus-factor` | admin/approver |
+| GET | `/audit` | admin/approver; `kind` filter; entries above the role's clearance are left out |
+| GET | `/projects` | authenticated user; lists only projects the user belongs to (admins see all) |
+| POST | `/projects/switch` | member of the project + CSRF |
+| POST | `/projects/new` | admin + CSRF |
+| POST | `/projects/{project_id}/members/{add\|remove}` | admin + CSRF |
+
 ## `/health` vs `/ready`
 
 `/health` is a **liveness** endpoint. It reports that the application process is running and does not assert database health.
