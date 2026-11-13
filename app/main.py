@@ -53,6 +53,7 @@ def create_app(secret_key: str | None = None, config: Settings | None = None) ->
     from .insights_web import router as insights_router
     from .web import router
     from .workspace_web import router as workspace_router
+    from .bulk_web import router as bulk_router
 
     cfg = config or Settings()
     for w in cfg.validate():                       # production problems raise ConfigError here
@@ -118,6 +119,7 @@ def create_app(secret_key: str | None = None, config: Settings | None = None) ->
     app.include_router(handover_router)
     app.include_router(insights_router)
     app.include_router(workspace_router)
+    app.include_router(bulk_router)
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request, exc):

@@ -151,6 +151,56 @@ def takeover_brief(request: Request, user: User = Depends(require_user),
                   hide=lambda text: redact_text(role, text))
 
 
+@router.get("/handover/export.md")
+def export_markdown(request: Request, user: User = Depends(require_user),
+                    session: Session = Depends(get_session), view_as: str = ""):
+    """The takeover brief as a Markdown file: the same content and limits as the page."""
+    import re
+    from fastapi.responses import PlainTextResponse
+    from .access import chunk_visible
+    data = _brief_inputs(request, user, session, view_as)
+    if data is None:
+        raise HTTPException(status_code=404, detail="Nothing is published for your role yet.")
+    project, handover, role, brief = data
+    release = latest_release(session, handover)
+
+    def cite(claim) -> str:
+        for e in claim.evidence:
+            if e.chunk is not None and chunk_visible(role, e.chunk):
+                return f"{e.chunk.source.name} › {e.chunk.locator}"
+        return ""
+
+    def line(c) -> str:
+        src = cite(c)
+        return f"- {redact_text(role, c.statement)} ({c.confidence.value}{'; ' + src if src else ''})"
+
+    h = brief.health
+    out = [f"# Takeover brief: {project.name}", ""]
+    if release:
+        out.append(f"Release {release.number}, signed off by {release.approved_by_name} on "
+                   f"{release.approved_at.strftime('%Y-%m-%d')}.")
+    else:
+        out.append("Draft. Not signed off yet.")
+    out += [f"Written for the **{role.value}** role.", "",
+            f"- {h.verified} of {h.total} claims quote-verified",
+            f"- {h.open_conflicts} open conflicts, {h.open_questions} open questions", "",
+            "A label such as quote-verified means the quote was found in the source. It does not "
+            "mean the claim is true, current or complete.", ""]
+    for title, items in (("Start here", [i.claim for i in brief.start_here]),
+                         ("Decisions you inherit", brief.decisions),
+                         ("Risks and blockers", brief.risks),
+                         ("Who knows what", brief.people),
+                         ("Questions", brief.questions),
+                         ("Next actions on record", brief.actions)):
+        if items:
+            out += [f"## {title}", ""] + [line(c) for c in items] + [""]
+    for q in brief.unanswered:
+        out.append(f"- Unanswered: {redact_text(role, q.text)}")
+    name = re.sub(r"[^A-Za-z0-9._-]+", "-", project.name).strip("-")[:60] or "handover"
+    return PlainTextResponse("\n".join(out) + "\n", media_type="text/markdown; charset=utf-8",
+                             headers={"Content-Disposition": f'attachment; filename="{name}-brief.md"'})
+
+
 ONBOARDING_STEPS = (
     ("Where things stand", "start", "start_here"),
     ("Decisions you inherit", "decisions", "decisions"),

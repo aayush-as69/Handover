@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Bulk review{% endblock %}
+{% block body %}
+<div class="page-shell">
+  <header class="page-header">
+    <div><p class="page-eyebrow">REVIEW / {{ project.name|upper }}</p><h1>Approve clean claims together</h1>
+      <p class="page-intro">Only claims whose quote was found word for word, with no model doubt and no open conflict, are listed. Nothing is ticked for you. Read each line, tick what you accept, then approve. Anything that changes before you submit is skipped. Everything else still needs the single-claim review. <a href="/review">Back to the review queue</a>.</p>
+    </div>
+    <div class="page-header-aside"><span class="page-aside-label">ELIGIBLE</span><strong>{{ claims|length }}</strong></div>
+  </header>
+  {% if claims %}
+  <form method="post" action="/review/bulk" class="tile bulk" style="padding:1.3rem 1.4rem">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <p><button type="button" class="link" data-select-all>Select all shown</button> · <button type="button" class="link" data-select-none>Clear</button></p>
+    <ul class="plain">
+      {% for c in claims %}
+      <li><label class="bulk-row"><input type="checkbox" name="claim_id" value="{{ c.id }}">
+        <span><a href="/review/claims/{{ c.id }}">{{ c.statement }}</a><br><span class="muted">{{ c.type.value.replace("_", " ") }} · {{ cites.get(c.id, "") }}</span></span></label></li>
+      {% endfor %}
+    </ul>
+    {% if claims|length >= limit %}<p class="muted">Showing the first {{ limit }}. Approve these, then come back for the rest.</p>{% endif %}
+    <button class="primary">Approve ticked claims</button>
+  </form>
+  {% else %}
+  <section class="tile"><p class="muted">No claims are eligible right now. Quote-verified claims with no conflict appear here once they are waiting for review.</p></section>
+  {% endif %}
+</div>
+{% endblock %}

@@ -576,3 +576,51 @@ def test_conflict_cards_cite_their_sources(env):
 def test_sources_page_shows_load_and_content_dates(env):
     page = login(env[0], "riya").get("/admin/sources").text
     assert "Newest content" in page and "Loaded" in page
+
+
+def test_bulk_review_only_offers_clean_claims_and_rechecks_on_submit(env):
+    from app.bulk_web import eligible_claims
+    from app.enums import Confidence
+    app, Session = env
+    with Session() as s:
+        meera = s.scalar(select(User).where(User.username == "meera"))
+        project = s.scalar(select(Project))
+        offered = eligible_claims(s, meera, project)
+        assert offered and all(c.confidence == Confidence.verified for c in offered)
+        assert all(c.review_status.value in ("generated", "edited") for c in offered)
+        ids = [c.id for c in offered][:2]
+        other = offered[2]
+        other.confidence = Confidence.unsupported      # no longer clean
+        other_id = other.id
+        s.commit()
+    c = login(app, "meera")
+    assert "Approve clean claims together" in c.get("/review/bulk").text
+    t = token(c, "/review/bulk")
+    # One eligible claim, plus one that is not clean: only the clean one is approved.
+    r = c.post("/review/bulk", data={"csrf": t, "claim_id": [ids[0], other_id]}, follow_redirects=True)
+    assert "Approved 1 claim(s). Skipped 1" in r.text
+    with Session() as s:
+        assert s.get(Claim, ids[0]).review_status.value == "approved"
+        assert s.get(Claim, other_id).review_status.value != "approved"
+    # Not open to readers, and a bad CSRF token changes nothing.
+    assert login(app, "kabir").get("/review/bulk").status_code == 403
+    assert c.post("/review/bulk", data={"csrf": "bad", "claim_id": [ids[1]]}).status_code in (400, 403)
+    with Session() as s:
+        assert s.get(Claim, ids[1]).review_status.value != "approved"
+
+
+def test_markdown_export_matches_role_and_needs_a_release_for_readers(env):
+    app, Session = env
+    kabir = login(app, "kabir")
+    assert kabir.get("/handover/export.md").status_code == 404      # nothing published yet
+    with Session() as s:
+        for c in s.scalars(select(Claim)):
+            c.review_status = ReviewStatus.approved
+        s.commit()
+    meera = login(app, "meera")
+    assert meera.post("/handover/approve", data={"csrf": token(meera, "/handover")}).status_code == 303
+    r = kabir.get("/handover/export.md")
+    assert r.status_code == 200 and "attachment" in r.headers["content-disposition"]
+    assert r.text.startswith("# Takeover brief:") and "does not mean the claim is true" in r.text
+    assert kabir.get("/handover/export.md?view_as=admin").status_code == 403
+    assert "restricted" in login(app, "rao").get("/handover/export.md").text

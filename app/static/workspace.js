@@ -74,3 +74,12 @@
     });
   });
 })();
+
+document.addEventListener("click", function (event) {
+  var all = event.target.closest("[data-select-all]");
+  var none = event.target.closest("[data-select-none]");
+  if (!all && !none) return;
+  var form = event.target.closest("form");
+  if (!form) return;
+  form.querySelectorAll('input[type="checkbox"]').forEach(function (box) { box.checked = !!all; });
+});
