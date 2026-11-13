@@ -474,3 +474,44 @@ class Job(Base):
     chunks_total: Mapped[int] = mapped_column(Integer, default=0)
     claims_created: Mapped[int] = mapped_column(Integer, default=0)
     message: Mapped[str] = mapped_column(Text, default="")
+
+
+class Team(Base):
+    """A named group of people, so a whole team can be added to a project in one step.
+
+    Adding a team copies its current members into the project. It is not a live link: people
+    added to the team later are not added to the project automatically.
+    """
+
+    __tablename__ = "teams"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(120), unique=True)
+    created_by: Mapped[str] = mapped_column(String(128))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class TeamMember(Base):
+    __tablename__ = "team_members"
+    __table_args__ = (UniqueConstraint("team_id", "user_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    team_id: Mapped[int] = mapped_column(ForeignKey("teams.id"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+
+
+class OnboardingStep(Base):
+    """A topic of the guided takeover that a person confirmed they have read.
+
+    Tied to the release they read, so a newer release starts the walkthrough again.
+    """
+
+    __tablename__ = "onboarding_steps"
+    __table_args__ = (UniqueConstraint("user_id", "project_id", "release_number", "step_key"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    release_number: Mapped[int] = mapped_column(Integer, default=0)    # 0 = unsigned draft
+    step_key: Mapped[str] = mapped_column(String(32))
+    done_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)

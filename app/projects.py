@@ -88,3 +88,15 @@ def remove_member(session: Session, project: Project, user: User) -> bool:
         return False
     session.delete(row)
     return True
+
+
+def add_team(session: Session, project: Project, team_members: list[User], by: str,
+             role: Role | None = None) -> tuple[int, int]:
+    """Copy a team's current members into a project. Returns (added, already members)."""
+    added = already = 0
+    for person in team_members:
+        if add_member(session, project, person, by, role if person.role != Role.admin else None):
+            added += 1
+        else:
+            already += 1
+    return added, already

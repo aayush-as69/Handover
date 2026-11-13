@@ -42,6 +42,11 @@
         <label>Role here <select name="role"><option value="">Their default role</option>{% for r in project_roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}</select></label>
         <button>Add</button>
       </form>
+      {% if teams %}<form method="post" action="/projects/{{ p.id }}/teams/add" class="inline">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <label>Add a whole team <select name="team_id">{% for t, _m in teams %}<option value="{{ t.id }}">{{ t.name }} ({{ _m|length }})</option>{% endfor %}</select></label>
+        <label>Role <select name="role"><option value="">Their default role</option>{% for r in project_roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}</select></label>
+        <button>Add team</button></form>{% endif %}
       {% endif %}
       {% endif %}
     </section>

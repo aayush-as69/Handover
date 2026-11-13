@@ -97,3 +97,7 @@ Code: `app/projects.py`, `app/audit_log.py`, `app/workspace_web.py`.
 - **Conflicts** now cite the source passage behind each side.
 - **Sources page** shows when each source was loaded and the date of its newest content.
 - **Workflow diagram**: `docs/assets/workflow.svg` compares a typical AI summary with Handover's evidence-first flow.
+- **Bulk review** (`/review/bulk`): approve many quote-verified claims with no conflict or model doubt in one step. Nothing is pre-ticked, each claim is re-checked on submit, and each approval is recorded under the reviewer's name.
+- **Markdown export** of the takeover brief (`/handover/export.md`): same content and limits as the page for the viewer's role.
+- **Teams**: an admin can group people into a named team and add the whole team to a project with a role. It copies current members and is not a live link.
+- **Onboarding progress**: a person can confirm each topic of the guided takeover. Progress is kept per person, project and release, so a new release starts the walkthrough again. Migration `0006` adds the `teams`, `team_members` and `onboarding_steps` tables.

@@ -151,6 +151,30 @@ def takeover_brief(request: Request, user: User = Depends(require_user),
                   hide=lambda text: redact_text(role, text))
 
 
+@router.post("/onboarding/done")
+def onboarding_done(request: Request, step_key: str = Form(""), step: int = Form(1),
+                    csrf: str = Form(""), user: User = Depends(require_user),
+                    session: Session = Depends(get_session)):
+    """Record that this person read one topic of the release, then go to the next topic."""
+    from .models import OnboardingStep
+    check_csrf(request, csrf)
+    if step_key not in {key for _, key, _ in ONBOARDING_STEPS}:
+        raise HTTPException(status_code=404, detail="Unknown step.")
+    data = _brief_inputs(request, user, session, "")
+    if data is None:
+        raise HTTPException(status_code=404, detail="Nothing is published for your role yet.")
+    project, handover, _, _ = data
+    release = latest_release(session, handover)
+    number = release.number if release else 0
+    if session.scalar(select(OnboardingStep.id).where(
+            OnboardingStep.user_id == user.id, OnboardingStep.project_id == project.id,
+            OnboardingStep.release_number == number, OnboardingStep.step_key == step_key)) is None:
+        session.add(OnboardingStep(user_id=user.id, project_id=project.id,
+                                   release_number=number, step_key=step_key))
+        session.commit()
+    return RedirectResponse(f"/onboarding?step={max(step, 1) + 1}", status_code=303)
+
+
 @router.get("/handover/export.md")
 def export_markdown(request: Request, user: User = Depends(require_user),
                     session: Session = Depends(get_session), view_as: str = ""):
@@ -234,8 +258,13 @@ def onboarding(request: Request, step: int = 1, user: User = Depends(require_use
                 for _, _, items in steps for i in items)
     total = len(steps)
     step = max(1, min(step, total + 1)) if total else 1
-    return render(request, "onboarding.html", user, project=project, brief=brief,
-                  release=latest_release(session, handover), steps=steps, step=step, total=total,
+    release = latest_release(session, handover)
+    from .models import OnboardingStep
+    done = set(session.scalars(select(OnboardingStep.step_key).where(
+        OnboardingStep.user_id == user.id, OnboardingStep.project_id == project.id,
+        OnboardingStep.release_number == (release.number if release else 0))))
+    return render(request, "onboarding.html", user, project=project, brief=brief, done=done,
+                  release=release, steps=steps, step=step, total=total,
                   minutes=max(1, round(words / 200)), view_role=role, previewing=role != user.role,
                   hide=lambda text: redact_text(role, text),
                   query=f"&view_as={role.value}" if role != user.role else "")

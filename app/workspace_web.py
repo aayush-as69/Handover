@@ -12,8 +12,8 @@ from .db import get_session
 from .enums import REVIEWER_ROLES, ClaimType, Role
 from .handover import can_view, get_handover, is_stale
 from .handover_web import require_admin, require_user
-from .models import Project, ProjectMember, User
-from .projects import PROJECT_ROLES, accessible_projects, add_member, can_access_project, remove_member, set_member_role
+from .models import Project, ProjectMember, Team, TeamMember, User
+from .projects import PROJECT_ROLES, accessible_projects, add_member, add_team, can_access_project, remove_member, set_member_role
 from .timeline import TIMELINE_TYPES, build_bus_factor, build_concentration, build_timeline
 from .web import check_csrf, project_for, render, require_reviewer
 
@@ -73,10 +73,18 @@ def projects_page(request: Request, user: User = Depends(require_user),
             roles.update({(p.id, m.user_id): m.role for m in rows})
             members[p.id] = [u for u in everyone if u.id in ids]
             others[p.id] = [u for u in everyone if u.id not in ids]
+    teams, team_others = [], {}
+    if user.role.value == "admin":
+        everyone = list(session.scalars(select(User).order_by(User.display_name)))
+        for t in session.scalars(select(Team).order_by(Team.name)):
+            ids = {m.user_id for m in session.scalars(select(TeamMember).where(TeamMember.team_id == t.id))}
+            teams.append((t, [u for u in everyone if u.id in ids]))
+            team_others[t.id] = [u for u in everyone if u.id not in ids]
     mine = {m.project_id: m.role for m in session.scalars(
         select(ProjectMember).where(ProjectMember.user_id == user.id))}
     return render(request, "projects.html", user, projects=projects, current=current,
                   members=members, others=others, roles=roles, mine=mine,
+                  teams=teams, team_others=team_others,
                   default_role=session.scalar(select(User.role).where(User.id == user.id)),
                   project_roles=[r.value for r in PROJECT_ROLES])
 
@@ -222,3 +230,66 @@ def quality_page(request: Request, user: User = Depends(require_reviewer),
             continue
     return render(request, "quality.html", user, project=project_for(session, request, user),
                   reports=reports)
+
+
+# ------------------------------------------------------------------ teams
+
+
+@router.post("/teams/new")
+def new_team(request: Request, name: str = Form(""), csrf: str = Form(""),
+             admin: User = Depends(require_admin), session: Session = Depends(get_session)):
+    check_csrf(request, csrf)
+    name = " ".join(name.split())[:120]
+    if not name:
+        return _flash(request, "Give the team a name.", "/projects")
+    if session.scalar(select(Team.id).where(func.lower(Team.name) == name.lower())):
+        return _flash(request, "A team with that name already exists.", "/projects")
+    session.add(Team(name=name, created_by=admin.username))
+    session.commit()
+    return _flash(request, f"Created team {name}.", "/projects")
+
+
+@router.post("/teams/{team_id}/members/{action}")
+def change_team(team_id: int, action: str, request: Request, user_id: int = Form(0),
+                csrf: str = Form(""), admin: User = Depends(require_admin),
+                session: Session = Depends(get_session)):
+    check_csrf(request, csrf)
+    team, person = session.get(Team, team_id), session.get(User, user_id)
+    if team is None or person is None or action not in ("add", "remove"):
+        raise HTTPException(status_code=404, detail="Not found.")
+    row = session.scalar(select(TeamMember).where(TeamMember.team_id == team.id,
+                                                  TeamMember.user_id == person.id))
+    if action == "add" and row is None:
+        session.add(TeamMember(team_id=team.id, user_id=person.id))
+    elif action == "remove" and row is not None:
+        session.delete(row)
+    session.commit()
+    return _flash(request, f"{'Added' if action == 'add' else 'Removed'} {person.display_name}"
+                           f" {'to' if action == 'add' else 'from'} {team.name}.", "/projects")
+
+
+@router.post("/projects/{project_id}/teams/add")
+def add_team_to_project(project_id: int, request: Request, team_id: int = Form(0),
+                        role: str = Form(""), csrf: str = Form(""),
+                        admin: User = Depends(require_admin),
+                        session: Session = Depends(get_session)):
+    check_csrf(request, csrf)
+    project, team = session.get(Project, project_id), session.get(Team, team_id)
+    if project is None or team is None:
+        raise HTTPException(status_code=404, detail="Not found.")
+    chosen = None
+    if role:
+        try:
+            chosen = Role(role)
+        except ValueError:
+            return _flash(request, "Choose a valid role.", "/projects")
+        if chosen not in PROJECT_ROLES:
+            return _flash(request, "Admin is set for the whole workspace, not per project.", "/projects")
+    people = [session.get(User, m.user_id) for m in session.scalars(
+        select(TeamMember).where(TeamMember.team_id == team.id))]
+    added, already = add_team(session, project, [p for p in people if p is not None],
+                              admin.username, chosen)
+    session.commit()
+    return _flash(request, f"Added {added} from {team.name} to {project.name}"
+                           f"{f' ({already} already members)' if already else ''}. "
+                           "Later changes to the team do not carry over.", "/projects")

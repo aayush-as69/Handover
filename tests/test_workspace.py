@@ -624,3 +624,60 @@ def test_markdown_export_matches_role_and_needs_a_release_for_readers(env):
     assert r.text.startswith("# Takeover brief:") and "does not mean the claim is true" in r.text
     assert kabir.get("/handover/export.md?view_as=admin").status_code == 403
     assert "restricted" in login(app, "rao").get("/handover/export.md").text
+
+
+def test_teams_copy_members_into_a_project_with_a_role(env):
+    from app.enums import Role
+    from app.models import ProjectMember, Team, TeamMember
+    app, Session = env
+    pid, _ = _other_project(Session, members=[])
+    riya = login(app, "riya")
+    t = token(riya, "/projects")
+    riya.post("/teams/new", data={"name": "Backend", "csrf": t})
+    assert "already exists" in riya.post("/teams/new", data={"name": "backend", "csrf": t},
+                                         follow_redirects=True).text
+    with Session() as s:
+        team_id = s.scalar(select(Team.id))
+        ids = {u.username: u.id for u in s.scalars(select(User))}
+    for who in ("kabir", "meera"):
+        riya.post(f"/teams/{team_id}/members/add", data={"user_id": ids[who], "csrf": t})
+    r = riya.post(f"/projects/{pid}/teams/add", data={"team_id": team_id, "role": "viewer", "csrf": t},
+                  follow_redirects=True)
+    assert "Added 2 from Backend" in r.text and "do not carry over" in r.text
+    with Session() as s:
+        rows = {m.user_id: m.role for m in s.scalars(select(ProjectMember).where(ProjectMember.project_id == pid))}
+        assert rows == {ids["kabir"]: Role.viewer, ids["meera"]: Role.viewer}
+    # Adding again changes nothing, and "admin" is refused as a project role.
+    assert "2 already members" in riya.post(f"/projects/{pid}/teams/add", data={"team_id": team_id, "csrf": t},
+                                            follow_redirects=True).text
+    assert "whole workspace" in riya.post(f"/projects/{pid}/teams/add",
+                                          data={"team_id": team_id, "role": "admin", "csrf": t},
+                                          follow_redirects=True).text
+    kabir = login(app, "kabir")
+    assert kabir.post("/teams/new", data={"name": "X", "csrf": token(kabir, "/projects")}).status_code == 403
+
+
+def test_onboarding_progress_is_per_person_and_per_release(env):
+    from app.models import OnboardingStep
+    app, Session = env
+    with Session() as s:
+        for c in s.scalars(select(Claim)):
+            c.review_status = ReviewStatus.approved
+        s.commit()
+    meera = login(app, "meera")
+    meera.post("/handover/approve", data={"csrf": token(meera, "/handover")})
+    kabir = login(app, "kabir")
+    t = token(kabir, "/onboarding")
+    page = kabir.get("/onboarding").text
+    assert "I have read this, continue" in page
+    key = "start" if 'value="start"' in page else page.split('name="step_key" value="')[1].split('"')[0]
+    r = kabir.post("/onboarding/done", data={"csrf": t, "step_key": key, "step": 1}, follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"].endswith("step=2")
+    kabir.post("/onboarding/done", data={"csrf": t, "step_key": key, "step": 1})   # repeating is harmless
+    with Session() as s:
+        rows = list(s.scalars(select(OnboardingStep)))
+        assert len(rows) == 1 and rows[0].release_number == 1
+    assert "read" in kabir.get("/onboarding?step=1").text
+    assert "You confirmed 1 of" in kabir.get("/onboarding?step=99").text
+    assert "You confirmed 0 of" in login(app, "rao").get("/onboarding?step=99").text
+    assert kabir.post("/onboarding/done", data={"csrf": t, "step_key": "nope", "step": 1}).status_code == 404
