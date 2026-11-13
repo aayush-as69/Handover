@@ -681,3 +681,61 @@ def test_onboarding_progress_is_per_person_and_per_release(env):
     assert "You confirmed 1 of" in kabir.get("/onboarding?step=99").text
     assert "You confirmed 0 of" in login(app, "rao").get("/onboarding?step=99").text
     assert kabir.post("/onboarding/done", data={"csrf": t, "step_key": "nope", "step": 1}).status_code == 404
+
+
+def test_comments_are_reviewer_only_checked_and_audited(env):
+    app, Session = env
+    with Session() as s:
+        cid = s.scalar(select(Claim.id).limit(1))
+    c = login(app, "meera")
+    t = token(c, f"/review/claims/{cid}")
+    page = c.post(f"/review/comments/{cid}", data={"csrf": t, "body": "Is this still true?"},
+                  follow_redirects=True).text
+    assert "Is this still true?" in page and "Comment added" in page
+    assert "Write something" in c.post(f"/review/comments/{cid}", data={"csrf": t, "body": "  "},
+                                       follow_redirects=True).text
+    assert "up to 1000" in c.post(f"/review/comments/{cid}", data={"csrf": t, "body": "x" * 1001},
+                                  follow_redirects=True).text
+    assert "commented on claim" in c.get("/audit?q=commented").text
+    k = login(app, "kabir")
+    assert k.post(f"/review/comments/{cid}",
+                  data={"csrf": token(k, "/projects"), "body": "hi"}).status_code == 403
+    assert c.post(f"/review/comments/{cid}", data={"csrf": "bad", "body": "x"}).status_code in (400, 403)
+
+
+def test_inbox_matches_role_and_search_respects_clearance(env):
+    app, Session = env
+    from app.conflicts import detect_conflicts
+    with Session() as s:
+        detect_conflicts(s, s.scalar(select(Project)))
+        s.commit()
+    meera = login(app, "meera")
+    inbox = meera.get("/inbox").text
+    assert "waiting for review" in inbox and "open conflict" in inbox
+    kabir = login(app, "kabir")
+    assert "waiting for review" not in kabir.get("/inbox").text
+    with Session() as s:
+        word = s.scalar(select(Claim.statement).limit(1)).split()[0]
+    assert word.lower() in meera.get(f"/search?q={word}").text.lower()
+    assert "Type at least two" in meera.get("/search?q=a").text
+    assert "No claims match" in meera.get("/search?q=zzzqqq").text
+    assert "No claims match" in meera.get("/search?q=%25%25").text     # wildcards are literal
+    # Nothing is published yet, so a reader gets no claims at all.
+    assert "No claims match" in kabir.get(f"/search?q={word}").text
+
+
+def test_json_export_matches_the_markdown_rules(env):
+    app, Session = env
+    k = login(app, "kabir")
+    assert k.get("/handover/export.json").status_code == 404
+    with Session() as s:
+        for c in s.scalars(select(Claim)):
+            c.review_status = ReviewStatus.approved
+        s.commit()
+    m = login(app, "meera")
+    m.post("/handover/approve", data={"csrf": token(m, "/handover")})
+    data = k.get("/handover/export.json").json()
+    assert data["role"] == "viewer" and data["release"]["number"] == 1 and "note" in data
+    assert k.get("/handover/export.json?view_as=admin").status_code == 403
+    sens = {"restricted", "confidential"}
+    assert all(i["evidence"] is None or isinstance(i["evidence"], dict) for i in data["decisions"])

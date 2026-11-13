@@ -515,3 +515,15 @@ class OnboardingStep(Base):
     release_number: Mapped[int] = mapped_column(Integer, default=0)    # 0 = unsigned draft
     step_key: Mapped[str] = mapped_column(String(32))
     done_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+
+class ClaimComment(Base):
+    """A reviewer's discussion note on a claim. Separate from the approval note."""
+
+    __tablename__ = "claim_comments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claims.id"), index=True)
+    author: Mapped[str] = mapped_column(String(128))
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)

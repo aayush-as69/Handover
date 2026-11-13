@@ -175,6 +175,39 @@ def onboarding_done(request: Request, step_key: str = Form(""), step: int = Form
     return RedirectResponse(f"/onboarding?step={max(step, 1) + 1}", status_code=303)
 
 
+@router.get("/handover/export.json")
+def export_json(request: Request, user: User = Depends(require_user),
+                session: Session = Depends(get_session), view_as: str = ""):
+    """The takeover brief as JSON, for other tools. Same content and limits as the page."""
+    from fastapi.responses import JSONResponse
+    from .access import chunk_visible
+    data = _brief_inputs(request, user, session, view_as)
+    if data is None:
+        raise HTTPException(status_code=404, detail="Nothing is published for your role yet.")
+    project, handover, role, brief = data
+    release = latest_release(session, handover)
+
+    def item(c) -> dict:
+        src = next(({"source": e.chunk.source.name, "locator": e.chunk.locator}
+                    for e in c.evidence if e.chunk is not None and chunk_visible(role, e.chunk)), None)
+        return {"id": c.id, "type": c.type.value, "statement": redact_text(role, c.statement),
+                "confidence": c.confidence.value, "evidence": src}
+
+    h = brief.health
+    return JSONResponse({
+        "project": project.name, "role": role.value,
+        "release": ({"number": release.number, "approved_by": release.approved_by_name,
+                     "approved_at": release.approved_at.isoformat()} if release else None),
+        "health": {"claims": h.total, "quote_verified": h.verified, "open_conflicts": h.open_conflicts,
+                   "open_questions": h.open_questions},
+        "start_here": [{**item(i.claim), "reason": i.reason} for i in brief.start_here],
+        "decisions": [item(c) for c in brief.decisions], "risks": [item(c) for c in brief.risks],
+        "people": [item(c) for c in brief.people], "questions": [item(c) for c in brief.questions],
+        "unanswered": [redact_text(role, q.text) for q in brief.unanswered],
+        "actions": [item(c) for c in brief.actions],
+        "note": "quote_verified means the quote was found in the source, not that the claim is true or current."})
+
+
 @router.get("/handover/export.md")
 def export_markdown(request: Request, user: User = Depends(require_user),
                     session: Session = Depends(get_session), view_as: str = ""):

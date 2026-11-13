@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Inbox{% endblock %}
+{% block body %}
+<div class="page-shell">
+  <header class="page-header">
+    <div><p class="page-eyebrow">YOUR INBOX / {{ project.name|upper }}</p><h1>What needs you</h1>
+      <p class="page-intro">Based on your role in this project. This page only reads; it never changes anything.</p></div>
+  </header>
+  <section class="tile" style="padding:1.3rem 1.4rem">
+    {% for what, why, link in items %}
+    <p class="inbox-item"><a href="{{ link }}"><strong>{{ what }}</strong></a><br><span class="muted">{{ why }}</span></p>
+    {% else %}
+    <p class="muted">Nothing needs your attention right now.</p>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

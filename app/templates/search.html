@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block body %}
+<div class="page-shell">
+  <header class="page-header">
+    <div><p class="page-eyebrow">SEARCH / {{ project.name|upper }}</p><h1>Find a claim</h1>
+      <p class="page-intro">Searches the claims your role may read in this project.</p></div>
+  </header>
+  <form method="get" action="/search" class="tile" style="padding:1rem 1.4rem;margin-bottom:12px">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search claims" aria-label="Search claims" autofocus style="width:100%">
+  </form>
+  {% if short %}<p class="muted">Type at least two characters.</p>{% endif %}
+  {% if q and not short %}
+  <section class="tile" style="padding:1.3rem 1.4rem">
+    <h2>{{ claims|length }} claim{{ "s" if claims|length != 1 }}</h2>
+    <ul class="plain">
+      {% for c in claims %}<li><span class="pill {{ c.confidence.value }}">{{ c.confidence.value.replace("-", " ") }}</span>
+        {% if user.role.value in ("admin", "approver") %}<a href="/review/claims/{{ c.id }}">{{ c.statement }}</a>{% else %}{{ c.statement }}{% endif %}
+        <span class="muted">· {{ c.type.value.replace("_", " ") }}</span></li>
+      {% else %}<li class="muted">No claims match “{{ q }}”.</li>{% endfor %}
+    </ul>
+    {% if questions %}<h2>{{ questions|length }} question{{ "s" if questions|length != 1 }}</h2>
+    <ul class="plain">{% for qu in questions %}<li><a href="/questions">{{ qu.text }}</a> <span class="muted">· {{ qu.status.value }}</span></li>{% endfor %}</ul>{% endif %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1211,3 +1211,4 @@ form.inline{display:inline;margin-left:.6rem}
 .bulk-row{display:flex;gap:.7rem;align-items:flex-start;padding:.45rem 0;cursor:pointer}
 .bulk-row input{margin-top:.3rem;flex:none}
 @media print{.topbar,nav,.guide-tip,.theme-toggle,form,button{display:none!important}body{background:#fff!important;color:#000!important}.tile{border:1px solid #bbb!important;background:#fff!important;box-shadow:none!important}a{color:#000!important}}
+.comment{margin:.5rem 0;padding:.5rem .8rem;border-left:3px solid var(--line)}.inbox-item{margin:.6rem 0}

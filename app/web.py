@@ -272,8 +272,11 @@ def claim_detail(claim_id: int, request: Request, user: User = Depends(require_r
             disputes.append((cf, others))
     from .connections import claim_connections, evidence_breakdown
     from .freshness import claim_freshness
+    from .models import ClaimComment
+    comments = list(session.scalars(select(ClaimComment).where(ClaimComment.claim_id == claim.id)
+                                    .order_by(ClaimComment.id)))
     return render(request, "claim.html", user, claim=claim, evidence=evidence, disputes=disputes,
-                  connections=claim_connections(session, user, claim), freshness=claim_freshness(claim), breakdown=evidence_breakdown(user, claim),
+                  connections=claim_connections(session, user, claim), freshness=claim_freshness(claim), breakdown=evidence_breakdown(user, claim), comments=comments,
                   history=list(reversed(history)), sensitivity=effective_sensitivity(claim),
                   max_statement=MAX_STATEMENT)
 

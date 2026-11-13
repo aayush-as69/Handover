@@ -101,3 +101,7 @@ Code: `app/projects.py`, `app/audit_log.py`, `app/workspace_web.py`.
 - **Markdown export** of the takeover brief (`/handover/export.md`): same content and limits as the page for the viewer's role.
 - **Teams**: an admin can group people into a named team and add the whole team to a project with a role. It copies current members and is not a live link.
 - **Onboarding progress**: a person can confirm each topic of the guided takeover. Progress is kept per person, project and release, so a new release starts the walkthrough again. Migration `0006` adds the `teams`, `team_members` and `onboarding_steps` tables.
+- **Claim comments**: reviewers can discuss a claim without changing its status. Comments appear in the audit log. Migration `0007` adds the `claim_comments` table.
+- **Inbox** (`/inbox`): what needs attention in the current project for the person's role there, such as claims waiting, open conflicts, stale evidence and a release to acknowledge. It only reads.
+- **Search** (`/search`): finds claims, and questions for reviewers, in the current project and within the role's clearance. Wildcard characters are treated literally.
+- **JSON export** (`/handover/export.json`): the takeover brief for other tools, with the same content and limits as the page.

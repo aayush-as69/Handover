@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from .access import clearance_rank, effective_rank_sql, role_can_see
 from .enums import Role
 from .models import (Acknowledgement, AuditEvent, Claim, ClaimVersion, Conflict, Handover,
-                     HandoverRelease, Question, Source, User)
+                     HandoverRelease, Question, Source, User, ClaimComment)
 
 KINDS = ("claim", "release", "acknowledgement", "conflict", "question", "source")
 
@@ -75,6 +75,9 @@ def audit_entries(session: Session, project, role: Role, kind: str = "",
                 out.append(Entry(v.created_at, "claim", v.changed_by,
                                  f"{_ACTIONS.get(v.change_type.value, v.change_type.value)} claim {v.claim_id} (v{v.version})",
                                  (v.note or ""), v.claim_id))
+            for cm in session.scalars(select(ClaimComment).where(ClaimComment.claim_id.in_(visible))):
+                out.append(Entry(cm.created_at, "claim", cm.author, f"commented on claim {cm.claim_id}",
+                                 cm.body[:200], cm.claim_id))
             for e in session.scalars(select(AuditEvent).where(AuditEvent.claim_id.in_(visible))):
                 try:
                     detail = json.loads(e.detail)
