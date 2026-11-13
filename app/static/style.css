@@ -1212,3 +1212,17 @@ form.inline{display:inline;margin-left:.6rem}
 .bulk-row input{margin-top:.3rem;flex:none}
 @media print{.topbar,nav,.guide-tip,.theme-toggle,form,button{display:none!important}body{background:#fff!important;color:#000!important}.tile{border:1px solid #bbb!important;background:#fff!important;box-shadow:none!important}a{color:#000!important}}
 .comment{margin:.5rem 0;padding:.5rem .8rem;border-left:3px solid var(--line)}.inbox-item{margin:.6rem 0}
+
+/* ---- "More" menu: grouped links outside the scrolling primary nav */
+.more{position:relative;flex:none}
+.more>summary{list-style:none;cursor:pointer;color:var(--mut);padding:.35rem .75rem;border-radius:999px;font-size:.94rem;white-space:nowrap}
+.more>summary::-webkit-details-marker{display:none}
+.more>summary::after{content:" \25BE"}
+.more[open]>summary,.more>summary:hover{color:var(--fg);background:var(--tile)}
+.more-panel{position:absolute;top:calc(100% + .5rem);right:0;z-index:30;width:min(36rem,calc(100vw - 1.8rem));
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:1rem;padding:1rem 1.2rem;
+  background:var(--tile);border:1px solid var(--line);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.more-panel h2{font-size:.8rem;font-weight:600;color:var(--mut);margin:0 0 .3rem}
+.more-panel a{display:block;padding:.3rem 0;color:var(--fg);font-size:.95rem}
+.more-panel a:hover{text-decoration:underline}
+@media (max-width:760px){.more{position:static}.more-panel{left:.9rem;right:.9rem;width:auto}}

@@ -91,6 +91,8 @@ Code: `app/projects.py`, `app/audit_log.py`, `app/workspace_web.py`.
 - **Knowledge concentration** on the bus-factor page: per kind of claim, the share resting on one person's words alone, with a suggested action. Small groups show their counts, so "1 of 1" is not read as a trend.
 - **Guided takeover** (`/onboarding`): the brief read one topic at a time, with a reading-time estimate (words at 200 a minute) and a closing list of what is still unresolved. Nothing is stored; the step is in the URL.
 - **Extraction quality page** (`/quality`): shows the saved scoring reports, so a live-model report appears beside the rule baseline once it is committed.
+- **Demo walkthrough**: `docs/16-demo-walkthrough.md` gives a fixed seven-minute order, expected questions and honest answers.
+- **Navigation**: the primary bar keeps the few pages used most; everything else is grouped under a **More** menu that works without JavaScript.
 - **Claim page**: a plain list of what a label checked and a reminder of what it does not mean.
 - **Per-project roles**: an admin can give a member a different role in each project (approver, viewer or restricted). With none set, the person's default role applies. The role for the project being viewed is applied to every request and never written back to the account. Admin is instance-wide and is not a per-project role, so no project can promote anyone to admin. Migration `0005` adds a nullable `role` column to `project_members`, so existing access is unchanged.
 - **Evidence breakdown and source tree** on each claim page: quotes found word for word, number and kinds of sources, contradicting quotes, any model opinion (advisory) and the exact passages the claim rests on. These are counts, not scores.
