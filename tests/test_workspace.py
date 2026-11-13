@@ -703,6 +703,23 @@ def test_comments_are_reviewer_only_checked_and_audited(env):
     assert c.post(f"/review/comments/{cid}", data={"csrf": "bad", "body": "x"}).status_code in (400, 403)
 
 
+def test_comment_author_follows_the_account_when_renamed(env):
+    from app.models import ClaimComment, User
+    app, Session = env
+    with Session() as s:
+        cid = s.scalar(select(Claim.id).limit(1))
+    c = login(app, "meera")
+    c.post(f"/review/comments/{cid}", data={"csrf": token(c, f"/review/claims/{cid}"), "body": "Checking this."})
+    with Session() as s:
+        cm = s.scalar(select(ClaimComment))
+        meera = s.scalar(select(User).where(User.username == "meera"))
+        assert cm.user_id == meera.id
+        meera.display_name = "Meera Renamed"
+        s.commit()
+    assert "Meera Renamed" in c.get(f"/review/claims/{cid}").text
+    assert "Meera Renamed" in c.get("/audit?q=commented").text
+
+
 def test_inbox_matches_role_and_search_respects_clearance(env):
     app, Session = env
     from app.conflicts import detect_conflicts

@@ -524,6 +524,14 @@ class ClaimComment(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     claim_id: Mapped[int] = mapped_column(ForeignKey("claims.id"), index=True)
-    author: Mapped[str] = mapped_column(String(128))
+    author: Mapped[str] = mapped_column(String(128))      # name at the time, kept as a fallback
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     body: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+
+    user: Mapped[Optional["User"]] = relationship("User", lazy="joined")
+
+    @property
+    def author_name(self) -> str:
+        """The author's current display name, or the name recorded at the time if the account is gone."""
+        return self.user.display_name if self.user is not None else self.author

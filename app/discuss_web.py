@@ -32,7 +32,7 @@ def add_comment(claim_id: int, request: Request, body: str = Form(""), csrf: str
     elif len(text) > MAX_COMMENT:
         request.session["flash"] = f"Comments can be up to {MAX_COMMENT} characters."
     else:
-        session.add(ClaimComment(claim_id=claim.id, author=user.display_name, body=text))
+        session.add(ClaimComment(claim_id=claim.id, author=user.display_name, user_id=user.id, body=text))
         session.commit()
         request.session["flash"] = "Comment added."
     return RedirectResponse(f"/review/claims/{claim.id}", status_code=303)

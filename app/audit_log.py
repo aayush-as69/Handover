@@ -76,7 +76,7 @@ def audit_entries(session: Session, project, role: Role, kind: str = "",
                                  f"{_ACTIONS.get(v.change_type.value, v.change_type.value)} claim {v.claim_id} (v{v.version})",
                                  (v.note or ""), v.claim_id))
             for cm in session.scalars(select(ClaimComment).where(ClaimComment.claim_id.in_(visible))):
-                out.append(Entry(cm.created_at, "claim", cm.author, f"commented on claim {cm.claim_id}",
+                out.append(Entry(cm.created_at, "claim", cm.author_name, f"commented on claim {cm.claim_id}",
                                  cm.body[:200], cm.claim_id))
             for e in session.scalars(select(AuditEvent).where(AuditEvent.claim_id.in_(visible))):
                 try:
