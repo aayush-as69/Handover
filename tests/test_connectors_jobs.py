@@ -155,6 +155,10 @@ def test_metrics_endpoint_counts_requests_logins_and_jobs(tmp_path, monkeypatch)
         assert 'handover_jobs{status="queued"} 0' in text
         assert "handover_request_seconds_count" in text
         assert "handover_requests_total" in c.get("/metrics?format=json", headers=h).text
+        for i in range(5):                                                  # junk methods must not mint new series
+            c.request(f"JUNK{i}", "/login")
+        text = c.get("/metrics", headers=h).text
+        assert "JUNK" not in text and 'method="OTHER"' in text
 
 
 def test_queue_workers_claim_each_job_once_and_requeue_stale_ones(env):

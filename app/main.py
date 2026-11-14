@@ -53,6 +53,7 @@ async def lifespan(app: FastAPI):
 
 
 SESSION_HOURS = 8
+_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}   # bounds metric labels
 
 
 def create_app(secret_key: str | None = None, config: Settings | None = None) -> FastAPI:
@@ -128,7 +129,7 @@ def create_app(secret_key: str | None = None, config: Settings | None = None) ->
             template = getattr(route, "path", None) or ("/static" if request.url.path.startswith("/static/") else "unmatched")
             seconds = time.perf_counter() - started
             if template not in ("/metrics",):
-                metrics.inc("handover_requests_total", method=request.method, route=template,
+                metrics.inc("handover_requests_total", method=request.method if request.method in _METHODS else "OTHER", route=template,
                             status=f"{status // 100}xx")
                 metrics.observe("handover_request_seconds", seconds, route=template)
                 metrics.log_request(request.method, template, status, seconds, request_id)

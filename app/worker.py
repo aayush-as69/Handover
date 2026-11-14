@@ -16,7 +16,6 @@ import os
 import signal
 import socket
 import threading
-import time
 
 from sqlalchemy.orm import sessionmaker
 

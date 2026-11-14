@@ -30,8 +30,8 @@ PASSWORD = "benchmark-" + "pass-123"
 
 def seed(session, n_claims: int):
     from app.conflicts import detect_conflicts
-    from app.enums import ClaimType, Confidence, ReviewStatus, Sensitivity, SourceKind, Stance
-    from app.handover import approve_handover, get_or_create_handover
+    from app.enums import ClaimType, Confidence, Sensitivity, SourceKind, Stance
+    from app.handover import get_or_create_handover
     from app.models import Chunk, Claim, Evidence, Project, ProjectMember, Source, User
     from app.security import set_user_password
 
@@ -68,7 +68,7 @@ def seed(session, n_claims: int):
         claim.approve("bench", "benchmark")
     session.commit()
     detect_conflicts(session, project)
-    handover = get_or_create_handover(session, project)
+    get_or_create_handover(session, project)
     session.commit()
     return project
 
