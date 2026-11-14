@@ -86,7 +86,7 @@ document.addEventListener("click", function (event) {
 
 document.addEventListener("click", function (event) {
   document.querySelectorAll("details.more[open]").forEach(function (menu) {
-    if (!menu.contains(event.target)) menu.open = false;
+    if (!menu.contains(event.target) || event.target === menu) menu.open = false;   // outside, or the dimmed backdrop
   });
 });
 document.addEventListener("keydown", function (event) {

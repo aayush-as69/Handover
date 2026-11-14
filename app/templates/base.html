@@ -22,9 +22,9 @@
   {% set reviewer = user.role.value in ("admin", "approver") %}
   <nav class="workspace-nav" aria-label="Primary navigation">
     <a href="/inbox"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13l2-7h12l2 7v5H4zM4 13h5l1 2h4l1-2h5"/></svg>Inbox</a>
-    {% if reviewer %}<a href="/review"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Review queue</a>{% endif %}
+    {% if reviewer %}<a href="/review"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>Review<span class="queue-word"> queue</span></a>{% endif %}
     <a href="/handover"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6"/></svg>Handover</a>
-    <a href="/timeline"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M12 7h6M12 12H6M12 17h6"/></svg>Timeline</a>
+    <a class="hide-sm" href="/timeline"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M12 7h6M12 12H6M12 17h6"/></svg>Timeline</a>
     <a href="/search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16 16l5 5"/></svg>Search</a>
   </nav>
   <details class="more">
@@ -34,7 +34,7 @@
         <a href="/review/bulk">Bulk review</a><a href="/conflicts">Conflicts</a><a href="/questions">Questions</a>
         <a href="/freshness">Freshness</a><a href="/audit">Audit log</a><a href="/quality">Extraction quality</a></div>{% endif %}
       <div><h2>Understand</h2>
-        <a href="/handover/brief">Takeover brief</a><a href="/onboarding">Guided takeover</a>
+        <a href="/timeline">Timeline</a><a href="/handover/brief">Takeover brief</a><a href="/onboarding">Guided takeover</a>
         {% if reviewer %}<a href="/bus-factor">Bus factor</a>{% endif %}<a href="/handover/releases">Release history</a></div>
       <div><h2>Workspace</h2>
         <a href="/projects">Projects</a>{% if user.role.value == "admin" %}<a href="/admin/sources">Sources</a>{% endif %}
