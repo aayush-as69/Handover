@@ -24,6 +24,7 @@ from .db import get_session
 from .enums import REVIEWER_ROLES, Confidence, ReviewStatus
 from .models import Chunk, Claim, Project, User
 from .projects import can_access_project
+from .review_guide import next_step
 from .security import (client_ip, csrf_ok, new_csrf_token,
                        verify_password, DUMMY_HASH)
 from . import metrics
@@ -244,8 +245,13 @@ def review_queue(request: Request, status: str = "open", confidence: str = "", p
     rows = session.execute(query.order_by(risk, Claim.id).limit(QUEUE_PAGE)
                            .offset((page - 1) * QUEUE_PAGE)).all()
     level = {c.id: sensitivity_from_rank(r) for c, r in rows}
+    from .models import Conflict
+    from .enums import ConflictStatus
+    disputed = {i for cf in session.scalars(select(Conflict).where(
+        Conflict.project_id == project.id, Conflict.status == ConflictStatus.open)) for i in cf.claim_ids}
     return render(request, "queue.html", user, project=project, claims=[c for c, _ in rows],
                   totals=totals, status=status, confidence=confidence, sens=lambda c: level[c.id],
+                  step=lambda c: next_step(c.review_status.value, c.confidence.value, int(c.id in disputed), False),
                   hidden=hidden, page=page, pages=pages, matching=matching)
 
 
@@ -279,8 +285,13 @@ def claim_detail(claim_id: int, request: Request, user: User = Depends(require_r
     from .models import ClaimComment
     comments = list(session.scalars(select(ClaimComment).where(ClaimComment.claim_id == claim.id)
                                     .order_by(ClaimComment.id)))
-    return render(request, "claim.html", user, claim=claim, evidence=evidence, disputes=disputes,
-                  connections=claim_connections(session, user, claim), freshness=claim_freshness(claim), breakdown=evidence_breakdown(user, claim), comments=comments,
+    from .review_guide import claim_brief
+    breakdown = evidence_breakdown(user, claim)
+    freshness = claim_freshness(claim)
+    brief = claim_brief(claim, breakdown=breakdown, freshness=freshness, disputes=disputes,
+                        sensitivity=effective_sensitivity(claim).value)
+    return render(request, "claim.html", user, claim=claim, evidence=evidence, disputes=disputes, brief=brief,
+                  connections=claim_connections(session, user, claim), freshness=freshness, breakdown=breakdown, comments=comments,
                   history=list(reversed(history)), sensitivity=effective_sensitivity(claim),
                   max_statement=MAX_STATEMENT)
 

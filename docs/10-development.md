@@ -106,3 +106,67 @@ Choose the demo password yourself; do not publish a real production password.
 - Add tests for security/integrity-sensitive behavior.
 - Do not weaken fail-closed behavior for convenience.
 - Update documentation when behavior changes.
+
+## 9. Tech stack
+
+| Layer | Technology |
+|---|---|
+| Runtime | Python 3.12 |
+| Web | FastAPI, Uvicorn, Jinja2 |
+| Data | SQLAlchemy 2, SQLite, PostgreSQL |
+| Validation | Pydantic |
+| Migrations | Alembic |
+| Extraction | Rule-based pipeline, optional OpenAI-compatible provider |
+| Repository ingestion | GitHub REST API |
+| Testing | Pytest, HTTPX, Playwright |
+| Deployment | Render blueprint (`render.yaml`) |
+| CI | GitHub Actions: SQLite, PostgreSQL 16, browser tests, `pip-audit` |
+
+## 10. Repository map
+
+```text
+Handover/
+├── app/
+│   ├── extract/          # Rule and optional LLM extraction, verification input
+│   ├── ingest/           # Parsers (notes, chat, Slack, Jira, tasks), GitHub collection, secret redaction
+│   ├── templates/        # Server-rendered HTML
+│   ├── static/           # Stylesheet and small scripts (no inline scripts: CSP)
+│   ├── throttle.py       # Request rate limiter and login lockout (the one throttling module)
+│   ├── metrics.py        # Counters, latency histogram, JSON access log
+│   ├── jobs.py, worker.py  # Background jobs: thread mode or queue + worker
+│   └── *.py              # Routes, domain logic, models, access rules
+├── data/demo/            # Synthetic demonstration project
+├── data/eval/            # Labelled set for extraction quality
+├── docs/                 # Product and engineering documentation, evaluation reports
+├── migrations/           # Alembic history
+├── scripts/              # Operational helpers
+├── tests/                # Unit, integration, security, browser tests
+│   └── evals/            # Evaluation fixtures and runner
+├── .github/workflows/    # CI
+└── render.yaml           # Render blueprint
+```
+
+## 11. Optional LLM extraction
+
+The built-in extractor needs no key but reads only structured sources (notes, task files). To read chat, set an
+OpenAI-compatible provider:
+
+```bash
+export LLM_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
+export LLM_API_KEY=<your-key>
+export LLM_MODEL=<model-name>
+python -m app.demo --extract llm
+```
+
+Keep keys in environment variables or a secrets manager; never commit them. Confidential chunks are withheld from
+remote extraction by default, and anything a model writes back is passed through secret masking before it is saved.
+Measure a provider with `python -m tests.evals.runner --engine llm` (see [18 — Evaluation](18-evaluation.md)).
+
+## 12. Running the tests
+
+```bash
+python -m pytest -q                                   # everything except browser tests when Chromium is absent
+python -m playwright install chromium
+python -m pytest -q tests/test_browser_e2e.py         # browser walkthrough
+TEST_DATABASE_URL=postgresql://... python -m pytest -q   # against a disposable PostgreSQL database
+```

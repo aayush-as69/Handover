@@ -46,7 +46,7 @@ A deployment can hold several projects with membership-based access (see `15-rou
 
 ### Distributed rate limiting is not implemented
 
-General request throttling is in memory per process. The database-backed login failure tracking is persistent, but request throttling itself is not distributed.
+General request throttling (`app/throttle.py`) is in memory per process. The database-backed login lockout is persistent and shared, but request throttling itself is not distributed.
 
 ## Roadmap proposals
 
@@ -66,7 +66,9 @@ These are proposals, not commitments:
 
 The project should not silently replace human approval with model confidence, expose confidential evidence to remote models by default, or turn verification into a claim of semantic truth.
 
-- Background jobs run on a thread inside the web process. They are not a distributed queue, do not survive a restart, and give a status, not a percentage.
+- Background jobs run on a thread inside the web process by default (`JOB_MODE=thread`): they do not survive a restart. `JOB_MODE=queue` with `python -m app.worker` moves them to separate workers that share the database as the queue; there is no broker, automatic retry or scheduling. Jobs give a status, not a percentage. See [17](17-jobs-and-observability.md).
+- Metrics are in memory per process and reset on restart; job counts come from the database.
+- `handover_releases.claims_json` is kept next to the new `handover_release_claims` table because releases are immutable and the old column cannot be cleared. Readers use the table and fall back to the JSON for releases that have no rows.
 - Slack and Jira are read from exported files, not a live connection. There is no scheduled sync.
 
 ## Environments

@@ -107,3 +107,12 @@ Code: `app/projects.py`, `app/audit_log.py`, `app/workspace_web.py`.
 - **Inbox** (`/inbox`): what needs attention in the current project for the person's role there, such as claims waiting, open conflicts, stale evidence and a release to acknowledge. It only reads.
 - **Search** (`/search`): finds claims, and questions for reviewers, in the current project and within the role's clearance. Wildcard characters are treated literally.
 - **JSON export** (`/handover/export.json`): the takeover brief for other tools, with the same content and limits as the page.
+- **Comment authors follow the account**: comments store the author's account as well as the name written at the time, so a rename carries over. Migration `0008`.
+- **Queue and worker for jobs**: `JOB_MODE=queue` makes the web process only queue a job; `python -m app.worker` claims and runs it, with a heartbeat so a dead worker's job is put back. Default stays the in-process thread. Migration `0009` adds `claimed_by` and `heartbeat_at`. See `docs/17-jobs-and-observability.md`.
+- **Evaluation suite** (`tests/evals/`): claim accuracy, evidence accuracy, hallucination and secret-leak cases with a runner that writes `docs/evals/eval-report.md`. It also runs as a regression gate. Its first run found that a secret echoed by a model could be stored in a claim; model output is now masked before saving.
+- **Release claims table**: `handover_release_claims` holds one row per claim in a release, append-only like the release. Existing releases are backfilled from `claims_json`, which stays as a frozen copy. Migration `0010`.
+- **One throttle module**: `app/throttle.py` holds the request limiter and the login lockout. The unused in-memory login throttle and the single-key lockout helpers were removed.
+- **Metrics and access log**: `/metrics` (bearer `METRICS_TOKEN` or admin session) with request latency, login failures, 429s, extraction duration, LLM failures, DB errors and job counts, plus one JSON access-log line per request.
+- **Four answers per claim**: each claim page opens with what the problem is, why it matters, what evidence backs it and what to do next; the review queue gains a Next step column. Chosen by fixed rules from recorded facts, not generated.
+- **README as a landing page**: technical detail moved to `docs/10`, `docs/17` and `docs/18`.
+

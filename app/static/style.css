@@ -1226,3 +1226,10 @@ form.inline{display:inline;margin-left:.6rem}
 .more-panel a{display:block;padding:.3rem 0;color:var(--fg);font-size:.95rem}
 .more-panel a:hover{text-decoration:underline}
 @media (max-width:760px){.more{position:static}.more-panel{left:.9rem;right:.9rem;width:auto}}
+
+/* Four answers at the top of a claim */
+.four-answers{margin-bottom:12px;padding:1.2rem 1.4rem}
+.four-answers dl{display:grid;grid-template-columns:minmax(11rem,14rem) 1fr;gap:.7rem 1.2rem;margin:0}
+.four-answers dt{font-weight:600}
+.four-answers dd{margin:0;max-width:70ch}
+@media (max-width:640px){.four-answers dl{grid-template-columns:1fr;gap:.15rem}.four-answers dd{margin-bottom:.7rem}}

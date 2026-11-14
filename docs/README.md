@@ -49,7 +49,11 @@ A structured guide to understanding, building, testing and operating Handover.
 - [09 — Testing guide](09-testing.md)
 - [10 — Development setup](10-development.md)
 - [11 — Deployment and operations](11-deployment-operations.md)
+- [17 — Background jobs and observability](17-jobs-and-observability.md)
+- [18 — Evaluation](18-evaluation.md)
 - [OPERATIONS — Operational runbook](OPERATIONS.md)
+- [15 — Running list of improvements](15-round-improvements.md)
+- [16 — Demo walkthrough](16-demo-walkthrough.md)
 
 ### Project context and audit material
 

@@ -56,7 +56,7 @@
     </div>
     <div class="table-scroll">
       <table>
-        <thead><tr><th>Claim</th><th>Type</th><th>Confidence</th><th>Sensitivity</th><th>Status</th></tr></thead>
+        <thead><tr><th>Claim</th><th>Type</th><th>Confidence</th><th>Sensitivity</th><th>Status</th><th>Next step</th></tr></thead>
         <tbody id="claims-table-body">
         {% for c in claims %}
         <tr class="{{ c.confidence.value }}" data-search-item>
@@ -65,11 +65,12 @@
           <td data-label="Confidence"><span class="pill {{ c.confidence.value }}">{{ conf_label(c.confidence) }}</span></td>
           <td data-label="Sensitivity"><span class="pill s-{{ sens(c).value }}">{{ sens(c).value }}</span></td>
           <td data-label="Status" class="muted">{{ c.review_status.value }}</td>
+          <td data-label="Next step">{{ step(c).headline }}</td>
         </tr>
         {% else %}
-        <tr><td colspan="5" class="muted table-empty">No claims match these filters.</td></tr>
+        <tr><td colspan="6" class="muted table-empty">No claims match these filters.</td></tr>
         {% endfor %}
-        <tr data-search-empty hidden><td colspan="5" class="muted table-empty">No claims match your search. Try another term.</td></tr>
+        <tr data-search-empty hidden><td colspan="6" class="muted table-empty">No claims match your search. Try another term.</td></tr>
         </tbody>
       </table>
     </div>

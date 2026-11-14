@@ -38,6 +38,18 @@
     </section>
   </div>
 
+  <section class="tile four-answers" aria-label="Summary for the reviewer">
+    <dl>
+      <dt>What is the problem?</dt><dd>{{ brief.problem }}</dd>
+      <dt>Why should I care?</dt>
+      <dd>{% for r in brief.reasons %}{{ r }}{% if not loop.last %} {% endif %}{% endfor %}</dd>
+      <dt>What evidence proves it?</dt>
+      <dd>{{ brief.evidence }}{% if brief.best_quote %}<br><span class="muted">“{{ brief.best_quote[0][:160] }}{{ "…" if brief.best_quote[0]|length > 160 }}” · <a href="/review/chunks/{{ brief.best_quote[2] }}">{{ brief.best_quote[1] }}</a></span>{% endif %}</dd>
+      <dt>What action should I take?</dt>
+      <dd><strong>{{ brief.action.headline }}.</strong> {{ brief.action.detail }}{% if brief.action.link %} <a href="{{ brief.action.link }}">Open conflicts</a>{% endif %}</dd>
+    </dl>
+  </section>
+
   <div class="section-heading">
     <div><p class="page-eyebrow">SOURCE TRACEABILITY</p><h2>Evidence</h2></div>
     <span class="panel-hint">{{ evidence|length }} linked quote(s)</span>

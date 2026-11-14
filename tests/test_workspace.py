@@ -756,3 +756,22 @@ def test_json_export_matches_the_markdown_rules(env):
     assert k.get("/handover/export.json?view_as=admin").status_code == 403
     sens = {"restricted", "confidential"}
     assert all(i["evidence"] is None or isinstance(i["evidence"], dict) for i in data["decisions"])
+
+
+def test_every_claim_page_answers_the_four_questions_and_the_queue_shows_the_next_step(env):
+    from app.review_guide import next_step
+    app, Session = env
+    with Session() as s:
+        cid = s.scalar(select(Claim.id).limit(1))
+    c = login(app, "meera")
+    page = c.get(f"/review/claims/{cid}").text
+    for q in ("What is the problem?", "Why should I care?", "What evidence proves it?", "What action should I take?"):
+        assert q in page
+    assert "Next step" in c.get("/review").text
+    # Fixed rules, most urgent first
+    assert next_step("generated", "verified", 1, False).key == "conflicts"
+    assert next_step("generated", "unsupported", 0, False).key == "reject"
+    assert next_step("generated", "inferred", 0, False).key == "edit"
+    assert next_step("generated", "verified", 0, True).headline == "Confirm it is still true"
+    assert next_step("generated", "verified", 0, False).key == "approve"
+    assert next_step("approved", "verified", 1, True).key == "none"
