@@ -76,6 +76,22 @@ def test_cannot_sign_off_an_empty_handover(env):
             approve_handover(s, h, s.scalar(select(User).where(User.username == "meera")))
 
 
+def test_a_release_stores_one_row_per_claim_and_the_json_copy(env):
+    import json
+    from app.models import HandoverRelease, HandoverReleaseClaim
+    app, Session = env
+    team = public_ids(Session)[:3]
+    approve_claims(app, Session, team)
+    m = login(app, "meera")
+    m.post("/handover/approve", data={"csrf": token(m, "/handover")})
+    with Session() as s:
+        release = s.scalar(select(HandoverRelease))
+        rows = list(s.scalars(select(HandoverReleaseClaim).order_by(HandoverReleaseClaim.position)))
+        assert [r.claim_id for r in rows] == sorted(team) and all(r.release_id == release.id for r in rows)
+        assert release.entries == [(r.claim_id, r.version) for r in rows]
+        assert [tuple(p) for p in json.loads(release.claims_json)] == release.entries
+
+
 def test_viewer_sees_only_approved_claims_within_clearance(env):
     app, Session = env
     team = public_ids(Session)[:2]

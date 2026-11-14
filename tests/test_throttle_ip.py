@@ -1,7 +1,7 @@
 """Login throttling: per account and address, per account overall, per address (accounts tried
 and raw volume), plus a general request limiter. All stored in the database except the limiter."""
 from app.config import Settings
-from app.security import (MAX_FAILURES, MAX_FAILURES_PER_IP, MAX_FAILURES_PER_USER,
+from app.throttle import (MAX_FAILURES, MAX_FAILURES_PER_IP, MAX_FAILURES_PER_USER,
                           MAX_USERNAMES_PER_IP, RateLimiter)
 from tests.test_web import PW, client, env, token  # noqa: F401
 
@@ -55,10 +55,10 @@ def test_many_addresses_guessing_one_account_are_blocked_overall(env):
 def test_raw_volume_from_one_address_is_capped(env):
     app, _ = env
     c = proxied(app)
-    from app.security import record_login_failure_for
+    from app.throttle import record_login_failure
     with env[1]() as s:
         for _ in range(MAX_FAILURES_PER_IP):
-            record_login_failure_for(s, "meera", "3.3.3.3")      # also trips the pair limit
+            record_login_failure(s, "meera", "3.3.3.3")      # also trips the pair limit
     assert attempt(c, "kabir", PW, ip="3.3.3.3") == 429
 
 
@@ -138,7 +138,7 @@ def test_login_posts_have_their_own_tighter_limit(env):
 def test_login_limits_are_shared_between_server_processes(env):
     """Two app instances (as two workers would be) over one database see the same failures."""
     from app.main import create_app
-    from app.security import MAX_FAILURES
+    from app.throttle import MAX_FAILURES
     app_a, _ = env
     app_b = create_app(secret_key="b" * 40)
     app_b.dependency_overrides = dict(app_a.dependency_overrides)

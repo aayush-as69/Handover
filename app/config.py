@@ -40,6 +40,8 @@ class Settings:
         self.edge_shared_secret = env.get("EDGE_SHARED_SECRET") or None
         cookie = env.get("COOKIE_SECURE")
         self.rate_limit_per_min = int(env.get("RATE_LIMIT_PER_MIN") or 300)        # 0 turns it off
+        self.job_mode = (env.get("JOB_MODE") or "thread").lower()      # thread | queue
+        self.metrics_token = env.get("METRICS_TOKEN") or None
         self.login_rate_per_min = int(env.get("LOGIN_RATE_PER_MIN") or 30)
         self.migrate_on_startup = _flag_in(env, "MIGRATE_ON_STARTUP", True)
         proxy = env.get("TRUST_PROXY")
@@ -54,6 +56,8 @@ class Settings:
     def validate(self) -> list[str]:
         """Raise ConfigError for unsafe production settings. Returns development warnings."""
         warnings: list[str] = []
+        if self.job_mode not in ("thread", "queue"):
+            raise ConfigError(f"JOB_MODE must be thread or queue, not {self.job_mode!r}")
         if self.env not in ("development", "production", "test"):
             raise ConfigError(f"APP_ENV must be development or production, not {self.env!r}")
         if self.production:

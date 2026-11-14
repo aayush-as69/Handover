@@ -443,8 +443,9 @@ def extract_claims(request: Request, engine: str = Form("rules"), csrf: str = Fo
             return _flash(request, f"Extraction failed: {exc}", "/admin/sources")
         job = jobs.create_job(session, project, "extract_llm", user.username)
         session.commit()
-        jobs.start_thread(sessionmaker(bind=session.get_bind(), expire_on_commit=False), job.id)
-        return _flash(request, "LLM extraction started in the background. Status is shown below.",
+        how = jobs.dispatch(sessionmaker(bind=session.get_bind(), expire_on_commit=False), job.id,
+                            request.app.state.cfg.job_mode)
+        return _flash(request, f"LLM extraction {how}. Status is shown below.",
                       "/admin/sources")
     try:
         if engine not in ("rules", "llm"):

@@ -131,3 +131,56 @@ def test_llm_extract_route_starts_one_job_and_refuses_a_second(env, monkeypatch)
     r = c.post("/admin/sources/extract", data={"csrf": t, "engine": "llm"}, follow_redirects=True)
     assert "already running" in r.text and len(started) == 1
     assert "Background runs" in c.get("/admin/sources").text
+
+
+def test_metrics_endpoint_counts_requests_logins_and_jobs(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+    from app import metrics
+    from app.config import Settings
+    from app.db import init_db
+    from app.main import create_app
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{tmp_path/'m.db'}")
+    monkeypatch.setenv("METRICS_TOKEN", "t0ken")
+    monkeypatch.setenv("RATE_LIMIT_PER_MIN", "3")
+    metrics.reset()
+    app = create_app(secret_key="k", config=Settings())
+    with TestClient(app) as c:
+        assert c.get("/metrics").status_code == 404                       # no token, no session
+        h = {"Authorization": "Bearer t0ken"}
+        c.get("/login"); c.get("/login"); c.get("/login")
+        assert c.get("/login").status_code == 429                           # the 4th trips a limit of 3
+        text = c.get("/metrics", headers=h).text
+        assert 'handover_requests_total{method="GET",route="/login",status="2xx"} 3' in text
+        assert 'handover_rate_limited_total{limiter="general"} 1' in text
+        assert 'handover_jobs{status="queued"} 0' in text
+        assert "handover_request_seconds_count" in text
+        assert "handover_requests_total" in c.get("/metrics?format=json", headers=h).text
+
+
+def test_queue_workers_claim_each_job_once_and_requeue_stale_ones(env):
+    from datetime import timedelta
+    from app import worker
+    app, Session = env
+    class Good:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        name, remote = "fake", True
+        def extract(self, views): return []
+    with Session() as s:
+        project = s.scalar(select(Project))
+        ids = [jobs.create_job(s, project, "extract_llm", "meera").id for _ in range(3)]
+        s.commit()
+    assert jobs.dispatch(Session, ids[0], "queue") == "queued for the background worker"
+    with Session() as s:
+        assert s.get(Job, ids[0]).status == "queued"        # the web process did not run it
+    assert jobs.claim(Session, ids[0], "w1") and not jobs.claim(Session, ids[0], "w2")   # one winner
+    with Session() as s:
+        assert s.get(Job, ids[0]).claimed_by == "w1"
+        # w1 goes quiet: after the stale window the job goes back in the queue
+        assert jobs.requeue_stale(s, jobs._now() + timedelta(minutes=5)) == 1
+        assert s.get(Job, ids[0]).status == "queued" and s.get(Job, ids[0]).claimed_by is None
+    ran = worker.work(Session, "w3", once=True, extractor_factory=lambda: Good())
+    assert ran == 3
+    with Session() as s:
+        assert {j.status for j in s.scalars(select(Job))} <= {"done", "failed"}
+        assert all(j.claimed_by == "w3" for j in s.scalars(select(Job)))

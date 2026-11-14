@@ -14,7 +14,7 @@ from app.extract.pipeline import run_extraction
 from app.extract.rules import RuleExtractor
 from app.main import create_app
 from app.models import Chunk, Claim, User
-from app.security import LoginThrottle, hash_password, set_user_password, verify_password
+from app.security import hash_password, set_user_password, verify_password
 from app import web
 
 PW = "demo-" + "pass-123"
@@ -87,16 +87,6 @@ def test_password_hashing():
     assert not verify_password("abd", h) and not verify_password("abc", None)
     assert not verify_password("abc", "garbage")
     assert hash_password("abc") != h                       # salted
-
-
-def test_throttle_blocks_then_expires():
-    now = [0.0]
-    t = LoginThrottle(max_failures=3, window=10, clock=lambda: now[0])
-    for _ in range(3):
-        t.fail("a")
-    assert t.blocked("a") and not t.blocked("b")
-    now[0] = 11
-    assert not t.blocked("a")
 
 
 # ------------------------------------------------------------ login

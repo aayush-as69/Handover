@@ -333,11 +333,32 @@ class HandoverRelease(Base):
     approved_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     approved_by_name: Mapped[str] = mapped_column(String(128))
     approved_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    # Frozen copy of the claim list, kept for databases from before `handover_release_claims`
+    # existed and written alongside it. Readers use `items`; this is the fallback only.
     claims_json: Mapped[str] = mapped_column(Text)        # [[claim_id, version], ...]
+
+    items: Mapped[list["HandoverReleaseClaim"]] = relationship(
+        order_by="HandoverReleaseClaim.position", lazy="selectin")
 
     @property
     def entries(self) -> list[tuple[int, int]]:
+        """(claim id, version) pairs signed off in this release, in release order."""
+        if self.items:
+            return [(i.claim_id, i.version) for i in self.items]
         return [(int(a), int(b)) for a, b in json.loads(self.claims_json)]
+
+
+class HandoverReleaseClaim(Base):
+    """One claim, at one version, inside one release. Append-only like the release itself."""
+
+    __tablename__ = "handover_release_claims"
+    __table_args__ = (UniqueConstraint("release_id", "claim_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    release_id: Mapped[int] = mapped_column(ForeignKey("handover_releases.id"), index=True)
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claims.id"), index=True)
+    version: Mapped[int] = mapped_column(Integer)
+    position: Mapped[int] = mapped_column(Integer)
 
 
 class Acknowledgement(Base):
@@ -457,8 +478,9 @@ event.listen(Evidence, "before_delete", _forbid)
 class Job(Base):
     """A slow task run in the background, so a web request does not have to wait for it.
 
-    Runs inside the web process on a worker thread. It does not survive a restart: a job
-    still queued or running at startup is marked failed rather than left looking busy.
+    Runs on a thread in the web process (JOB_MODE=thread) or in a separate worker process
+    (JOB_MODE=queue); see jobs.py. In thread mode a job still active at startup is marked
+    failed; in queue mode a job whose worker stopped is put back in the queue.
     """
 
     __tablename__ = "jobs"
@@ -474,6 +496,8 @@ class Job(Base):
     chunks_total: Mapped[int] = mapped_column(Integer, default=0)
     claims_created: Mapped[int] = mapped_column(Integer, default=0)
     message: Mapped[str] = mapped_column(Text, default="")
+    claimed_by: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)   # worker name
+    heartbeat_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
 class Team(Base):

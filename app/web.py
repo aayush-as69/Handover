@@ -24,8 +24,10 @@ from .db import get_session
 from .enums import REVIEWER_ROLES, Confidence, ReviewStatus
 from .models import Chunk, Claim, Project, User
 from .projects import can_access_project
-from .security import (clear_login_failures_for, client_ip, csrf_ok, login_allowed, new_csrf_token,
-                       record_login_failure_for, verify_password, DUMMY_HASH)
+from .security import (client_ip, csrf_ok, new_csrf_token,
+                       verify_password, DUMMY_HASH)
+from . import metrics
+from .throttle import clear_login_failures, login_allowed, record_login_failure
 from .verify import verify_claim
 
 router = APIRouter()
@@ -174,15 +176,17 @@ def login(request: Request, username: str = Form(""), password: str = Form(""),
     cfg = request.app.state.cfg
     ip = client_ip(request, cfg.trust_proxy, cfg.edge_shared_secret)
     if not login_allowed(session, key, ip):
+        metrics.inc("handover_rate_limited_total", limiter="login_lockout")
         return render_login(request, None, 429,
                             error="Too many failed attempts. Try again in a few minutes.")
     user = session.scalar(select(User).where(User.username == key))
     # Verify even when the user is unknown, so timing does not reveal which names exist.
     ok = verify_password(password, user.password_hash if user else DUMMY_HASH)
     if not (user and ok):
-        record_login_failure_for(session, key, ip)
+        record_login_failure(session, key, ip)
+        metrics.inc("handover_login_failures_total")
         return render_login(request, None, 401, error="Wrong username or password.")
-    clear_login_failures_for(session, key, ip)    # the address keeps its volume count; it decays
+    clear_login_failures(session, key, ip)    # the address keeps its volume count; it decays
     request.session.clear()                      # new session on login
     request.session["uid"] = user.id
     request.session["session_version"] = user.session_version

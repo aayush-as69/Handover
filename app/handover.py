@@ -18,7 +18,8 @@ from sqlalchemy.orm import Session
 
 from .access import filter_handover
 from .enums import REVIEWER_ROLES, ClaimType, HandoverStatus, ReviewStatus, Role
-from .models import Acknowledgement, Claim, Handover, HandoverRelease, Project, User, utcnow
+from .models import (Acknowledgement, Claim, Handover, HandoverRelease, HandoverReleaseClaim, Project,
+                     User, utcnow)
 
 SECTIONS: list[tuple[str, str, list[ClaimType]]] = [
     ("first-week", "Your first week",
@@ -91,7 +92,9 @@ def approve_handover(session: Session, handover: Handover, user: User) -> Handov
     release = HandoverRelease(
         handover_id=handover.id, number=(last.number + 1) if last else 1,
         approved_by_id=user.id, approved_by_name=user.display_name,
-        claims_json=json.dumps([[c.id, c.version] for c in approved]))
+        claims_json=json.dumps([[c.id, c.version] for c in approved]),
+        items=[HandoverReleaseClaim(claim_id=c.id, version=c.version, position=n)
+               for n, c in enumerate(approved)])
     try:
         with session.begin_nested():
             session.add(release)

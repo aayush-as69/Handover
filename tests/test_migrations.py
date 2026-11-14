@@ -190,3 +190,35 @@ def test_migration_enforces_append_only_audit_and_evidence_guards(eng):
         session.execute(text("UPDATE evidence SET snippet_verified=TRUE WHERE id=:id"),
                         {"id": evidence_id})
         session.commit()
+
+
+def test_release_claims_are_backfilled_from_json_and_are_append_only(eng):
+    from alembic import command as cmd
+    with eng.begin() as conn:
+        cmd.upgrade(alembic_config(conn), "0009")
+    Session = sessionmaker(eng, expire_on_commit=False)
+    with Session() as session:
+        project = Project(name="Backfill test")
+        user = User(username="u", display_name="U", role=Role.approver)
+        session.add_all([project, user])
+        session.flush()
+        claims = [Claim.create(project_id=project.id, statement=f"Claim {i}", type=ClaimType.decision,
+                               created_by="t", sensitivity=Sensitivity.team) for i in range(2)]
+        session.add_all(claims)
+        handover = Handover(project_id=project.id, title="H", outgoing_name="O",
+                            status=HandoverStatus.approved, approved_by_id=user.id)
+        session.add(handover)
+        session.flush()
+        ids = [c.id for c in claims]
+        session.add(HandoverRelease(handover_id=handover.id, number=1, approved_by_id=user.id,
+                                    approved_by_name="U", claims_json=f"[[{ids[0]},1],[{ids[1]},3]]"))
+        session.commit()
+    migrate(eng)
+    with Session() as session:
+        release = session.scalar(select(HandoverRelease))
+        assert release.entries == [(ids[0], 1), (ids[1], 3)]
+        assert [(i.claim_id, i.version, i.position) for i in release.items] == [(ids[0], 1, 0), (ids[1], 3, 1)]
+        for stmt in ("UPDATE handover_release_claims SET version=9", "DELETE FROM handover_release_claims"):
+            with pytest.raises(DBAPIError):
+                session.execute(text(stmt))
+            session.rollback()

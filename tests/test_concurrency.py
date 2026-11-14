@@ -15,7 +15,7 @@ from app.handover import (HandoverError, acknowledge, approve_handover, get_or_c
 from app.ingest.service import ingest_source
 from app.models import (Acknowledgement, Base, Claim, Handover, HandoverRelease, LoginAttempt,
                         Project, Source, User)
-from app.security import login_blocked, record_login_failure
+from app.throttle import login_allowed, record_login_failure
 from tests.dbutil import PG_URL, on_postgres
 from tests.test_conflicts_questions import add_claim
 
@@ -178,10 +178,10 @@ def test_simultaneous_sign_offs_get_distinct_release_numbers(Session):
 def test_parallel_failed_logins_are_all_counted_and_lock_the_account(Session):
     def work(s, i, barrier):
         barrier.wait()
-        record_login_failure(s, "meera")
+        record_login_failure(s, "meera", "9.9.9.9")
 
     _, errors = race(Session, work, n=6)
     assert errors == [None] * 6
     with Session() as s:
-        assert s.scalar(select(func.count()).select_from(LoginAttempt)) == 6
-        assert login_blocked(s, "meera") and not login_blocked(s, "someone-else")
+        assert s.scalar(select(func.count()).select_from(LoginAttempt)) == 18
+        assert not login_allowed(s, "meera", "9.9.9.9") and login_allowed(s, "someone-else", "9.9.9.9")
