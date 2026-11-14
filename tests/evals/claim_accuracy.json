@@ -1,0 +1,31 @@
+{
+  "description": "Does the extractor find the decisions, owners, risks and blockers a careful reader would? Each case is a short source and the claims it must yield. Matching is by claim type and key words, not exact wording. Small cases on purpose: they cover one skill each, so a drop points at what broke.",
+  "cases": [
+    {"id": "decision-with-reason", "kind": "chat", "name": "decision_reason.txt",
+     "text": "[02/10/2026, 09:05] Dev Patel: we're going with sqlite for the catalogue, postgres is overkill for 4k books and we have no one to run it\n[02/10/2026, 09:30] Sam Okafor: lunch anyone?",
+     "expected": [{"id": "sqlite", "types": ["decision"], "all": ["sqlite"], "reason_any": ["overkill", "no one to run", "4k"]}]},
+    {"id": "owner-handoff", "kind": "chat", "name": "owner.txt",
+     "text": "[09/10/2026, 17:40] Dev Patel: Ana owns the late-fee rules now, ask her before touching them",
+     "expected": [{"id": "late-fee-owner", "types": ["owner"], "all": ["ana", "late"]}]},
+    {"id": "blocker", "kind": "chat", "name": "blocker.txt",
+     "text": "[12/10/2026, 10:02] Dev Patel: the receipt printer driver only works on windows 10, which blocks the ubuntu kiosk image",
+     "expected": [{"id": "printer", "types": ["blocker", "risk", "dependency"], "all": ["printer", "windows"]}]},
+    {"id": "deadline-risk", "kind": "chat", "name": "deadline.txt",
+     "text": "[14/10/2026, 15:20] Ana Rossi: don't forget to renew the domain by 30 nov or the kiosk page goes down",
+     "expected": [{"id": "domain", "types": ["risk", "next_action"], "all": ["domain"]}]},
+    {"id": "notes-decision-section", "kind": "notes", "name": "notes_decision.md",
+     "text": "# Planning notes\n\n## Decisions\n- Use the existing campus single sign-on for staff login. Reason: staff already have accounts and nobody has to reset passwords.\n\n## Risks\n- The kiosk touch screen firmware is out of warranty and has no spare unit.\n\n## Open questions\n- Do we need a parental waiver for under-13 members?\n",
+     "expected": [
+       {"id": "sso", "types": ["decision"], "all": ["single sign-on"], "reason_any": ["accounts", "reset"]},
+       {"id": "firmware", "types": ["risk"], "all": ["firmware"]},
+       {"id": "waiver", "types": ["open_question"], "all": ["waiver"]}]},
+    {"id": "task-board", "kind": "tasks", "name": "tasks.csv",
+     "text": "id,title,owner,status,due,notes\nK2,Late fee rules module,UNASSIGNED,todo,2026-11-10,\nK3,Receipt printer on ubuntu,Dev Patel,blocked,2026-11-12,Driver only supports windows 10\n",
+     "expected": [
+       {"id": "unowned", "types": ["owner"], "all": ["k2"]},
+       {"id": "blocked", "types": ["blocker"], "all": ["k3"]}]},
+    {"id": "small-talk-only", "kind": "chat", "name": "smalltalk.txt",
+     "text": "[02/10/2026, 09:30] Sam Okafor: lunch anyone?\n[02/10/2026, 09:31] Ana Rossi: lol yes\n[02/10/2026, 09:32] Dev Patel: thanks!",
+     "expected": []}
+  ]
+}

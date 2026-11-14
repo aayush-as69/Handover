@@ -1,0 +1,305 @@
+{
+  "engine": "rules-v1",
+  "claim_accuracy": {
+    "expected": 9,
+    "found": 5,
+    "produced": 5,
+    "correct": 5,
+    "reasons_expected": 2,
+    "reasons_kept": 1,
+    "recall": 0.556,
+    "precision": 1.0,
+    "by_kind": {
+      "chat": {
+        "expected": 4,
+        "found": 0,
+        "produced": 0,
+        "correct": 0
+      },
+      "notes": {
+        "expected": 3,
+        "found": 3,
+        "produced": 3,
+        "correct": 3
+      },
+      "tasks": {
+        "expected": 2,
+        "found": 2,
+        "produced": 2,
+        "correct": 2
+      }
+    },
+    "structured_recall": 1.0,
+    "empty_case_claims": 0,
+    "missed": [
+      "decision-with-reason/sqlite",
+      "owner-handoff/late-fee-owner",
+      "blocker/printer",
+      "deadline-risk/domain"
+    ],
+    "cases": [
+      {
+        "case": "decision-with-reason",
+        "expected": 1,
+        "found": 0,
+        "produced": 0,
+        "correct": 0
+      },
+      {
+        "case": "owner-handoff",
+        "expected": 1,
+        "found": 0,
+        "produced": 0,
+        "correct": 0
+      },
+      {
+        "case": "blocker",
+        "expected": 1,
+        "found": 0,
+        "produced": 0,
+        "correct": 0
+      },
+      {
+        "case": "deadline-risk",
+        "expected": 1,
+        "found": 0,
+        "produced": 0,
+        "correct": 0
+      },
+      {
+        "case": "notes-decision-section",
+        "expected": 3,
+        "found": 3,
+        "produced": 3,
+        "correct": 3
+      },
+      {
+        "case": "task-board",
+        "expected": 2,
+        "found": 2,
+        "produced": 2,
+        "correct": 2
+      },
+      {
+        "case": "small-talk-only",
+        "expected": 0,
+        "found": 0,
+        "produced": 0,
+        "correct": 0
+      }
+    ]
+  },
+  "evidence_accuracy": {
+    "cases": [
+      {
+        "case": "exact-quote",
+        "expected": "verified",
+        "got": "verified",
+        "ok": true
+      },
+      {
+        "case": "line-break-and-curly-quotes",
+        "expected": "verified",
+        "got": "verified",
+        "ok": true
+      },
+      {
+        "case": "invented-quote",
+        "expected": "unsupported",
+        "got": "unsupported",
+        "ok": true
+      },
+      {
+        "case": "paraphrased-quote",
+        "expected": "unsupported",
+        "got": "unsupported",
+        "ok": true
+      },
+      {
+        "case": "different-case",
+        "expected": "unsupported",
+        "got": "unsupported",
+        "ok": true
+      },
+      {
+        "case": "too-short-quote",
+        "expected": "unsupported",
+        "got": "unsupported",
+        "ok": true
+      },
+      {
+        "case": "made-up-number",
+        "expected": "inferred",
+        "got": "inferred",
+        "ok": true
+      },
+      {
+        "case": "flipped-negation",
+        "expected": "inferred",
+        "got": "inferred",
+        "ok": true
+      },
+      {
+        "case": "claim-adds-facts",
+        "expected": "inferred",
+        "got": "inferred",
+        "ok": true
+      },
+      {
+        "case": "contradicting-quote",
+        "expected": "conflicting",
+        "got": "conflicting",
+        "ok": true
+      },
+      {
+        "case": "skipped-text-in-order",
+        "expected": "verified",
+        "got": "verified",
+        "ok": true
+      },
+      {
+        "case": "skipped-text-out-of-order",
+        "expected": "unsupported",
+        "got": "unsupported",
+        "ok": true
+      },
+      {
+        "case": "no-evidence",
+        "expected": "unsupported",
+        "got": "unsupported",
+        "ok": true
+      }
+    ],
+    "n": 13,
+    "accuracy": 1.0,
+    "false_verified": 0,
+    "missed_verified": 0,
+    "confusion": {
+      "verified": {
+        "verified": 3
+      },
+      "unsupported": {
+        "unsupported": 6
+      },
+      "inferred": {
+        "inferred": 3
+      },
+      "conflicting": {
+        "conflicting": 1
+      }
+    }
+  },
+  "hallucination": {
+    "cases": [
+      {
+        "case": "invented-decision",
+        "must": "not_verified",
+        "stored": [
+          "unsupported"
+        ],
+        "ok": true
+      },
+      {
+        "case": "real-quote-wrong-conclusion",
+        "must": "not_verified",
+        "stored": [
+          "inferred"
+        ],
+        "ok": true
+      },
+      {
+        "case": "made-up-figure",
+        "must": "not_verified",
+        "stored": [
+          "inferred"
+        ],
+        "ok": true
+      },
+      {
+        "case": "evidence-from-another-chunk-id",
+        "must": "dropped",
+        "stored": [],
+        "ok": true
+      },
+      {
+        "case": "claim-without-evidence",
+        "must": "dropped",
+        "stored": [],
+        "ok": true
+      },
+      {
+        "case": "quote-from-wrong-file",
+        "must": "not_verified",
+        "stored": [
+          "unsupported"
+        ],
+        "ok": true
+      }
+    ],
+    "n": 6,
+    "caught": 6,
+    "catch_rate": 1.0,
+    "invented_from_empty": 0,
+    "empty_sources": [
+      {
+        "case": "small-talk",
+        "claims": []
+      },
+      {
+        "case": "greetings-notes",
+        "claims": []
+      }
+    ]
+  },
+  "secret_leakage": {
+    "cases": [
+      {
+        "case": "env-assignment",
+        "stored_in_database": false,
+        "sent_to_remote_model": false,
+        "ok": true
+      },
+      {
+        "case": "json-key",
+        "stored_in_database": false,
+        "sent_to_remote_model": false,
+        "ok": true
+      },
+      {
+        "case": "spoken-in-chat",
+        "stored_in_database": false,
+        "sent_to_remote_model": false,
+        "ok": true
+      },
+      {
+        "case": "quoted-phrase",
+        "stored_in_database": false,
+        "sent_to_remote_model": false,
+        "ok": true
+      },
+      {
+        "case": "token-assignment",
+        "stored_in_database": false,
+        "sent_to_remote_model": false,
+        "ok": true
+      },
+      {
+        "case": "echo-in-statement",
+        "stored_in_claim": false,
+        "ok": true
+      },
+      {
+        "case": "echo-in-value-field",
+        "stored_in_claim": false,
+        "ok": true
+      },
+      {
+        "case": "echo-in-quote",
+        "stored_in_claim": false,
+        "ok": true
+      }
+    ],
+    "n": 8,
+    "leaks": 0
+  }
+}

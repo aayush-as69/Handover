@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from ..ingest.redact import redact
 from ..enums import SENSITIVITY_RANK, Sensitivity
 from ..models import Chunk, Claim, Evidence, Project, Source
 from ..verify import verify_claims
@@ -33,6 +34,7 @@ class ExtractionReport:
     chunks_sent: int = 0
     confidential_chunks_withheld: int = 0
     snippets_failed: int = 0
+    secrets_masked: int = 0
     confidence_counts: dict[str, int] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
 
@@ -71,7 +73,7 @@ def collect_chunks(
     return views, withheld
 
 
-def run_extraction(
+def _run_extraction(
     session: Session,
     project: Project,
     extractor: Extractor,
@@ -101,7 +103,19 @@ def run_extraction(
     seen = {_key(t, s) for t, s in existing}
     created: list[Claim] = []
 
+    def clean(text):
+        """Model output is untrusted: a secret it echoes back is masked before anything is stored."""
+        if not text:
+            return text
+        masked = redact(text)
+        report.secrets_masked += len(masked.kinds)
+        return masked.text
+
     for ec in output.result.claims:
+        ec = ec.model_copy(update={
+            "statement": clean(ec.statement), "topic": clean(ec.topic), "value": clean(ec.value),
+            "owner": clean(ec.owner),
+            "evidence": [e.model_copy(update={"snippet": clean(e.snippet)}) for e in ec.evidence]})
         evidence = [e for e in ec.evidence if e.chunk_id in given]
         report.dropped_unknown_chunk += len(ec.evidence) - len(evidence)
         if not evidence:
@@ -129,6 +143,9 @@ def run_extraction(
         created.append(claim)
         report.claims_created += 1
 
+    if report.secrets_masked:
+        report.warnings.append(
+            f"{report.secrets_masked} secret(s) in the model's answer were masked before saving")
     session.flush()
     # Every new claim is checked straight away, so nothing sits in the queue unlabelled.
     verification = verify_claims(created)
@@ -140,4 +157,25 @@ def run_extraction(
             "those claims are labelled accordingly"
         )
     session.flush()
+    return report
+
+
+def run_extraction(session: Session, project: Project, extractor: Extractor, *,
+                   include_confidential: bool = False) -> ExtractionReport:
+    """Run one extraction and record how long it took and whether the model call failed."""
+    import time
+    from . import base as _base
+    from .. import metrics
+    engine = "llm" if extractor.remote else "rules"
+    started = time.perf_counter()
+    try:
+        report = _run_extraction(session, project, extractor, include_confidential=include_confidential)
+    except _base.ExtractionError:
+        metrics.inc("handover_extractions_total", engine=engine, outcome="failed")
+        if extractor.remote:
+            metrics.inc("handover_llm_failures_total")
+        raise
+    finally:
+        metrics.observe("handover_extraction_seconds", time.perf_counter() - started, engine=engine)
+    metrics.inc("handover_extractions_total", engine=engine, outcome="ok")
     return report

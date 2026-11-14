@@ -1,0 +1,34 @@
+{
+  "description": "A model that makes things up must not get its claims trusted. Part 1 replays model output that is wrong in a known way and checks the pipeline drops it or labels it below 'verified'. Part 2 gives the real extractor a source with nothing worth extracting and counts what it invents.",
+  "scripted": [
+    {"id": "invented-decision", "source": {"kind": "chat", "name": "c1.txt", "text": "[02/10/2026, 09:30] Sam Okafor: lunch anyone?"},
+     "claims": [{"statement": "The team decided to migrate to Kubernetes.", "type": "decision",
+                 "evidence": [{"snippet": "we decided to migrate to Kubernetes", "stance": "supports"}]}],
+     "must": "not_verified"},
+    {"id": "real-quote-wrong-conclusion", "source": {"kind": "chat", "name": "c2.txt", "text": "[05/10/2026, 11:12] Ana Rossi: the usb hub keeps dropping barcode reads, so we are switching to the bluetooth scanner"},
+     "claims": [{"statement": "The team will keep the USB hub and drop the bluetooth scanner for 2027 budget reasons.", "type": "decision",
+                 "evidence": [{"snippet": "we are switching to the bluetooth scanner", "stance": "supports"}]}],
+     "must": "not_verified"},
+    {"id": "made-up-figure", "source": {"kind": "notes", "name": "n1.md", "text": "## Risks\n- The kiosk firmware is out of warranty and has no spare unit.\n"},
+     "claims": [{"statement": "The kiosk firmware is out of warranty and a replacement costs 12000 rupees.", "type": "risk",
+                 "evidence": [{"snippet": "The kiosk firmware is out of warranty and has no spare unit", "stance": "supports"}]}],
+     "must": "not_verified"},
+    {"id": "evidence-from-another-chunk-id", "source": {"kind": "chat", "name": "c3.txt", "text": "[05/10/2026, 11:12] Ana Rossi: renew the domain by 30 nov"},
+     "claims": [{"statement": "Renew the domain by 30 November.", "type": "next_action",
+                 "evidence": [{"snippet": "renew the domain by 30 nov", "stance": "supports", "chunk_id": 999999}]}],
+     "must": "dropped"},
+    {"id": "claim-without-evidence", "source": {"kind": "chat", "name": "c4.txt", "text": "[05/10/2026, 11:12] Ana Rossi: hello"},
+     "claims": [{"statement": "Ana is the project lead.", "type": "owner", "evidence": []}],
+     "must": "dropped"},
+    {"id": "quote-from-wrong-file", "source": {"kind": "chat", "name": "c5.txt", "text": "[05/10/2026, 11:12] Ana Rossi: hello team"},
+     "claims": [{"statement": "Use Redis for the seat-lock service.", "type": "decision",
+                 "evidence": [{"snippet": "Use Redis for the seat-lock service because Postgres locks were too slow", "stance": "supports"}]}],
+     "must": "not_verified"}
+  ],
+  "no_content_sources": [
+    {"id": "small-talk", "kind": "chat", "name": "talk.txt",
+     "text": "[02/10/2026, 09:30] Sam Okafor: lunch anyone?\n[02/10/2026, 09:31] Ana Rossi: lol yes\n[02/10/2026, 09:32] Dev Patel: thanks!"},
+    {"id": "greetings-notes", "kind": "notes", "name": "hello.md",
+     "text": "# Hello\n\nWelcome to the team. Looking forward to working together. See you at the stand-up.\n"}
+  ]
+}
