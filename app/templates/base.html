@@ -34,7 +34,7 @@
         <a href="/review/bulk">Bulk review</a><a href="/conflicts">Conflicts</a><a href="/questions">Questions</a>
         <a href="/freshness">Freshness</a><a href="/audit">Audit log</a><a href="/quality">Extraction quality</a></div>{% endif %}
       <div><h2>Understand</h2>
-        <a href="/timeline">Timeline</a><a href="/handover/brief">Takeover brief</a><a href="/onboarding">Guided takeover</a>
+        <a class="phone-only" href="/timeline">Timeline</a><a href="/handover/brief">Takeover brief</a><a href="/onboarding">Guided takeover</a>
         {% if reviewer %}<a href="/bus-factor">Bus factor</a>{% endif %}<a href="/handover/releases">Release history</a></div>
       <div><h2>Workspace</h2>
         <a href="/projects">Projects</a>{% if user.role.value == "admin" %}<a href="/admin/sources">Sources</a>{% endif %}

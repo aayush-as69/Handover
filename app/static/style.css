@@ -1226,6 +1226,7 @@ form.inline{display:inline;margin-left:.6rem}
 .more-panel a{display:block;padding:.3rem 0;color:var(--fg);font-size:.95rem}
 .more-panel a:hover{text-decoration:underline}
 .more-panel>div{display:block}
+.more-panel a.phone-only{display:none}
 /* Phones: primary links become a bottom tab bar; More opens a sheet above it. */
 @media (max-width:760px){
   :root{--tabbar:3.7rem}
@@ -1238,6 +1239,7 @@ form.inline{display:inline;margin-left:.6rem}
   .top nav.workspace-nav svg{width:1.3rem;height:1.3rem}
   .top nav.workspace-nav a.hide-sm,.queue-word{display:none}
   .more{position:static}
+  .more-panel a.phone-only{display:block}
   .more>summary{position:fixed;right:0;bottom:0;z-index:40;width:4.4rem;height:calc(var(--tabbar) + env(safe-area-inset-bottom));
     padding:.3rem 0 env(safe-area-inset-bottom);border-radius:0;background:var(--tile);border-top:1px solid var(--line);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.1rem;font-size:.7rem;color:var(--mut)}
