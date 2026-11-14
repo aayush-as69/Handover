@@ -115,4 +115,7 @@ Code: `app/projects.py`, `app/audit_log.py`, `app/workspace_web.py`.
 - **Metrics and access log**: `/metrics` (bearer `METRICS_TOKEN` or admin session) with request latency, login failures, 429s, extraction duration, LLM failures, DB errors and job counts, plus one JSON access-log line per request.
 - **Four answers per claim**: each claim page opens with what the problem is, why it matters, what evidence backs it and what to do next; the review queue gains a Next step column. Chosen by fixed rules from recorded facts, not generated.
 - **README as a landing page**: technical detail moved to `docs/10`, `docs/17` and `docs/18`.
+- **Demo and production blueprints separated**: `render.yaml` stays the free demo; `render.production.yaml` has demo mode off, queue mode with a worker service, a paid database and `/ready` health checks. `python -m app.users` creates the first admin where no demo accounts exist. Tests keep the two blueprints honest.
+- **Recovery drill**: `scripts/restore_check.py --smoke` also boots the app on the restored copy; a weekly workflow runs it when a database secret is configured.
+- **Page timing benchmark**: `scripts/benchmark.py` seeds a synthetic project and times the heavy pages at several sizes; CI runs a small one with a loose budget.
 

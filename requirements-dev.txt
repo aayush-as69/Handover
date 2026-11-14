@@ -3,3 +3,4 @@ pytest==9.2.0
 httpx2==2.13.0         # Starlette TestClient-compatible HTTP client
 playwright==1.65.0    # browser end-to-end tests
 pip-audit==2.10.1
+pyyaml==6.0.3         # blueprint tests

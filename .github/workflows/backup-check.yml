@@ -1,0 +1,41 @@
+name: backup-check
+# Weekly proof that a backup of the real database can be restored and matches it.
+# Needs a repository secret BACKUP_CHECK_DATABASE_URL: a connection string for the database
+# (a read-only role is enough on the source) whose server also allows creating a scratch database.
+# Without the secret this workflow does nothing, so forks stay quiet.
+on:
+  schedule:
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+
+jobs:
+  restore-check:
+    runs-on: ubuntu-latest
+    env:
+      DB_URL: ${{ secrets.BACKUP_CHECK_DATABASE_URL }}
+    steps:
+      - name: Skip when no database is configured
+        if: env.DB_URL == ''
+        run: echo "BACKUP_CHECK_DATABASE_URL is not set; nothing to check."
+      - uses: actions/checkout@v4
+        if: env.DB_URL != ''
+      - uses: actions/setup-python@v5
+        if: env.DB_URL != ''
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install PostgreSQL 16 client tools
+        if: env.DB_URL != ''
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-16
+      - name: Install dependencies
+        if: env.DB_URL != ''
+        run: pip install -r requirements.lock
+      - name: Dump, restore into a scratch database, compare
+        if: env.DB_URL != ''
+        env:
+          PG_BIN: /usr/lib/postgresql/16/bin
+        run: python scripts/restore_check.py "$DB_URL" --smoke

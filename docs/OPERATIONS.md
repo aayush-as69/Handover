@@ -25,6 +25,26 @@ build) is refused with instructions. To adopt it:
    lists the difference and changes nothing; restore into a new database instead.
 4. Start the app normally.
 
+## Two deployments: demo and production
+`render.yaml` is the free **demo** blueprint: `DEMO_MODE=true`, synthetic accounts, one shared demo
+password you type into the dashboard. `render.production.yaml` is the **real** one: demo mode off,
+`JOB_MODE=queue` with a separate worker service (`python -m app.worker`), a paid Postgres with
+backups, `/ready` as the health check, `autoDeploy` off and a generated `METRICS_TOKEN`. Keep them as
+separate Render projects so synthetic data and credentials never reach a real environment.
+
+With the demo off nobody exists yet. Create the first admin from the web service's shell, then add
+the rest in the app (Projects) or the same way:
+
+    python -m app.users create --username you --name "Your Name" --role admin
+    python -m app.users set-password --username you      # also signs them out everywhere
+    python -m app.users list
+
+The password is asked for on the terminal (or read from `NEW_USER_PASSWORD`), never taken as an
+argument. Minimum 10 characters, no common passwords.
+
+The worker does not migrate (`MIGRATE_ON_STARTUP=false`): the web service owns the schema. On the very
+first deploy the worker may restart a few times until the web service has finished migrating.
+
 ## Backups
 - Render free Postgres has no automatic backups and expires; for anything real use a paid plan
   with backups.
@@ -42,6 +62,19 @@ build) is refused with instructions. To adopt it:
    deletes the scratch copy. It exits non-zero on any difference. Use `pg_dump`/`pg_restore` of the same major version as the
    database (set `PG_BIN` to their folder): a newer client writes settings an older server rejects.
 
+### Recovery drill (run it, do not just read it)
+1. Backup: `pg_dump --format=custom "$DATABASE_URL" > handover-$(date +%F).dump` (the paid database also keeps its own daily backups).
+2. Restore into an isolated database, never over production.
+3. Check the schema: `DATABASE_URL=<restored> python -m app.db status` should say current.
+4. Check the application: start it against the restored copy and request `/ready`.
+5. Smoke test: sign in, open `/handover/releases`, and compare the claim and release counts with production.
+
+`python scripts/restore_check.py <DATABASE_URL> --smoke` performs steps 1 to 4 and compares every table.
+`.github/workflows/backup-check.yml` runs it weekly against the database named by the repository secret
+`BACKUP_CHECK_DATABASE_URL` (a no-op while the secret is unset). The database user needs permission to
+create a scratch database; if the host does not allow that, run the drill from a machine that can reach
+a separate PostgreSQL server instead.
+
 Exercised on 9 Nov 2026 against a local PostgreSQL 16 holding the demo project: all 15 tables
 matched (48 claims, 87 chunks, 48 claim versions, 48 audit events and the rest) and the restored
 schema was current. It has **not** been run on Render's database; do that once after deploying.
@@ -56,6 +89,9 @@ The app limits each address to `RATE_LIMIT_PER_MIN` requests (default 300) and `
 login posts (default 30) a minute, returning 429. The counters live in each server process, so with
 several processes the effective limit is higher. For real protection put a rate limiter in front
 (Cloudflare, or your host's edge rules) and keep `TRUST_PROXY=true` so addresses are read correctly.
+The sign-in lockout is different: it is stored in the database and is shared by every instance.
+Moving the request limiter itself into a shared store (Redis) is only worth doing if you run several
+web instances and cannot limit at the edge; `app/throttle.py` is the one place to change.
 
 ## Dependencies
 `requirements.txt` lists minimum versions; `requirements.lock` pins every package to the exact

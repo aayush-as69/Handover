@@ -1,0 +1,64 @@
+# Render blueprint for a real (non-demo) deployment: web service + background worker + Postgres.
+# render.yaml stays the free demo blueprint. Differences here, on purpose:
+#   * DEMO_MODE is off. There are no synthetic accounts or shared demo password. Create the first
+#     admin from the web service shell:  python -m app.users create --username you --name "You" --role admin
+#   * JOB_MODE=queue with a separate worker, so extraction survives deploys and restarts.
+#   * Paid plans: the free Postgres has no backups and expires, and free services sleep.
+# Secrets marked `sync: false` are typed into the Render dashboard, never committed.
+envVarGroups:
+  - name: handover-shared
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APP_ENV
+        value: production
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DEMO_MODE
+        value: "false"
+      - key: JOB_MODE
+        value: queue
+      - key: DATABASE_URL
+        fromDatabase:
+          name: handover-prod-db
+          property: connectionString
+      - key: LLM_BASE_URL     # optional: only to extract from chat with a model
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        sync: false
+
+services:
+  - type: web
+    name: handover
+    runtime: python
+    plan: starter
+    autoDeploy: false          # deploy deliberately; take a backup before a release that adds migrations
+    buildCommand: pip install -r requirements.lock
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /ready    # checks the database and schema, not just that the process is up
+    envVars:
+      - fromGroup: handover-shared
+      - key: TRUST_PROXY
+        value: "true"
+      - key: METRICS_TOKEN
+        generateValue: true
+
+  - type: worker
+    name: handover-worker
+    runtime: python
+    plan: starter
+    autoDeploy: false
+    buildCommand: pip install -r requirements.lock
+    startCommand: python -m app.worker
+    envVars:
+      - fromGroup: handover-shared
+      - key: MIGRATE_ON_STARTUP   # the web service owns migrations; the worker only reads the schema
+        value: "false"
+
+databases:
+  - name: handover-prod-db
+    plan: basic-256mb          # paid plan: daily backups. Still run scripts/restore_check.py (docs/OPERATIONS.md)

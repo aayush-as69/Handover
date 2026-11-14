@@ -78,3 +78,21 @@ The project should not silently replace human approval with model confidence, ex
 | Development | SQLite or PostgreSQL |
 | CI | SQLite and PostgreSQL 16 |
 | Production | PostgreSQL required; SQLite is refused at startup |
+
+## Scale and operations: what is known
+
+- **Page timings** (`python scripts/benchmark.py`, SQLite, one user, one process, synthetic project with quotes and conflicts; seconds, median of 2–3 requests):
+
+  | Claims | `/review` | `/conflicts` | `/search` | `/inbox` | `/handover` | `/handover/brief` |
+  |---|---|---|---|---|---|---|
+  | 100 | 0.03 | 0.01 | 0.01 | 0.02 | 0.03 | 0.01 |
+  | 1,000 | 0.04 | 0.06 | 0.04 | 0.06 | 0.16 | 0.07 |
+  | 5,000 | 0.13 | 0.35 | 0.02 | 0.40 | 1.2 | 0.48 |
+  | 10,000 | 0.19 | 0.61 | 0.02 | 0.62 | 3.7 | 0.99 |
+
+  Query counts stay flat (about 10 to 25 per page; more only where lookups are split into batches), so there is no per-claim query. Time grows roughly linearly. `/handover` is the outlier because it renders every approved claim into one page (about 35 MB of HTML at 6,000 claims) and the page searches client-side, so it cannot simply be paged. A real handover is tens to a few hundred claims; if one grows past about 2,000, split the project. PostgreSQL, concurrent users and 100,000 claims have not been measured.
+- Metrics are per process and the request limiter is per process. With several web instances, scrape each instance or aggregate in your monitoring system, and limit at the edge.
+- The backup drill (`scripts/restore_check.py --smoke`) has been run on local PostgreSQL 16 only, not on a hosted database.
+- `render.production.yaml` has not been deployed by the author; the first real deploy is its test.
+- The stylesheet is one file (about 1,300 lines). It is organised by comment sections, and splitting it is worthwhile once the interface stops changing.
+

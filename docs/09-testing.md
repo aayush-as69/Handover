@@ -130,3 +130,7 @@ The repository README records a historical CI result of 481 SQLite tests and 482
 ---
 
 [← Documentation index](README.md) · [Project home](../README.md)
+
+## Performance benchmark
+
+`python scripts/benchmark.py --sizes 100 1000 10000` builds a synthetic project of each size in a temporary database, signs in through the real login form and times a GET of the pages that read the most data, with the number of SQL statements each ran. CI runs `--sizes 300 --budget 5` as a loose guard against gross regressions or a per-claim query. It is a timing aid, not a load test: one user, one process. Results and what they mean are in [13 — Limitations](13-limitations-roadmap.md). Use a disposable database if you point it at PostgreSQL.
