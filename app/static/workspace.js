@@ -62,15 +62,18 @@
     });
 
     var path = window.location.pathname.replace(/\/$/, "") || "/";
-    document.querySelectorAll(".workspace-nav a").forEach(function (link) {
+    // Mark the one link that best matches this page: the longest href that is the path or its parent.
+    var links = Array.prototype.slice.call(document.querySelectorAll(".workspace-nav a, .side-groups a"));
+    var best = 0;
+    links.forEach(function (link) {
       var href = link.getAttribute("href") || "";
-      var exact = href === path;
-      var nested = href !== "/" && path.indexOf(href + "/") === 0;
-      if (exact || nested) {
-        link.setAttribute("aria-current", "page");
-      } else {
-        link.removeAttribute("aria-current");
-      }
+      if (href === path || (href !== "/" && path.indexOf(href + "/") === 0)) best = Math.max(best, href.length);
+    });
+    links.forEach(function (link) {
+      var href = link.getAttribute("href") || "";
+      var hit = best && href.length === best && (href === path || path.indexOf(href + "/") === 0);
+      if (hit) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
     });
   });
 })();
