@@ -786,7 +786,7 @@ small{font-size:.86rem;line-height:1.55}
 .table-panel .table-scroll table{margin:0}
 .table-panel th:first-child,.table-panel td:first-child{padding-left:1.5rem}
 .claim-summary{margin:0}
-.claim-statement-panel{display:flex;flex-direction:column;justify-content:center;gap:.7rem}
+.claim-statement-panel{display:flex;flex-direction:column;justify-content:flex-start;gap:.7rem}
 .claim-statement-panel .meta{gap:.55rem}
 .claim-statement-panel .statement{font-size:clamp(1.5rem,3vw,2.05rem);line-height:1.35;margin:.5rem 0 0}
 .verification-panel h2{font-size:1.2rem;margin:.2rem 0 .6rem}

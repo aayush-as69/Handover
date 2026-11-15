@@ -4,7 +4,7 @@
 
 # Screenshot gallery
 
-Real captures of the running application, taken in the dark theme from the synthetic demo as the reviewer `meera`. The two most useful ones are also in the [main README](../../../README.md).
+Real captures of the running application, taken in the dark theme from the synthetic demo as the reviewer `meera`, with the left sidebar layout. The two most useful ones are also in the [main README](../../../README.md).
 
 </div>
 
@@ -34,7 +34,7 @@ Approved claims only, each with its quote. This capture was taken after approvin
 ![Handover preview](handover-release.png)
 
 ## On a phone
-The grid folds to one column and the claim table becomes stacked cards.
+The sidebar becomes a bottom tab bar with a More sheet, and the claim table becomes stacked cards.
 
 <img src="mobile-queue.png" alt="Review queue on a phone" width="320" />
 
