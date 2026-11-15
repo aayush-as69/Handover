@@ -131,15 +131,7 @@ Verification and approval are separate. A person—not the model—decides wheth
 
 Handover keeps the important work in focused, role-aware screens.
 
-![Handover review queue](docs/assets/screenshots/review-queue.png)
-
 ![A claim with its supporting evidence](docs/assets/screenshots/claim-evidence.png)
-
-![The handover preview, approved claims only](docs/assets/screenshots/handover-release.png)
-
-On a phone the sidebar becomes a bottom tab bar:
-
-<img src="docs/assets/screenshots/mobile-queue.png" alt="Review queue on a phone" width="260" />
 
 The [screenshot gallery](docs/assets/screenshots/README.md) documents the remaining real application captures. The README stays selective; detailed walkthroughs belong in the guides.
 
