@@ -307,12 +307,12 @@ class Handover(Base):
     title: Mapped[str] = mapped_column(String(200))
     outgoing_name: Mapped[str] = mapped_column(String(128))
     incoming_user_id: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("users.id"), nullable=True
+        ForeignKey("users.id"), nullable=True, index=True
     )
     status: Mapped[HandoverStatus] = mapped_column(
         _enum(HandoverStatus), default=HandoverStatus.draft
     )
-    approved_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
+    approved_by_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True, index=True)
     approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
@@ -330,7 +330,7 @@ class HandoverRelease(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     handover_id: Mapped[int] = mapped_column(ForeignKey("handovers.id"))
     number: Mapped[int] = mapped_column(Integer)
-    approved_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    approved_by_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     approved_by_name: Mapped[str] = mapped_column(String(128))
     approved_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     # Frozen copy of the claim list, kept for databases from before `handover_release_claims`
@@ -369,7 +369,7 @@ class Acknowledgement(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     release_id: Mapped[int] = mapped_column(ForeignKey("handover_releases.id"))
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     acknowledged_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
 
 
@@ -446,6 +446,17 @@ class LoginAttempt(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     key: Mapped[str] = mapped_column(String(80), index=True)
     at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+
+
+class UserSession(Base):
+    """One signed-in browser. Signing out marks it revoked, so a copied cookie stops working."""
+
+    __tablename__ = "user_sessions"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+    revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
 
 
 # ---------------------------------------------------------------- append-only guards

@@ -67,3 +67,35 @@ def test_a_deployment_without_demo_has_a_way_to_create_the_first_admin(tmp_path,
         before = user.session_version
         change_password(s, "meera", "a-different-long-pass")
         assert s.scalar(select(User.session_version)) == before + 1          # old cookies stop working
+
+
+def test_user_cli_creates_lists_and_rejects(monkeypatch, tmp_path, capsys):
+    import app.db as db
+    from sqlalchemy.orm import sessionmaker
+    from tests.dbutil import new_engine
+    from app import users
+    Session = sessionmaker(new_engine(), expire_on_commit=False)
+    monkeypatch.setattr(db, "SessionLocal", Session)
+    monkeypatch.setattr(db, "init_db", lambda *a, **k: None)
+    pw = "long-" + "enough-pw-1"
+    monkeypatch.setenv("NEW_USER_PASSWORD", pw)
+    assert users.main(["create", "--username", "Zed", "--name", "Zed Z", "--role", "approver"]) == 0
+    assert users.main(["create", "--username", "zed", "--name", "Again"]) == 1       # duplicate
+    assert users.main(["set-password", "--username", "nobody"]) == 1
+    monkeypatch.setenv("NEW_USER_PASSWORD", "short")
+    assert users.main(["set-password", "--username", "zed"]) == 1
+    capsys.readouterr()
+    assert users.main(["list"]) == 0
+    assert "zed\tapprover" in capsys.readouterr().out
+
+
+def test_worker_loop_stops_when_told_and_once_returns_zero_on_empty_queue():
+    import threading
+    from sqlalchemy.orm import sessionmaker
+    from tests.dbutil import new_engine
+    from app import worker
+    Session = sessionmaker(new_engine(), expire_on_commit=False)
+    assert worker.work(Session, "w1", once=True) == 0
+    stop = threading.Event()
+    stop.set()
+    assert worker.work(Session, "w1", stop=stop) == 0

@@ -7,6 +7,8 @@ here decides visibility on its own.
 from __future__ import annotations
 
 import difflib
+import secrets
+from datetime import timedelta
 from functools import lru_cache
 from pathlib import Path
 from typing import Optional
@@ -14,7 +16,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import case, func, select
+from sqlalchemy import case, delete, func, select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import StaleDataError
 
@@ -22,7 +24,7 @@ from .access import (chunk_visible, clearance_rank, effective_rank_sql, effectiv
                      sensitivity_from_rank, visible_in_review)
 from .db import get_session
 from .enums import REVIEWER_ROLES, Confidence, ReviewStatus
-from .models import Chunk, Claim, Project, User
+from .models import Chunk, Claim, Project, User, UserSession, utcnow
 from .projects import can_access_project
 from .review_guide import next_step
 from .security import (client_ip, csrf_ok, new_csrf_token,
@@ -64,6 +66,11 @@ def current_user(request: Request, session: Session = Depends(get_session)) -> O
     user = session.get(User, uid)
     # Cookies issued before session-version support (or before a password reset) are stale.
     if user is None or request.session.get("session_version") != user.session_version:
+        request.session.clear()
+        return None
+    # Signing out revokes the server-side record, so a copied cookie cannot be replayed.
+    record = session.get(UserSession, request.session.get("sid") or "")
+    if record is None or record.user_id != user.id or record.revoked_at is not None:
         request.session.clear()
         return None
     # A person can hold a different role in each project. Apply the one for the project they
@@ -189,14 +196,24 @@ def login(request: Request, username: str = Form(""), password: str = Form(""),
         return render_login(request, None, 401, error="Wrong username or password.")
     clear_login_failures(session, key, ip)    # the address keeps its volume count; it decays
     request.session.clear()                      # new session on login
+    cutoff = utcnow() - timedelta(hours=9)       # cookies last 8 h; older records are dead weight
+    session.execute(delete(UserSession).where(UserSession.created_at < cutoff))
+    sid = secrets.token_hex(16)
+    session.add(UserSession(id=sid, user_id=user.id))
+    session.commit()
+    request.session["sid"] = sid
     request.session["uid"] = user.id
     request.session["session_version"] = user.session_version
     return RedirectResponse(landing(user), status_code=303)
 
 
 @router.post("/logout")
-def logout(request: Request, csrf: str = Form("")):
+def logout(request: Request, csrf: str = Form(""), session: Session = Depends(get_session)):
     check_csrf(request, csrf)
+    record = session.get(UserSession, request.session.get("sid") or "")
+    if record is not None and record.revoked_at is None:
+        record.revoked_at = utcnow()
+        session.commit()
     request.session.clear()
     return RedirectResponse("/login", status_code=303)
 

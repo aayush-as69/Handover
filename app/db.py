@@ -78,7 +78,10 @@ def adopt_legacy(eng=None, *, dry_run: bool = False) -> list[str]:
         post_0001_additions = {
             ("users", "session_version"),
         }
+        post_0001_indexes = {"ix_handovers_incoming_user_id", "ix_handovers_approved_by_id",
+                             "ix_handover_releases_approved_by_id", "ix_acknowledgements_user_id"}
         other = [d for d in diff if d[0] != "add_table"
+                 and not (d[0] == "add_index" and d[1].name in post_0001_indexes)
                  and not (d[0] == "add_index" and d[1].table.name in missing)
                  and not (d[0] == "add_column" and
                           (d[2], d[3].name) in post_0001_additions)]

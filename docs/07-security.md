@@ -18,7 +18,8 @@ Handover uses layered controls rather than treating the UI or the model as a sec
 
 - Passwords are hashed with PBKDF2-HMAC-SHA256 using a per-password random salt.
 - Unknown usernames are checked using a dummy hash at the real hashing cost.
-- Sessions use Starlette's signed session middleware.
+- Sessions use Starlette's signed session middleware. Each sign-in also creates a server-side record (`user_sessions`); signing out revokes it, so a copied cookie stops working immediately. Records older than 9 hours are pruned at the next sign-in.
+- Responses send `Permissions-Policy` to switch off camera, microphone, location, payment and USB.
 - Production requires a 32+ character `SECRET_KEY`.
 - Production requires secure cookies.
 

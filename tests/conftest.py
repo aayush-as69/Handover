@@ -6,10 +6,16 @@ os.environ["DATABASE_URL"] = "sqlite:///" + os.path.join(tempfile.mkdtemp(), "ap
 
 import pytest
 from sqlalchemy.orm import sessionmaker
-from tests.dbutil import new_engine
+from tests.dbutil import dispose_sqlite_engines, new_engine
 
 from app.enums import ClaimType, Sensitivity, SourceKind
 from app.models import Base, Chunk, Claim, Evidence, Project, Source
+
+
+@pytest.fixture(autouse=True)
+def _close_test_engines():
+    yield
+    dispose_sqlite_engines()
 
 
 @pytest.fixture()

@@ -31,6 +31,7 @@ _HEADERS = {
     "Referrer-Policy": "same-origin",
     "Content-Security-Policy": "default-src 'self'; style-src 'self'; frame-ancestors 'none'",
     "Cache-Control": "no-store",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
 }
 
 

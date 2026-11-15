@@ -726,3 +726,24 @@ def test_conflicts_use_full_width_card_flow_and_balanced_evidence_columns():
     assert "columns:2 26rem;" in css
     assert "break-inside:avoid;" in css
     assert ".conflicts-page .conflict-members{\n    columns:1;" in css
+
+
+def test_signing_out_revokes_a_copied_cookie(env):
+    app, Session = env
+    c = login(app, "meera")
+    stolen = c.cookies.get("handover_session")
+    assert c.get("/review").status_code == 200
+    r = c.post("/logout", data={"csrf": token(c, "/review")})
+    assert r.status_code in (302, 303)
+    thief = client(app)
+    thief.cookies.set("handover_session", stolen)
+    r = thief.get("/review")
+    assert r.status_code == 303 and r.headers["location"].startswith("/login")
+    from app.models import UserSession
+    with Session() as s:
+        assert s.scalars(select(UserSession)).all()[0].revoked_at is not None
+
+
+def test_responses_carry_a_permissions_policy(env):
+    app, _ = env
+    assert "camera=()" in client(app).get("/login").headers["Permissions-Policy"]

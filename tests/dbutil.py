@@ -15,6 +15,13 @@ from app.models import Base
 
 PG_URL = os.environ.get("TEST_DATABASE_URL")
 _pg_engine = None
+_sqlite_engines = []
+
+
+def dispose_sqlite_engines() -> None:
+    """Close the in-memory databases a test opened, so connections do not pile up."""
+    while _sqlite_engines:
+        _sqlite_engines.pop().dispose()
 
 
 def on_postgres() -> bool:
@@ -27,6 +34,7 @@ def new_engine():
         eng = create_engine("sqlite://", connect_args={"check_same_thread": False},
                             poolclass=StaticPool)
         Base.metadata.create_all(eng)
+        _sqlite_engines.append(eng)
         return eng
     if _pg_engine is None:
         _pg_engine = create_engine(_normalise_db_url(PG_URL), pool_pre_ping=True)
