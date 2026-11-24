@@ -40,6 +40,11 @@ def _blocked(session: Session, key: str, limit: int | None = None) -> bool:
     return (n or 0) >= (MAX_FAILURES if limit is None else limit)
 
 
+def _like_escape(text: str) -> str:
+    """The client IP can be attacker-supplied text behind a proxy; %, _ must match literally."""
+    return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 def login_allowed(session: Session, username: str, ip: str) -> bool:
     """False if any of the four limits has been reached."""
     since = utcnow() - WINDOW
@@ -51,7 +56,7 @@ def login_allowed(session: Session, username: str, ip: str) -> bool:
     if _blocked(session, f"ip:{ip}", MAX_FAILURES_PER_IP):
         return False
     distinct = session.scalar(select(func.count(func.distinct(LoginAttempt.key))).where(
-        LoginAttempt.key.like(f"ipu:{ip}|%"), LoginAttempt.at >= since))
+        LoginAttempt.key.like(_like_escape(f"ipu:{ip}|") + "%", escape="\\"), LoginAttempt.at >= since))
     return (distinct or 0) < MAX_USERNAMES_PER_IP
 
 

@@ -12,7 +12,7 @@
   <section class="tile"><p class="muted">Nothing is approved for your role yet, so there is nothing to walk through.</p></section>
   {% elif step <= total %}
   {% set title, key, items = steps[step - 1] %}
-  <section class="tile" style="padding:1.3rem 1.4rem">
+  <section class="tile pad-lg">
     <h2>{{ title }}{% if key in done %} <span class="pill verified">read</span>{% endif %}</h2>
     <ul class="plain">
       {% for i in items %}
@@ -27,7 +27,7 @@
   </p>
   {% else %}
   {% set h = brief.health %}
-  <section class="tile" style="padding:1.3rem 1.4rem">
+  <section class="tile pad-lg">
     <h2>What you went through</h2>
     <ul class="plain">
       <li>You confirmed {{ steps|selectattr(1, "in", done)|list|length }} of {{ total }} topic{{ "s" if total != 1 }}{% if not previewing and steps|selectattr(1, "in", done)|list|length < total %}. <a href="/onboarding?step=1">Go back to the rest</a>{% endif %}.</li>

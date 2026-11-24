@@ -6,12 +6,12 @@
     <div><p class="page-eyebrow">SEARCH / {{ project.name|upper }}</p><h1>Find a claim</h1>
       <p class="page-intro">Searches the claims your role may read in this project.</p></div>
   </header>
-  <form method="get" action="/search" class="tile" style="padding:1rem 1.4rem;margin-bottom:12px">
-    <input type="search" name="q" value="{{ q }}" placeholder="Search claims" aria-label="Search claims" autofocus style="width:100%">
+  <form method="get" action="/search" class="tile pad-md mb-12">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search claims" aria-label="Search claims" autofocus class="w-full">
   </form>
   {% if short %}<p class="muted">Type at least two characters.</p>{% endif %}
   {% if q and not short %}
-  <section class="tile" style="padding:1.3rem 1.4rem">
+  <section class="tile pad-lg">
     <h2>{{ claims|length }} claim{{ "s" if claims|length != 1 }}</h2>
     <ul class="plain">
       {% for c in claims %}<li><span class="pill {{ c.confidence.value }}">{{ c.confidence.value.replace("-", " ") }}</span>

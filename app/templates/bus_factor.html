@@ -9,12 +9,12 @@
     <div class="page-header-aside"><span class="page-aside-label">EXAMINED</span><strong>{{ result.examined }} claims<br>{{ result.unattributed }} without a named author</strong></div>
   </header>
   {% if concentration %}
-  <section class="tile concentration" style="margin-bottom:12px;padding:1.3rem 1.4rem">
+  <section class="tile concentration pad-lg mb-12">
     <h2>Knowledge concentration</h2>
     <p class="muted">For each kind of claim: the share that rests on one person's words alone. Longer bars mean more would be lost if that person left.</p>
     {% for c in concentration %}
     <div class="bar-row"><span class="bar-label">{{ c.kind }}</span>
-      <span class="bar-track"><span class="bar-fill {{ 'hot' if c.share >= 60 else 'warm' if c.share >= 30 else '' }}" style="width:{{ c.share }}%"></span></span>
+      <span class="bar-track"><span class="bar-fill {{ 'hot' if c.share >= 60 else 'warm' if c.share >= 30 else '' }}" data-pct="{{ c.share }}"></span></span>
       <span class="bar-note">{{ c.share }}%{% if c.top_person %} {{ c.top_person }}{% else %} spread across people{% endif %} <span class="muted">({{ c.top_sole }} of {{ c.attributed }})</span></span></div>
     {% endfor %}
   </section>

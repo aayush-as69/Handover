@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -114,7 +115,11 @@ def new_project(request: Request, name: str = Form(""), outgoing: str = Form("")
     project = Project(name=name, description=description.strip()[:1000],
                       outgoing_member=" ".join(outgoing.split())[:128] or None)
     session.add(project)
-    session.flush()
+    try:
+        session.flush()
+    except IntegrityError:           # lost a race with another admin creating the same name
+        session.rollback()
+        return _flash(request, "A project with that name already exists.", "/projects")
     add_member(session, project, user, user.username)
     session.commit()
     request.session["project_id"] = project.id

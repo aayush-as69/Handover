@@ -9,7 +9,7 @@
     <div class="page-header-aside"><span class="page-aside-label">ELIGIBLE</span><strong>{{ claims|length }}</strong></div>
   </header>
   {% if claims %}
-  <form method="post" action="/review/bulk" class="tile bulk" style="padding:1.3rem 1.4rem">
+  <form method="post" action="/review/bulk" class="tile bulk pad-lg">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <p><button type="button" class="link" data-select-all>Select all shown</button> · <button type="button" class="link" data-select-none>Clear</button></p>
     <ul class="plain">

@@ -10,7 +10,7 @@
     <div class="page-header-aside"><span class="page-aside-label">IMMUTABLE RECORD</span><strong>Every release<br>keeps its history</strong></div>
   </header>
   {% if changes and latest %}
-  <section class="tile" style="margin-bottom:12px;padding:1.3rem 1.4rem">
+  <section class="tile pad-lg mb-12">
     <h2>What changed in release #{{ latest.number }}</h2>
     {% if not changes.previous %}<p class="muted">This is the first release, so there is nothing to compare with.</p>
     {% else %}

@@ -98,7 +98,7 @@ def test_nothing_is_ever_approved_by_extraction_or_verification(env):
 
 def test_verify_module_never_writes_review_status():
     import pathlib
-    src = (pathlib.Path(__file__).parent.parent / "app" / "verify.py").read_text()
+    src = (pathlib.Path(__file__).parent.parent / "app" / "verify.py").read_text(encoding="utf-8")
     assert not re.search(r"review_status\s*=", src), "verification must not decide approval"
     assert "ReviewStatus.approved" not in src
 

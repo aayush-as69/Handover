@@ -621,7 +621,7 @@ def test_sitewide_typography_uses_readable_defaults():
     import re
     css_url = re.search(r'href="(/static/style\.css\?v=[0-9a-f]{10})"', html)
     assert css_url
-    css = c.get(css_url.group(1)).text
+    css = c.get(css_url.group(1)).text.replace("\r\n", "\n")
     assert "html{font-size:17px}" in css
     assert "body{font-size:1rem;line-height:1.6}" in css
     assert "th{font-size:.92rem" in css
@@ -709,7 +709,7 @@ def test_conflict_page_uses_compact_page_specific_spacing(env):
 
     css_url = re.search(r'href="(/static/style\.css\?v=[0-9a-f]{10})"', response.text)
     assert css_url
-    css = reviewer.get(css_url.group(1)).text
+    css = reviewer.get(css_url.group(1)).text.replace("\r\n", "\n")
     assert ".conflicts-page .section-heading{\n  margin:1rem 0 .7rem;" in css
     assert ".conflicts-page .work-card-grid{\n  align-items:start;" in css
 
@@ -717,8 +717,8 @@ def test_conflict_page_uses_compact_page_specific_spacing(env):
 def test_conflicts_use_full_width_card_flow_and_balanced_evidence_columns():
     from pathlib import Path
 
-    template = Path("app/templates/conflicts.html").read_text(encoding="utf-8")
-    css = Path("app/static/style.css").read_text(encoding="utf-8")
+    template = Path("app/templates/conflicts.html").read_text(encoding="utf-8").replace("\r\n", "\n")
+    css = Path("app/static/style.css").read_text(encoding="utf-8").replace("\r\n", "\n")
     assert 'class="tile s12 work-card conflict-card"' in template
     assert ".conflicts-page #conflict-list{\n  display:flex;\n  flex-direction:column;" in css
     assert "main:has(.conflicts-page){\n  max-width:none;" in css

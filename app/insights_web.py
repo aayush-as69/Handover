@@ -143,6 +143,7 @@ def question_action(question_id: int, action: str, request: Request, csrf: str =
         msg = "Dismissed."
     elif action == "reopen":
         q.status, q.answer = QuestionStatus.open, None
+        q.answered_by = q.answered_at = None
         msg = "Question reopened."
     else:
         raise HTTPException(status_code=404, detail="Unknown action.")

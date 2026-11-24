@@ -43,7 +43,7 @@ def test_production_blueprint_has_no_demo_and_a_worker_for_queue_mode():
     assert web_env["METRICS_TOKEN"].get("generateValue") is True
     assert bp["databases"][0]["plan"] not in ("free",) and web["plan"] != "free"
     # No secret value is written into the file.
-    text = (ROOT / "render.production.yaml").read_text()
+    text = (ROOT / "render.production.yaml").read_text(encoding="utf-8")
     assert "sync: false" in text and "sk-" not in text
 
 

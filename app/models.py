@@ -15,11 +15,14 @@ from sqlalchemy import (
     DateTime,
     Enum as SAEnum,
     Float,
+    Index,
     ForeignKey,
     Integer,
     String,
     Text,
     UniqueConstraint,
+    func,
+    text,
     event,
     inspect as sa_inspect,
 )
@@ -66,6 +69,7 @@ class User(Base):
 
 class Project(Base):
     __tablename__ = "projects"
+    __table_args__ = (Index("uq_projects_name_lower", func.lower(text("name")), unique=True),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(200))

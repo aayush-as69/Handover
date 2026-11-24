@@ -71,17 +71,17 @@
     {% endfor %}
   </div>
 
-  <section class="tile" style="margin-bottom:12px;padding:1.3rem 1.4rem">
+  <section class="tile pad-lg mb-12">
     <h3>Discussion</h3>
     {% for cm in comments %}<p class="comment"><strong>{{ cm.author_name }}</strong> <span class="muted">{{ cm.created_at.strftime("%Y-%m-%d %H:%M") }} UTC</span><br>{{ cm.body }}</p>
     {% else %}<p class="muted">No comments yet. Use this for questions to other reviewers. It does not change the claim's status.</p>{% endfor %}
     <form method="post" action="/review/comments/{{ claim.id }}"><input type="hidden" name="csrf" value="{{ csrf }}">
-      <textarea name="body" rows="2" maxlength="1000" aria-label="Comment" placeholder="Add a comment" style="width:100%"></textarea>
+      <textarea name="body" rows="2" maxlength="1000" aria-label="Comment" placeholder="Add a comment" class="w-full"></textarea>
       <button>Post comment</button></form>
   </section>
 
   {% set b = breakdown %}
-  <section class="tile" style="margin-bottom:12px;padding:1.3rem 1.4rem">
+  <section class="tile pad-lg mb-12">
     <h3>Evidence breakdown</h3>
     <ul class="plain checks">
       <li>{{ "✓" if b.quotes and b.found == b.quotes else "✗" }} {{ b.found }} of {{ b.quotes }} supporting quote{{ "s" if b.quotes != 1 }} found word for word.</li>
@@ -101,7 +101,7 @@
   </section>
 
   {% set f = freshness %}
-  <section class="tile" style="margin-bottom:12px;padding:1.3rem 1.4rem">
+  <section class="tile pad-lg mb-12">
     <h3>Evidence age</h3>
     <p><span class="pill {{ 'unsupported' if f.state == 'stale' else 'inferred' if f.state in ('ageing', 'undated') else 'verified' }}">{{ f.label }}</span>
       {% if f.newest %}Newest supporting passage is from {{ f.newest.strftime("%Y-%m-%d") }} ({{ f.age_days }} days ago).{% else %}No supporting passage carries a date.{% endif %}</p>
