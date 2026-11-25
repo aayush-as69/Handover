@@ -790,6 +790,7 @@ def test_tour_uses_the_real_masking_placeholder():
 def test_checkboxes_are_not_stretched_by_the_text_field_rules():
     # `input{width:100%}` is for text fields; without an override the bulk-review and timeline
     # tick boxes render as full-width bars and push the claim text off screen.
+    from pathlib import Path
     css = Path("app/static/style.css").read_text(encoding="utf-8").replace("\r\n", "\n")
     rule = re.search(r"input\[type=checkbox\],input\[type=radio\]\{([^}]*)\}", css)
     assert rule, "missing checkbox/radio override"
