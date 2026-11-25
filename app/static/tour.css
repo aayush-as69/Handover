@@ -1,0 +1,102 @@
+/* Guided tour. Loaded only by tour.html; uses the app's theme tokens so the theme toggle works.
+   No inline styles (the CSP forbids them). Without JavaScript every step is shown in order. */
+:root{--mark:#fde68a;--mark-ink:#3b2f00}
+:root[data-theme="dark"]{--mark:#5b4a10;--mark-ink:#fff3c4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--mark:#5b4a10;--mark-ink:#fff3c4}}
+
+.top .tour-nav-actions{margin-left:auto;display:flex;align-items:center;gap:1.1rem}
+.tour-nav-actions a:not(.button),.tour-signin{color:var(--fg);font-weight:600;font-size:.95rem}
+.tour-nav-actions .button{padding:.5rem 1rem;font-size:.92rem}
+@media (max-width:600px){.tour-nav-actions a:not(.button){display:none}}
+
+.tour{max-width:1120px;margin:0 auto;padding-top:clamp(1.2rem,4vw,3rem)}
+.tour h1,.tour h2{font-family:var(--serif);font-weight:600;letter-spacing:-.025em;margin:0}
+.tour h1{font-size:clamp(2.4rem,5vw,3.8rem);line-height:1.05}
+.tour-intro p{color:var(--mut);font-size:1.15rem;max-width:46ch;margin:1rem 0 0}
+
+.tour-layout{display:grid;grid-template-columns:15rem minmax(0,1fr);gap:clamp(2rem,5vw,4rem);margin-top:clamp(2rem,5vw,3.5rem);align-items:start}
+
+/* step list */
+.tour-rail{position:sticky;top:4.5rem}
+.tour-rail ol{list-style:none;margin:0;padding:0;counter-reset:step;border-left:1px solid var(--line)}
+.tour-rail li{counter-increment:step}
+.tour-rail a{display:flex;gap:.7rem;align-items:baseline;padding:.55rem 0 .55rem 1rem;margin-left:-1px;border-left:2px solid transparent;color:var(--mut);font-size:.96rem}
+.tour-rail a::before{content:counter(step);font-variant-numeric:tabular-nums;font-weight:700;color:var(--mut);min-width:1ch}
+.tour-rail a:hover{color:var(--fg);text-decoration:none}
+.tour-rail a[aria-current="step"]{color:var(--fg);font-weight:650;border-left-color:var(--acc)}
+.tour-rail a[aria-current="step"]::before{color:var(--acc)}
+
+/* a step */
+.tour-step{margin:0 0 clamp(3rem,6vw,4.5rem);scroll-margin-top:5.5rem}
+.tour.js .tour-step{margin-bottom:0}
+.tour-step h2{font-size:clamp(1.7rem,3.2vw,2.35rem);line-height:1.12;max-width:20ch}
+.tour-step h2:focus{outline:none}
+.tour-step h2:focus-visible{outline:3px solid var(--acc);outline-offset:6px}
+.tour-step>p{color:var(--mut);font-size:1.08rem;margin:1rem 0 0;max-width:58ch}
+
+/* the stage: the mock product surface for a step */
+.stage{margin-top:1.8rem;background:var(--tile);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 18px 50px -32px #00000080}
+.stage-bar{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;justify-content:space-between;padding:.7rem 1.2rem;background:var(--tile-2);border-bottom:1px solid var(--line);font-size:.9rem;font-weight:600}
+.stage-body{padding:1.3rem 1.3rem 1.4rem}
+.stage-body[hidden]{display:none}
+.stage-note{color:var(--mut);font-size:.94rem;margin:1.1rem 0 0;max-width:60ch}
+.tour .muted{font-weight:500;color:var(--mut)}
+
+.tour mark{background:var(--mark);color:var(--mark-ink);padding:.05em .2em;border-radius:3px}
+.src{font:.92rem/1.6 ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;margin:0;overflow-wrap:anywhere}
+.src-quote{margin:.9rem 0 0;padding:.1rem 0 .1rem .95rem;border-left:3px solid var(--line)}
+.src-quote.bad{border-left-color:var(--bad)}
+.src-quote p{font:.9rem/1.55 ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;margin:0}
+.src-quote footer{color:var(--mut);font-size:.82rem;margin-top:.3rem}
+.src-none{margin:.9rem 0 0;padding-left:.95rem;border-left:3px dashed var(--line);color:var(--mut);font-style:italic}
+.claim-text{font-family:var(--serif);font-size:1.25rem;line-height:1.35;margin:0}
+.claim-text .pill{font-family:var(--sans);margin-right:.5rem;vertical-align:.12em}
+.claim-kind{margin:0 0 .25rem;color:var(--mut);font-size:.85rem;font-weight:600}
+
+.claims{list-style:none;margin:0;padding:0}
+.claims li{padding:1.2rem 1.3rem;border-bottom:1px solid var(--line)}
+.claims li:last-child{border-bottom:0}
+.claims .claim-text{font-size:1.2rem}
+
+/* switches and buttons */
+.switch{display:flex;flex-wrap:wrap;gap:.35rem}
+.tour button{font:inherit;font-size:.9rem;font-weight:600;color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:999px;padding:.4rem .9rem;cursor:pointer}
+.tour button:hover:not(:disabled){background:var(--tile)}
+.tour button:disabled{opacity:.4;cursor:default}
+.tour button[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+.tour button.primary{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+.tour button.quiet{border-color:transparent;color:var(--mut)}
+.tour:not(.js) [data-switch],.tour:not(.js) .decide-actions,.tour:not(.js) .tour-controls,.tour:not(.js) .tour-rail{display:none}
+.tour:not(.js) .tour-layout{grid-template-columns:minmax(0,1fr)}
+.tour:not(.js) .stage-body+.stage-body{border-top:1px solid var(--line)}
+.decide-actions{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.2rem}
+
+.visible{list-style:none;margin:0;padding:0}
+.visible li{padding:.8rem 0;border-bottom:1px solid var(--line);font-family:var(--serif);font-size:1.12rem;line-height:1.4}
+.visible li:last-child{border-bottom:0}
+.visible .pill{font-family:var(--sans);margin-right:.5rem}
+
+.releases{list-style:none;margin:0;padding:0}
+.releases li{padding:1rem 0;border-bottom:1px solid var(--line)}
+.releases li:first-child{padding-top:0}
+.releases li:last-child{border-bottom:0}
+.releases .claim-text{margin-top:.4rem}
+.tour del{color:var(--bad);text-decoration-thickness:2px}
+.tour ins{color:var(--ok);text-decoration:none;font-weight:650;background:var(--ok-bg);padding:0 .2em;border-radius:3px}
+
+.tour-finish{margin-top:2.4rem;padding-top:1.4rem;border-top:1px solid var(--line)}
+.tour-finish p{margin:0;max-width:52ch}
+.tour-finish-actions{display:flex;flex-wrap:wrap;align-items:center;gap:1.3rem;margin-top:1.1rem}
+
+.tour-controls{display:flex;align-items:center;gap:1rem;margin-top:2.2rem}
+.tour-progress{margin:0;color:var(--mut);font-size:.92rem;flex:1;text-align:center}
+.tour-controls button{padding:.55rem 1.3rem}
+.tour-controls [data-next]{margin-left:0}
+
+@media (max-width:860px){
+  .tour-layout{grid-template-columns:minmax(0,1fr);gap:1.6rem}
+  .tour-rail{position:static}
+  .tour-rail ol{display:flex;gap:.3rem;overflow-x:auto;border-left:0;border-bottom:1px solid var(--line);padding-bottom:.2rem}
+  .tour-rail a{padding:.4rem .8rem;margin:0;border-left:0;border-bottom:2px solid transparent;white-space:nowrap}
+  .tour-rail a[aria-current="step"]{border-bottom-color:var(--acc)}
+}

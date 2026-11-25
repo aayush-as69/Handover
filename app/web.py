@@ -163,6 +163,12 @@ def home(request: Request, user: Optional[User] = Depends(current_user)):
     return RedirectResponse(landing(user), status_code=303)
 
 
+@router.get("/tour")
+def tour(request: Request, user: Optional[User] = Depends(current_user)):
+    """A public, no-login walkthrough using invented data."""
+    return render(request, "tour.html", user)
+
+
 def render_login(request: Request, user: Optional[User] = None,
                 status_code: int = 200, **ctx):
     cfg = request.app.state.cfg

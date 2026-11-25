@@ -758,3 +758,30 @@ def test_landing_loads_its_stylesheet_and_has_no_inline_styles():
     assert "style=" not in html          # the CSP drops inline style attributes
     css_url = re.search(r'href="(/static/landing\.css\?v=[0-9a-f]{10})"', html)
     assert css_url and c.get(css_url.group(1)).status_code == 200
+
+
+def test_tour_is_public_self_contained_and_linked_from_the_landing_page():
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    c = TestClient(create_app(secret_key="k" * 40), follow_redirects=False)
+    r = c.get("/tour")
+    assert r.status_code == 200
+    html = r.text
+    for n in range(1, 7):
+        assert f'id="step-{n}"' in html and f'href="#step-{n}"' in html
+    assert "style=" not in html                       # the CSP drops inline style attributes
+    assert "<script>" not in html                     # and inline scripts; tour.js is served from self
+    for asset, needle in (("tour.css", "stage"), ("tour.js", "data-tour")):
+        url = re.search(rf'(?:href|src)="(/static/{re.escape(asset)}\?v=[0-9a-f]{{10}})"', html)
+        assert url, asset
+        assert needle in c.get(url.group(1)).text
+    assert 'href="/tour"' in c.get("/").text
+
+
+def test_tour_uses_the_real_masking_placeholder():
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    from app.ingest.redact import redact
+    html = TestClient(create_app(secret_key="k" * 40)).get("/tour").text
+    assert "[REDACTED:secret]" in html
+    assert "[REDACTED:secret]" in redact("riya: I rotated the staging key, api_key=sk-test-91f3c07a22").text

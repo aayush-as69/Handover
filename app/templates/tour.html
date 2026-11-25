@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}Take the tour{% endblock %}
+{% block head %}
+<meta name="description" content="A six-step walkthrough of Handover using an invented project: how sources are masked, claims are checked, a person decides, and each reader sees the right detail.">
+<link rel="stylesheet" href="{{ asset_url('tour.css') }}">
+<script src="{{ asset_url('tour.js') }}" defer></script>
+{% endblock %}
+{% block anon_nav %}
+<div class="tour-nav-actions">
+  <a href="/">Home</a>
+  <a class="tour-signin" href="/login#sign-in-form">Sign in</a>
+  <a class="button primary" href="/login#demo-accounts">Explore the demo</a>
+</div>
+{% endblock %}
+{% block body %}
+<div class="tour" data-tour>
+
+  <header class="tour-intro">
+    <h1>Take the tour</h1>
+    <p>Six steps through one invented project, CampusEvents. Nothing here is real data, and nothing needs a sign-in.</p>
+  </header>
+
+  <div class="tour-layout">
+    <nav class="tour-rail" aria-label="Tour steps">
+      <ol>
+        <li><a href="#step-1">Sources come in</a></li>
+        <li><a href="#step-2">Claims are drafted</a></li>
+        <li><a href="#step-3">Claims are checked</a></li>
+        <li><a href="#step-4">A person decides</a></li>
+        <li><a href="#step-5">Readers see their share</a></li>
+        <li><a href="#step-6">Releases keep history</a></li>
+      </ol>
+    </nav>
+
+    <div class="tour-main">
+
+      <section class="tour-step" id="step-1" aria-labelledby="step-1-title">
+        <h2 id="step-1-title" tabindex="-1">Sources come in. Secrets don’t stay.</h2>
+        <p>Handover reads notes, chat exports, task lists and public GitHub activity. Before anything is stored, passwords, keys and tokens are masked. A chunk that needed masking is marked confidential from then on.</p>
+        <div class="stage">
+          <div class="stage-bar">
+            <span>team_chat.txt</span>
+            <div class="switch" data-switch role="group" aria-label="Show the chat line">
+              <button type="button" data-show="s1-raw" aria-pressed="true">As received</button>
+              <button type="button" data-show="s1-stored" aria-pressed="false">As stored</button>
+            </div>
+          </div>
+          <div id="s1-raw" class="stage-body">
+            <p class="src">riya: seats keep double booking, I rotated the staging key, <mark>api_key=sk-test-91f3c07a22</mark>, don’t paste it anywhere</p>
+            <p class="stage-note">This is what was in the export.</p>
+          </div>
+          <div id="s1-stored" class="stage-body">
+            <p class="src">riya: seats keep double booking, I rotated the staging key, api_key=<mark>[REDACTED:secret]</mark>, don’t paste it anywhere</p>
+            <p class="stage-note">This is all Handover keeps. The chunk is now confidential, and confidential chunks are withheld from remote models by default.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="tour-step" id="step-2" aria-labelledby="step-2-title">
+        <h2 id="step-2-title" tabindex="-1">Claims are drafted, each with its quote.</h2>
+        <p>Handover pulls out decisions, owners, risks, dependencies and open questions. Each draft claim carries the exact words it was taken from, and a link back to the source.</p>
+        <div class="stage">
+          <div class="stage-bar"><span>Draft claims</span><span class="muted">3 of 52</span></div>
+          <ul class="claims">
+            <li>
+              <p class="claim-kind">Owner</p>
+              <p class="claim-text">Riya owns the booking service.</p>
+              <blockquote class="src-quote"><p>I’m the only one who deploys the <mark>booking service</mark>.</p><footer>team_chat.txt</footer></blockquote>
+            </li>
+            <li>
+              <p class="claim-kind">Decision</p>
+              <p class="claim-text">Seat holds expire after 10 minutes.</p>
+              <blockquote class="src-quote"><p>hold TTL is <mark>10 min</mark>, don’t raise it</p><footer>meeting_notes.md</footer></blockquote>
+            </li>
+            <li>
+              <p class="claim-kind">Risk</p>
+              <p class="claim-text">Double booking is fixed and the Redis seat locks stopped it.</p>
+              <blockquote class="src-quote"><p>Double booking happened again <mark>after the Redis lock change</mark>, filed an issue.</p><footer>team_chat.txt</footer></blockquote>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="tour-step" id="step-3" aria-labelledby="step-3-title">
+        <h2 id="step-3-title" tabindex="-1">Every claim gets one of four labels.</h2>
+        <p>The checker compares each claim with its quote and says what it found. There is no hidden score. A label is an evidence check, not a promise that the claim is true.</p>
+        <div class="stage">
+          <div class="stage-bar">
+            <span>Pick a label</span>
+            <div class="switch" data-switch role="group" aria-label="Choose a label">
+              <button type="button" data-show="s3-verified" aria-pressed="true">quote-verified</button>
+              <button type="button" data-show="s3-inferred" aria-pressed="false">inferred</button>
+              <button type="button" data-show="s3-conflicting" aria-pressed="false">conflicting</button>
+              <button type="button" data-show="s3-unsupported" aria-pressed="false">unsupported</button>
+            </div>
+          </div>
+          <div id="s3-verified" class="stage-body">
+            <p class="claim-text"><span class="pill verified">quote-verified</span> Seat holds expire after 10 minutes.</p>
+            <blockquote class="src-quote"><p>hold TTL is <mark>10 min</mark>, don’t raise it</p><footer>meeting_notes.md</footer></blockquote>
+            <p class="stage-note">The quote exists in the source and passes the mechanical support checks.</p>
+          </div>
+          <div id="s3-inferred" class="stage-body">
+            <p class="claim-text"><span class="pill inferred">inferred</span> Kabir owns the refund policy decision.</p>
+            <blockquote class="src-quote"><p>Kabir, can you <mark>look at the refund policy</mark> this week?</p><footer>team_chat.txt</footer></blockquote>
+            <p class="stage-note">The quote exists, but asking someone to look at something is not the same as owning the decision.</p>
+          </div>
+          <div id="s3-conflicting" class="stage-body">
+            <p class="claim-text"><span class="pill conflicting">conflicting</span> Double booking is fixed and the Redis seat locks stopped it.</p>
+            <blockquote class="src-quote bad"><p>Double booking happened again <mark>after the Redis lock change</mark>, filed an issue.</p><footer>team_chat.txt</footer></blockquote>
+            <p class="stage-note">Source evidence contradicts the claim. A person has to decide which one is right.</p>
+          </div>
+          <div id="s3-unsupported" class="stage-body">
+            <p class="claim-text"><span class="pill unsupported">unsupported</span> The sponsor expects a demo on launch day.</p>
+            <p class="src-none">No usable quote was found.</p>
+            <p class="stage-note">No evidence is attached, so a reviewer sees it flagged before deciding what to do with it.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="tour-step" id="step-4" aria-labelledby="step-4-title">
+        <h2 id="step-4-title" tabindex="-1">A person decides. Always.</h2>
+        <p>Handover never approves anything. A reviewer can approve a claim, edit it, reject it or reopen it later. An edited claim is checked again and needs approval again.</p>
+        <div class="stage" data-decide>
+          <div class="stage-bar"><span>Review queue</span><span class="muted">Try it</span></div>
+          <div class="stage-body">
+            <p class="claim-text"><span class="pill inferred" data-status>generated</span> Kabir owns the refund policy decision.</p>
+            <blockquote class="src-quote"><p>Kabir, can you <mark>look at the refund policy</mark> this week?</p><footer>team_chat.txt</footer></blockquote>
+            <div class="decide-actions">
+              <button type="button" data-action="approve">Approve</button>
+              <button type="button" data-action="edit">Edit</button>
+              <button type="button" data-action="reject">Reject</button>
+              <button type="button" data-action="reset" class="quiet">Reopen</button>
+            </div>
+            <p class="stage-note" data-message role="status" aria-live="polite">Nothing has been decided yet. This claim stays out of every release until someone does.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="tour-step" id="step-5" aria-labelledby="step-5-title">
+        <h2 id="step-5-title" tabindex="-1">Each reader sees their share.</h2>
+        <p>Every claim has a sensitivity, and every role has a clearance. A reader below the clearance doesn’t get a blurred version. They get nothing, or a version with the private detail removed.</p>
+        <div class="stage">
+          <div class="stage-bar">
+            <span>Same handover, three readers</span>
+            <div class="switch" data-switch role="group" aria-label="Choose a reader">
+              <button type="button" data-show="s5-approver" aria-pressed="true">Meera, approver</button>
+              <button type="button" data-show="s5-viewer" aria-pressed="false">Kabir, viewer</button>
+              <button type="button" data-show="s5-restricted" aria-pressed="false">Mr. Rao, restricted</button>
+            </div>
+          </div>
+          <div id="s5-approver" class="stage-body">
+            <ul class="visible">
+              <li><span class="pill s-public">team</span> Seat holds expire after 10 minutes.</li>
+              <li><span class="pill s-restricted">restricted</span> Sandbox payment keys rotate every month.</li>
+              <li><span class="pill s-confidential">confidential</span> Vendor renewal is due before the next fee review.</li>
+              <li><span class="pill s-restricted">restricted</span> Sponsor contact: priya@sponsor.example</li>
+            </ul>
+            <p class="stage-note">Approvers see all four.</p>
+          </div>
+          <div id="s5-viewer" class="stage-body">
+            <ul class="visible">
+              <li><span class="pill s-public">team</span> Seat holds expire after 10 minutes.</li>
+              <li><span class="pill s-restricted">restricted</span> Sandbox payment keys rotate every month.</li>
+              <li><span class="pill s-restricted">restricted</span> Sponsor contact: <mark>[email hidden]</mark></li>
+            </ul>
+            <p class="stage-note">The confidential claim isn’t in the list at all, and the email address is removed from the one that mentions it.</p>
+          </div>
+          <div id="s5-restricted" class="stage-body">
+            <ul class="visible">
+              <li><span class="pill s-public">team</span> Seat holds expire after 10 minutes.</li>
+            </ul>
+            <p class="stage-note">A mentor sees team-level claims only.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="tour-step" id="step-6" aria-labelledby="step-6-title">
+        <h2 id="step-6-title" tabindex="-1">Releases keep their history.</h2>
+        <p>Approved claims are published as numbered releases. A published release never changes. A correction is reviewed and goes out in the next one, with the difference shown.</p>
+        <div class="stage">
+          <div class="stage-bar"><span>Release history</span></div>
+          <div class="stage-body">
+            <ul class="releases">
+              <li><strong>Release 2</strong> <span class="muted">correction</span>
+                <p class="claim-text">Seat holds expire after <del>15</del> <ins>10</ins> minutes.</p></li>
+              <li><strong>Release 1</strong> <span class="muted">first handover</span>
+                <p class="claim-text">Seat holds expire after 15 minutes.</p></li>
+            </ul>
+            <p class="stage-note">Release 1 stays exactly as it was published. The next release shows what changed.</p>
+          </div>
+        </div>
+        <div class="tour-finish">
+          <p>That’s the whole loop. Try it on the full demo project, or sign in if your team already has an account.</p>
+          <div class="tour-finish-actions">
+            <a class="button primary" href="/login#demo-accounts">Explore the demo</a>
+            <a class="tour-signin" href="/login#sign-in-form">Sign in</a>
+          </div>
+        </div>
+      </section>
+
+      <div class="tour-controls" aria-label="Tour controls">
+        <button type="button" data-prev>Back</button>
+        <p class="tour-progress" data-progress aria-live="polite">Step 1 of 6</p>
+        <button type="button" data-next class="primary">Next</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
