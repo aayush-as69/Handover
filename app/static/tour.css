@@ -10,7 +10,7 @@
 @media (max-width:600px){.tour-nav-actions a:not(.button){display:none}}
 
 .tour{max-width:1120px;margin:0 auto;padding-top:clamp(1.2rem,4vw,3rem)}
-.tour h1,.tour h2{font-family:var(--serif);font-weight:600;letter-spacing:-.025em;margin:0}
+.tour h1,.tour h2{font-family:var(--serif);font-weight:400;letter-spacing:-.018em;margin:0}
 .tour h1{font-size:clamp(2.4rem,5vw,3.8rem);line-height:1.05}
 .tour-intro p{color:var(--mut);font-size:1.15rem;max-width:46ch;margin:1rem 0 0}
 
