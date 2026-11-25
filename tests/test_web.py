@@ -785,3 +785,12 @@ def test_tour_uses_the_real_masking_placeholder():
     html = TestClient(create_app(secret_key="k" * 40)).get("/tour").text
     assert "[REDACTED:secret]" in html
     assert "[REDACTED:secret]" in redact("riya: I rotated the staging key, api_key=sk-test-91f3c07a22").text
+
+
+def test_checkboxes_are_not_stretched_by_the_text_field_rules():
+    # `input{width:100%}` is for text fields; without an override the bulk-review and timeline
+    # tick boxes render as full-width bars and push the claim text off screen.
+    css = Path("app/static/style.css").read_text(encoding="utf-8").replace("\r\n", "\n")
+    rule = re.search(r"input\[type=checkbox\],input\[type=radio\]\{([^}]*)\}", css)
+    assert rule, "missing checkbox/radio override"
+    assert "width:1.1rem" in rule.group(1) and "flex:none" in rule.group(1)
