@@ -18,7 +18,7 @@
 
 <br />
 
-<p><strong><a href="https://handover-2hpd.onrender.com">Live demo</a></strong> · the demo password is set by the project team</p>
+<p><strong><a href="https://handover-2hpd.onrender.com">Live demo</a></strong> · <strong><a href="https://handover-2hpd.onrender.com/tour">Take the tour</a></strong> · the demo password is set by the project team</p>
 
 <a href="https://render.com/deploy?repo=https://github.com/aayush-as69/Handover">
   <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" />
@@ -144,8 +144,9 @@ The [screenshot gallery](docs/assets/screenshots/README.md) documents the remain
 - **Sources:** upload by file picker or drag and drop, classify sensitivity, run extraction and search ingested material.
 - **Handover:** preview another role, jump between sections, search approved knowledge, publish a numbered release and acknowledge it.
 - **Release history:** review sign-offs and acknowledgement counts.
+- **Landing page and tour:** a public landing page, plus a six-step guided tour at `/tour` that follows one claim from a masked source to a numbered release. It uses the synthetic CampusEvents project and needs no sign-in.
 
-The workspace uses responsive layouts, light/dark themes, readable typography and keyboard-visible focus states. Search and section navigation are client-side conveniences; authorization and data visibility remain enforced by the server.
+The workspace uses responsive layouts, light/dark themes, readable typography and keyboard-visible focus states. Pages are served under a strict Content-Security-Policy (`default-src 'self'; style-src 'self'`), so there are no inline styles or scripts, CDNs or web fonts. Search and section navigation are client-side conveniences; authorization and data visibility remain enforced by the server.
 
 ## Tech stack
 
@@ -288,7 +289,7 @@ Handover/
 │   ├── extract/          # Rule and optional LLM extraction
 │   ├── ingest/           # Parsers, GitHub collection and redaction
 │   ├── templates/        # Server-rendered HTML
-│   ├── static/           # Stylesheets and static assets
+│   ├── static/           # Stylesheets (style.css, plus landing.css and tour.css), small scripts and images
 │   └── *.py              # Routes, domain logic, models and security
 ├── data/demo/            # Synthetic demonstration project
 ├── docs/                 # Product and engineering documentation
@@ -322,7 +323,8 @@ See [Security](docs/07-security.md) and [Limitations](docs/13-limitations-roadma
 2. Keep access rules centralized and fail closed.
 3. Treat source material and model output as untrusted input.
 4. Add tests for behavior and security-sensitive changes.
-5. Update relevant documentation when behavior changes.
+5. Keep the front end CSP-clean: put styles in a stylesheet and scripts in a file under `app/static/`. Inline `style=""`, `<style>`, `<script>` and `onclick=`-style handlers are silently blocked by the browser. Check new pages in a real browser, not only in tests.
+6. Update relevant documentation when behavior changes.
 
 ## Acknowledgements
 
