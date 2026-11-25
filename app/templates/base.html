@@ -1,3 +1,14 @@
+{% macro nav_groups(user, reviewer, phone_timeline=false) %}
+      {% if reviewer %}<div><h2>Review</h2>
+        <a href="/review/bulk">Bulk review</a><a href="/conflicts">Conflicts</a><a href="/questions">Questions</a>
+        <a href="/freshness">Freshness</a><a href="/audit">Audit log</a><a href="/quality">Extraction quality</a></div>{% endif %}
+      <div><h2>Understand</h2>
+        {% if phone_timeline %}<a class="phone-only" href="/timeline">Timeline</a>{% endif %}<a href="/handover/brief">Takeover brief</a><a href="/onboarding">Guided takeover</a>
+        {% if reviewer %}<a href="/bus-factor">Bus factor</a>{% endif %}<a href="/handover/releases">Release history</a></div>
+      <div><h2>Workspace</h2>
+        <a href="/projects">Projects</a>{% if user.role.value == "admin" %}<a href="/admin/sources">Sources</a>{% endif %}
+        <a href="/guide">How it works</a></div>
+{% endmacro -%}
 <!doctype html>
 <html lang="en">
 <head>
@@ -19,7 +30,6 @@
     <span class="brand-word">Handover</span>
   </a>
   {% if user %}
-  {% set reviewer = user.role.value in ("admin", "approver") %}
   <form method="post" action="/logout" class="who">
     <span>{{ user.display_name }} · {{ user.role.value }}</span>
     <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -42,28 +52,12 @@
     <a href="/search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M16 16l5 5"/></svg>Search</a>
   </nav>
   <div class="side-groups">
-      {% if reviewer %}<div><h2>Review</h2>
-        <a href="/review/bulk">Bulk review</a><a href="/conflicts">Conflicts</a><a href="/questions">Questions</a>
-        <a href="/freshness">Freshness</a><a href="/audit">Audit log</a><a href="/quality">Extraction quality</a></div>{% endif %}
-      <div><h2>Understand</h2>
-        <a href="/handover/brief">Takeover brief</a><a href="/onboarding">Guided takeover</a>
-        {% if reviewer %}<a href="/bus-factor">Bus factor</a>{% endif %}<a href="/handover/releases">Release history</a></div>
-      <div><h2>Workspace</h2>
-        <a href="/projects">Projects</a>{% if user.role.value == "admin" %}<a href="/admin/sources">Sources</a>{% endif %}
-        <a href="/guide">How it works</a></div>
+    {{ nav_groups(user, reviewer) }}
     </div>
   <details class="more">
     <summary>More</summary>
     <div class="more-panel">
-      {% if reviewer %}<div><h2>Review</h2>
-        <a href="/review/bulk">Bulk review</a><a href="/conflicts">Conflicts</a><a href="/questions">Questions</a>
-        <a href="/freshness">Freshness</a><a href="/audit">Audit log</a><a href="/quality">Extraction quality</a></div>{% endif %}
-      <div><h2>Understand</h2>
-        <a class="phone-only" href="/timeline">Timeline</a><a href="/handover/brief">Takeover brief</a><a href="/onboarding">Guided takeover</a>
-        {% if reviewer %}<a href="/bus-factor">Bus factor</a>{% endif %}<a href="/handover/releases">Release history</a></div>
-      <div><h2>Workspace</h2>
-        <a href="/projects">Projects</a>{% if user.role.value == "admin" %}<a href="/admin/sources">Sources</a>{% endif %}
-        <a href="/guide">How it works</a></div>
+    {{ nav_groups(user, reviewer, true) }}
     </div>
   </details>
 </aside>

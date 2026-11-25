@@ -747,3 +747,14 @@ def test_signing_out_revokes_a_copied_cookie(env):
 def test_responses_carry_a_permissions_policy(env):
     app, _ = env
     assert "camera=()" in client(app).get("/login").headers["Permissions-Policy"]
+
+
+def test_landing_loads_its_stylesheet_and_has_no_inline_styles():
+    from fastapi.testclient import TestClient
+    from app.main import create_app
+    c = TestClient(create_app(secret_key="k" * 40))
+    html = c.get("/").text
+    assert "/static/landing.css?v=" in html
+    assert "style=" not in html          # the CSP drops inline style attributes
+    css_url = re.search(r'href="(/static/landing\.css\?v=[0-9a-f]{10})"', html)
+    assert css_url and c.get(css_url.group(1)).status_code == 200

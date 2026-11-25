@@ -1,0 +1,123 @@
+/* Landing page. Loaded only by landing.html. Everything is scoped under .lp (or the header nav)
+   so it cannot collide with the app's own styles, and it uses the app's theme tokens so the
+   light/dark toggle works here too. No inline styles: the CSP does not allow them. */
+
+:root{--mark:#fde68a;--mark-ink:#3b2f00}
+:root[data-theme="dark"]{--mark:#5b4a10;--mark-ink:#fff3c4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--mark:#5b4a10;--mark-ink:#fff3c4}}
+
+/* ---- header (anonymous) */
+.top nav.lp-nav{flex:1;display:flex;justify-content:center;gap:1.6rem;overflow:visible}
+.top nav.lp-nav a{padding:.25rem 0;border-radius:0;background:none;font-size:.92rem}
+.top nav.lp-nav a:hover{background:none;color:var(--fg);text-decoration:underline;text-underline-offset:5px}
+.lp-nav-actions{display:flex;align-items:center;gap:1rem}
+.lp-nav-actions .button{padding:.5rem 1rem;font-size:.92rem}
+.lp-signin{color:var(--fg);font-weight:600;font-size:.95rem}
+@media (max-width:760px){
+  .top nav.lp-nav{justify-content:flex-start;gap:1.2rem;overflow-x:auto;margin:0}
+  .lp-nav-actions .lp-signin{display:none}
+}
+
+/* ---- page frame. One rule spaces every section; nothing else sets section margins. */
+.lp{max-width:1120px;margin:0 auto;padding-top:clamp(1.5rem,5vw,4rem)}
+.lp>section,.lp>.lp-sources,.lp>.lp-foot{margin-top:clamp(4rem,9vw,7.5rem)}
+.lp>.lp-hero{margin-top:0}
+.lp>.lp-sources{margin-top:clamp(2.5rem,5vw,4rem)}
+.lp h1,.lp h2{font-family:var(--serif);font-weight:600;letter-spacing:-.025em;margin:0}
+.lp h2{font-size:clamp(1.9rem,3.6vw,2.8rem);line-height:1.1;max-width:22ch}
+.lp h3{font-size:1.08rem;margin:0 0 .4rem;letter-spacing:-.01em}
+.lp p{max-width:62ch}
+.lp-link{font-weight:600;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
+.lp-note{color:var(--mut);font-size:.9rem;margin-top:.4rem}
+
+.lp-heading p{color:var(--mut);font-size:1.08rem;margin:1rem 0 0}
+
+/* ---- hero: headline left, one live example right */
+.lp-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.9fr);gap:clamp(2rem,5vw,4.5rem);align-items:center}
+.lp h1{font-size:clamp(2.5rem,5.2vw,4.2rem);line-height:1.04;letter-spacing:-.035em;text-wrap:balance}
+.lp-lead{font-size:1.2rem;line-height:1.55;color:var(--mut);margin:1.6rem 0 0;max-width:34em}
+.lp-actions{display:flex;flex-wrap:wrap;align-items:center;gap:1.3rem;margin-top:2rem}
+.lp-principles{color:var(--mut);font-size:.95rem;margin-top:1.6rem;padding-top:1.1rem;border-top:1px solid var(--line);max-width:34em}
+
+/* the evidence ledger */
+.lp-ledger{margin:0;background:var(--tile);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 18px 50px -28px #00000080}
+.lp-ledger-head{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:.85rem 1.3rem;background:var(--tile-2);border-bottom:1px solid var(--line);font-size:.88rem;font-weight:600}
+.lp-ledger-tag{font-weight:500;color:var(--mut)}
+.lp-row{padding:1.3rem 1.3rem 1.4rem;border-bottom:1px solid var(--line)}
+.lp-row-claim{display:flex;flex-direction:column;align-items:flex-start;gap:.55rem}
+.lp-row-claim p{font-family:var(--serif);font-size:1.28rem;line-height:1.3;margin:0}
+.lp-quote{margin:1rem 0 0;padding:.1rem 0 .1rem .95rem;border-left:3px solid var(--line)}
+.lp-quote p{font:.9rem/1.55 ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;margin:0;max-width:none}
+.lp-quote footer{color:var(--mut);font-size:.82rem;margin-top:.35rem}
+.lp mark{background:var(--mark);color:var(--mark-ink);padding:.05em .2em;border-radius:3px}
+.lp-contradicts{margin:.9rem 0 0;font-size:.88rem;font-weight:650;color:var(--bad)}
+.lp-row-wrong .lp-quote{margin-top:.5rem;border-left-color:var(--bad)}
+.lp-ledger-foot{margin:0;padding:1rem 1.3rem;font-size:.92rem;color:var(--mut);max-width:none}
+.lp-ledger-foot strong{color:var(--fg)}
+
+/* the one animated moment: the wrong claim is struck through once on load */
+.lp-struck{background:linear-gradient(var(--bad),var(--bad)) no-repeat 0 58%/100% 2px;color:var(--mut);
+  box-decoration-break:clone;-webkit-box-decoration-break:clone;
+  animation:lp-strike .7s ease-out .9s backwards}
+@keyframes lp-strike{from{background-size:0 2px}}
+@media (prefers-reduced-motion:reduce){.lp-struck{animation:none}}
+
+.lp-sources{color:var(--mut);font-size:.98rem;max-width:none;padding-top:1.1rem;border-top:1px solid var(--line)}
+
+/* ---- how it works: a real sequence, so it is numbered */
+.lp-steps{list-style:none;margin:2.6rem 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2.2rem;counter-reset:none}
+.lp-steps li{position:relative;padding-top:2.9rem}
+.lp-steps li::before{content:"";position:absolute;top:1.05rem;left:0;right:-2.2rem;border-top:1px solid var(--line)}
+.lp-steps li:last-child::before{right:0}
+.lp-step-n{position:absolute;top:0;left:0;width:2.1rem;height:2.1rem;border-radius:50%;background:var(--acc);color:var(--on-acc);
+  display:grid;place-items:center;font-weight:700;font-size:.95rem}
+.lp-steps p{color:var(--mut);margin:0}
+
+/* ---- product */
+.lp-product{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(2rem,4vw,3.5rem);align-items:start}
+.lp-points{margin:1.4rem 0 1.4rem;padding-left:1.1rem;color:var(--fg)}
+.lp-points li{margin:.35rem 0;padding-left:.2rem}
+.lp-shot{margin:0}
+.lp-shot img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:14px;box-shadow:0 24px 60px -34px #00000099}
+.lp-shot figcaption{margin-top:.8rem;color:var(--mut);font-size:.92rem}
+.lp-shot strong{color:var(--fg)}
+
+/* ---- labels: a definition table, not cards */
+.lp-labels{margin:2.2rem 0 0;border-top:1px solid var(--line)}
+.lp-labels>div{display:grid;grid-template-columns:12rem minmax(0,1fr);gap:1.5rem;align-items:center;padding:1.15rem 0;border-bottom:1px solid var(--line)}
+.lp-labels dt,.lp-labels dd{margin:0}
+.lp-labels dd{font-size:1.04rem}
+
+/* ---- trust: ruled columns */
+.lp-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:2.4rem;border-top:1px solid var(--line)}
+.lp-cols>div{padding:1.5rem 1.6rem 0 0}
+.lp-cols>div+div{padding-left:1.6rem;border-left:1px solid var(--line)}
+.lp-cols p{color:var(--mut);margin:0}
+
+/* ---- what stays */
+.lp-keep-line{font-family:var(--serif);font-size:clamp(1.7rem,3.8vw,2.9rem);line-height:1.15;letter-spacing:-.02em;max-width:30ch;margin:0;text-wrap:balance}
+.lp-keep p:last-child{color:var(--mut);margin-top:1rem}
+
+/* ---- closing call to action */
+.lp-end{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:clamp(2rem,5vw,4rem);align-items:center;
+  padding:clamp(1.8rem,4vw,3rem);background:var(--tile);border:1px solid var(--line);border-radius:22px}
+.lp-end p{color:var(--mut);margin:1rem 0 0}
+.lp-end-actions{display:flex;flex-direction:column;align-items:flex-start;gap:1rem}
+.lp-end-actions p{margin:0}
+
+.lp-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.6rem 2rem;padding-top:1.4rem;border-top:1px solid var(--line);color:var(--mut);font-size:.9rem}
+.lp-foot a{color:var(--mut);text-decoration:underline;text-underline-offset:3px}
+.lp-foot a:hover{color:var(--fg)}
+
+/* ---- narrow screens */
+@media (max-width:900px){
+  .lp-hero,.lp-product,.lp-end{grid-template-columns:1fr}
+  .lp-steps{grid-template-columns:1fr;gap:1.8rem}
+  .lp-steps li::before{display:none}
+  .lp-cols{grid-template-columns:1fr}
+  .lp-cols>div,.lp-cols>div+div{padding:1.3rem 0;border-left:0;border-bottom:1px solid var(--line)}
+}
+@media (max-width:600px){
+  .lp-labels>div{grid-template-columns:1fr;gap:.5rem}
+  .lp-actions{gap:1rem}
+}
