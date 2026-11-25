@@ -7,9 +7,11 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--mark:#5b4a10;--mark-ink:#fff3c4}}
 
 /* ---- header (anonymous) */
-.top nav.lp-nav{flex:1;display:flex;justify-content:center;gap:1.6rem;overflow:visible}
-.top nav.lp-nav a{padding:.25rem 0;border-radius:0;background:none;font-size:.92rem}
-.top nav.lp-nav a:hover{background:none;color:var(--fg);text-decoration:underline;text-underline-offset:5px}
+.top nav.lp-nav{flex:1;display:flex;justify-content:center;gap:.4rem;overflow:visible}
+.top nav.lp-nav a{padding:.35rem .6rem;border-radius:8px;background:none;font-size:.92rem}
+.top nav.lp-nav a:hover{background:var(--tile);color:var(--fg);text-decoration:none}
+.top nav.lp-nav a:focus{outline:none}
+.top nav.lp-nav a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .lp-nav-actions{display:flex;align-items:center;gap:1rem}
 .lp-nav-actions .button{padding:.5rem 1rem;font-size:.92rem}
 .lp-signin{color:var(--fg);font-weight:600;font-size:.95rem}
@@ -24,6 +26,7 @@
 .lp{max-width:1120px;margin:0 auto;padding-top:clamp(1.5rem,5vw,4rem)}
 .lp>section,.lp>.lp-foot{margin-top:clamp(4rem,9vw,7.5rem)}
 .lp>.lp-hero{margin-top:0}
+.lp>section{scroll-margin-top:7rem}
 .lp h1,.lp h2{font-family:var(--serif);font-weight:400;letter-spacing:-.018em;margin:0}
 .lp h2{font-size:clamp(1.8rem,3.2vw,2.55rem);line-height:1.14;max-width:24ch;text-wrap:balance}
 .lp h3{font-size:1.08rem;margin:0 0 .4rem;letter-spacing:-.01em}
@@ -83,12 +86,13 @@
 .lp-shot strong{color:var(--fg)}
 
 /* ---- labels: a definition table, not cards */
-.lp-labels{margin:2.2rem 0 0;border-top:1px solid var(--line)}
-.lp-labels>div{display:grid;grid-template-columns:12rem minmax(0,1fr);gap:1.5rem;align-items:center;padding:1.15rem 0;border-bottom:1px solid var(--line)}
+.lp-labels{margin:2.2rem 0 0;border-top:1px solid var(--line);max-width:52rem}
+.lp-labels>div{display:grid;grid-template-columns:10.5rem minmax(0,1fr);gap:1.5rem;align-items:center;padding:1.15rem 0;border-bottom:1px solid var(--line)}
 .lp-labels dt,.lp-labels dd{margin:0}
-.lp-labels dd{font-size:1.04rem}
+.lp-labels dd{font-size:1rem;color:var(--mut)}
 
 /* ---- trust: ruled columns */
+.lp-trust h2{max-width:none}
 .lp-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:2.4rem;border-top:1px solid var(--line)}
 .lp-cols>div{padding:1.5rem 1.6rem 0 0}
 .lp-cols>div+div{padding-left:1.6rem;border-left:1px solid var(--line)}
@@ -104,6 +108,7 @@
 .lp-end p{color:var(--mut);margin:1rem 0 0}
 .lp-end-actions{display:flex;flex-direction:column;align-items:flex-start;gap:1rem}
 .lp-end-actions p{margin:0}
+.lp-end-buttons{display:flex;flex-wrap:wrap;align-items:center;gap:.8rem}
 
 .lp-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:.6rem 2rem;padding-top:1.4rem;border-top:1px solid var(--line);color:var(--mut);font-size:.9rem}
 .lp-foot a{color:var(--mut);text-decoration:underline;text-underline-offset:3px}
