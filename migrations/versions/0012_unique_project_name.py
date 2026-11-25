@@ -16,18 +16,15 @@ _NAME = "uq_projects_name_lower"
 
 def upgrade() -> None:
     bind = op.get_bind()
-    insp = sa.inspect(bind)
-    if _NAME in {i["name"] for i in insp.get_indexes("projects")}:
-        return
     dupes = bind.execute(sa.text(
         "SELECT lower(name) FROM projects GROUP BY lower(name) HAVING count(*) > 1")).fetchall()
     if dupes:
         # Never fail an upgrade over existing data; the app-level check still applies.
         return
-    op.create_index(_NAME, "projects", [sa.text("lower(name)")], unique=True)
+    # IF NOT EXISTS, not an inspector check: SQLAlchemy does not reflect expression indexes on
+    # SQLite, and a database adopted from the model may already have this index.
+    op.execute(sa.text(f"CREATE UNIQUE INDEX IF NOT EXISTS {_NAME} ON projects (lower(name))"))
 
 
 def downgrade() -> None:
-    insp = sa.inspect(op.get_bind())
-    if _NAME in {i["name"] for i in insp.get_indexes("projects")}:
-        op.drop_index(_NAME, table_name="projects")
+    op.execute(sa.text(f"DROP INDEX IF EXISTS {_NAME}"))
