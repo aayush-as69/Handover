@@ -18,7 +18,7 @@ python -m app.demo --extract rules
 uvicorn app.main:app --reload
 ```
 
-Open `/login`.
+Open `/` for the landing page, or `/tour` for a six-step guided tour that needs no sign-in. Open `/login` to use the demo accounts.
 
 ## 2. Demo personas
 

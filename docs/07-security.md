@@ -46,6 +46,8 @@ Unknown/invalid sensitivity values in SQL ranking are treated above the known le
 
 The database stores failed attempts so throttling survives process restarts. The documented limits include per-user/IP, per-user, username-spraying and per-IP failure limits.
 
+The client IP is escaped for SQL `LIKE` before the per-IP lookup, because behind a proxy it can be attacker-supplied text and `%` or `_` would otherwise act as wildcards.
+
 The application also has in-memory request-rate limiting. This is per server process and therefore is not a distributed rate limiter.
 
 ## 6. Secret protection
@@ -73,7 +75,7 @@ The application sets:
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: DENY`
 - `Referrer-Policy: same-origin`
-- restrictive `Content-Security-Policy`
+- `Content-Security-Policy: default-src 'self'; style-src 'self'; frame-ancestors 'none'`. Everything must come from the app's own origin: templates may not use inline `style=""` attributes, `<style>` blocks, inline `<script>` or `on*=` handlers, and pages may not load fonts or scripts from a CDN. Browsers drop these silently, so a violation breaks the page without an error. Styles live in `app/static/*.css` and scripts in `app/static/*.js`
 - `Cache-Control: no-store` for normal responses
 - HSTS when secure cookies are enabled.
 

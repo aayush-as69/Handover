@@ -16,6 +16,8 @@
 
 The repository has tests spanning unit logic, database behavior, web/API behavior, security, ingestion, extraction, verification, concurrency, deployment configuration, migrations, backup/restore and browser E2E.
 
+Tests that read source or template files open them as UTF-8 and normalise line endings, so they pass on Windows checkouts where Git converts files to CRLF.
+
 ## 2. Test inventory
 
 | Area | Relevant tests |

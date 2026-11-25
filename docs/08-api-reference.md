@@ -18,7 +18,8 @@ Handover is primarily a server-rendered web application. The repository delibera
 
 | Method | Route | Purpose |
 |---|---|---|
-| GET | `/` | Redirects to login, review or handover depending on session |
+| GET | `/` | Public landing page when signed out; redirects to review or handover when signed in |
+| GET | `/tour` | Public six-step guided tour of the product using the synthetic CampusEvents project. No sign-in needed. Interactivity comes from `static/tour.js`; every step is also readable without JavaScript |
 | GET | `/login` | Login page |
 | POST | `/login` | Authenticate a user |
 | POST | `/logout` | End session |

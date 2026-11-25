@@ -8,6 +8,8 @@ A fixed order for presenting Handover so the story holds together. All data is s
 2. Sign in as `riya` (admin) in one window and `kabir` (viewer) in a private window.
 3. Optional but recommended: as `meera` (approver), open **Bulk review**, tick the clean claims, approve them, then **Handover → Sign off**. This gives release 1 and makes the brief, timeline and guided read look full. Do it before the audience arrives; it is a normal human approval, nothing is skipped.
 
+Short on time, or presenting to someone without an account? The public `/tour` page walks through the same loop in six steps with invented data and needs no sign-in or password.
+
 ## The story (one sentence)
 
 Riya is leaving the CampusEvents project. Kabir takes over. Everything Riya knew is in notes, chat and tasks. Handover turns that into claims, each tied to the exact words it came from, and a person approves every one.

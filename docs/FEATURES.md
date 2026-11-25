@@ -28,7 +28,7 @@ All three work on the demo project with no API key, and are covered by `tests/te
 Rules ask: why a technical choice was made when no source says; who owns an unowned action;
 who answers an open question; who watches a risk; whether a promised document exists; and
 which side of an open conflict is right. Questions are idempotent, close themselves when the
-gap is filled, and never overwrite an answer. Answers appear in the handover as the leaver's
+gap is filled, and never overwrite an answer. Reopening a question clears the earlier answer together with who gave it and when. Answers appear in the handover as the leaver's
 own words, only when every claim they concern is visible to the reader.
 
 ## 3. Redaction and role views (`app/redaction.py`, `/handover?view_as=`)

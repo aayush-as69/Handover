@@ -105,6 +105,9 @@ Choose the demo password yourself; do not publish a real production password.
 - Treat model output as untrusted input.
 - Add tests for security/integrity-sensitive behavior.
 - Do not weaken fail-closed behavior for convenience.
+- Keep pages CSP-clean: put styles in a stylesheet and scripts in a file under `app/static/`. Inline `style=""`, `<style>`, `<script>` and `onclick=`-style handlers are silently blocked.
+- Do not rely on a font being installed. The serif stack falls back to Georgia on Windows, which only has regular and bold weights, so check headings in a browser on more than one platform.
+- Form-field rules (`input{width:100%}`) must not leak onto checkboxes and radios; `style.css` has an override for them.
 - Update documentation when behavior changes.
 
 ## 9. Tech stack
@@ -130,7 +133,7 @@ Handover/
 │   ├── extract/          # Rule and optional LLM extraction, verification input
 │   ├── ingest/           # Parsers (notes, chat, Slack, Jira, tasks), GitHub collection, secret redaction
 │   ├── templates/        # Server-rendered HTML
-│   ├── static/           # Stylesheet and small scripts (no inline scripts: CSP)
+│   ├── static/           # style.css, plus landing.css and tour.css for the public pages; small scripts (no inline scripts or styles: CSP)
 │   ├── throttle.py       # Request rate limiter and login lockout (the one throttling module)
 │   ├── metrics.py        # Counters, latency histogram, JSON access log
 │   ├── jobs.py, worker.py  # Background jobs: thread mode or queue + worker

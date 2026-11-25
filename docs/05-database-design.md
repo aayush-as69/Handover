@@ -16,7 +16,7 @@
 
 SQLAlchemy is the persistence layer. PostgreSQL is the production/deployment target; SQLite is used for local development and tests.
 
-Alembic owns migration history. The current repository contains an initial migration and explicit handling for databases created before migration history existed.
+Alembic owns migration history. The repository has a numbered series of migrations (`0001` to `0012` at the time of writing) and explicit handling for databases created before migration history existed. Migrations that add indexes use `IF NOT EXISTS`, because a database adopted from the current models may already have them.
 
 ## 2. Entities
 
@@ -33,6 +33,8 @@ Represents the project being handed over.
 Key fields: `id`, `name`, `description`, `outgoing_member`, `created_at`.
 
 Relationships: one project has many sources and claims.
+
+Project names are unique ignoring case, enforced by the unique index `uq_projects_name_lower` on `lower(name)` (migration `0012`). The create-project page still checks first and shows a friendly message; the index closes the race where two admins submit the same name at once. If an existing database already has names that differ only by case, the migration leaves the index out rather than fail the upgrade, and the page-level check still applies.
 
 ### Source
 
